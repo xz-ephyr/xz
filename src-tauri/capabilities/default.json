@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default Outlier desktop permissions: window controls + sidecar shell spawn.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:default",
+    "core:webview:default",
+    "shell:allow-spawn",
+    "shell:allow-kill",
+    "updater:default"
+  ]
+}
