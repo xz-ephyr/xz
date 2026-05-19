@@ -1,10 +1,12 @@
 {
   "name": "xz",
   "version": "0.15.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "desktop:prebuild": "npm run build",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
