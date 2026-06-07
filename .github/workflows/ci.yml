@@ -18,8 +18,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
       - name: Build
         run: cargo build --verbose
+        working-directory: src-tauri
       - name: Test
         run: cargo test --verbose
+        working-directory: src-tauri
 
   lint:
     runs-on: ubuntu-latest
@@ -31,5 +33,7 @@ jobs:
           components: clippy, rustfmt
       - name: Check Formatting
         run: cargo fmt -- --check
+        working-directory: src-tauri
       - name: Clippy
         run: cargo clippy -- -D warnings
+        working-directory: src-tauri

@@ -1,3 +1,6 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/outfit";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,33 +13,34 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.527 0.154 150.069);
-    --primary-foreground: oklch(0.982 0.018 155.826);
+    --primary: oklch(0.555 0.163 48.998);
+    --primary-foreground: oklch(0.987 0.022 95.277);
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.527 0.154 150.069);
-    --accent-foreground: oklch(0.982 0.018 155.826);
+    --accent: oklch(0.555 0.163 48.998);
+    --accent-foreground: oklch(0.987 0.022 95.277);
     --destructive: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.871 0.15 154.449);
-    --chart-2: oklch(0.723 0.219 149.579);
-    --chart-3: oklch(0.627 0.194 149.214);
-    --chart-4: oklch(0.527 0.154 150.069);
-    --chart-5: oklch(0.448 0.119 151.328);
+    --chart-1: oklch(0.879 0.169 91.605);
+    --chart-2: oklch(0.769 0.188 70.08);
+    --chart-3: oklch(0.666 0.179 58.318);
+    --chart-4: oklch(0.555 0.163 48.998);
+    --chart-5: oklch(0.473 0.137 46.201);
     --radius: 0.875rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.627 0.194 149.214);
-    --sidebar-primary-foreground: oklch(0.982 0.018 155.826);
+    --sidebar-primary: oklch(0.666 0.179 58.318);
+    --sidebar-primary-foreground: oklch(0.987 0.022 95.277);
     --sidebar-accent: oklch(0.97 0 0);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
   }
+
   .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -44,36 +48,46 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.448 0.119 151.328);
-    --primary-foreground: oklch(0.982 0.018 155.826);
+    --primary: oklch(0.473 0.137 46.201);
+    --primary-foreground: oklch(0.987 0.022 95.277);
     --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
     --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.448 0.119 151.328);
-    --accent-foreground: oklch(0.982 0.018 155.826);
+    --accent: oklch(0.473 0.137 46.201);
+    --accent-foreground: oklch(0.987 0.022 95.277);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.871 0.15 154.449);
-    --chart-2: oklch(0.723 0.219 149.579);
-    --chart-3: oklch(0.627 0.194 149.214);
-    --chart-4: oklch(0.527 0.154 150.069);
-    --chart-5: oklch(0.448 0.119 151.328);
+    --chart-1: oklch(0.879 0.169 91.605);
+    --chart-2: oklch(0.769 0.188 70.08);
+    --chart-3: oklch(0.666 0.179 58.318);
+    --chart-4: oklch(0.555 0.163 48.998);
+    --chart-5: oklch(0.473 0.137 46.201);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.723 0.219 149.579);
-    --sidebar-primary-foreground: oklch(0.982 0.018 155.826);
+    --sidebar-primary: oklch(0.769 0.188 70.08);
+    --sidebar-primary-foreground: oklch(0.279 0.077 45.635);
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
   }
+
   * {
     @apply border-border;
+    outline: 1px solid var(--ring);
   }
   body {
-    @apply bg-background text-foreground;
+    @apply antialiased bg-background text-foreground;
+    font-family: 'Outfit Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Outfit Variable', sans-serif;
+  }
+  html {
+    @apply font-sans;
   }
 }

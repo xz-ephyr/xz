@@ -65,7 +65,6 @@ jobs:
 
       - name: Install npm deps
         run: npm install --no-audit --no-fund
-
       - name: Build the app
         run: npm run desktop:prebuild
 
@@ -82,3 +81,5 @@ jobs:
           releaseDraft: false
           prerelease: ${{ github.event.inputs.prerelease }}
           args: --target ${{ matrix.target }}
+          tauriActionScript: npm install
+          tauriActionWorkingDir: src-tauri
