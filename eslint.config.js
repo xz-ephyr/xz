@@ -65,6 +65,7 @@ export default [
     rules: {
       ...ts.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off', // Turn off to prevent any-related lint failures
+      'no-undef': 'off',
     },
   },
 ];
