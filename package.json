@@ -16,6 +16,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.80",
     "@ai-sdk/react": "^3.0.199",
     "@fontsource-variable/outfit": "^5.2.8",
     "@hugeicons/core-free-icons": "^4.2.0",
@@ -46,6 +47,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.20.1",
+    "fallow": "^2.89.0",
     "postcss": "^8.5.2",
     "prettier": "^3.5.1",
     "tailwindcss": "^3.4.17",

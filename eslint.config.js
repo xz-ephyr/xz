@@ -3,6 +3,9 @@ import ts from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 
 export default [
+  {
+    ignores: ['dist/**', '.vite/**', 'node_modules/**']
+  },
   js.configs.recommended,
   {
     languageOptions: {
