@@ -19,8 +19,6 @@
     "@ai-sdk/google": "^3.0.80",
     "@ai-sdk/react": "^3.0.199",
     "@fontsource-variable/outfit": "^5.2.8",
-    "@hugeicons/core-free-icons": "^4.2.0",
-    "@hugeicons/react": "^1.1.6",
     "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-store": "^2.4.3",

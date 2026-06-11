@@ -6,7 +6,6 @@ export default function App() {
     <div className="flex">
       <Sidebar />
       <main className="flex-1 p-4">
-        <h1>Vibe Code</h1>
       </main>
     </div>
   );

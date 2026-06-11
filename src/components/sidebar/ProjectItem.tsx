@@ -1,4 +1,5 @@
 // Your rules resume
+import { EllipsisVertical } from 'lucide-react';
 import GlassyFolderIcon from './GlassyFolderIcon';
 
 interface ProjectItemProps {
@@ -15,7 +16,9 @@ export default function ProjectItem({ name }: ProjectItemProps) {
       <div className="ml-6 mt-1 space-y-1">
         <div className="text-sm p-1 hover:bg-[#f2f3f6] rounded-[8px] flex justify-between group text-gray-600">
           Chat Session 1
-          <button className="hidden group-hover:block">...</button>
+          <button className="hidden group-hover:block p-1 hover:bg-[#e5e5e5] rounded-[4px]">
+            <EllipsisVertical size={16} />
+          </button>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 // Your rules resume
 import { useState } from 'react';
-import { PencilEdit01Icon, Calendar01Icon, Plug01Icon, Book01Icon, UserCircleIcon, Settings02Icon } from '@hugeicons/core-free-icons';
+import { SquarePen, AlarmClock, Toolbox, SunMoon, Settings, PanelLeft, PanelRight } from 'lucide-react';
 import SidebarTab from './SidebarTab';
 import ProjectItem from './ProjectItem';
 
@@ -13,35 +13,36 @@ export default function Sidebar() {
     >
       <div className="flex justify-end p-2 shrink-0">
         <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-1 hover:bg-[#e5e5e5] rounded-[8px]">
-          {isCollapsed ? '->' : '<-'}
+          {isCollapsed ? <PanelRight size={20} /> : <PanelLeft size={20} />}
         </button>
       </div>
 
       <div className="px-4 flex-1 overflow-y-auto">
-        {!isCollapsed && (
-          <>
-            <SidebarTab icon={PencilEdit01Icon} label="New thread" />
-            <SidebarTab icon={Calendar01Icon} label="Schedule" />
-            <SidebarTab icon={Plug01Icon} label="Plugins" />
-            <SidebarTab icon={Book01Icon} label="Wiki" />
-            
-            <div className="mt-6 flex justify-between items-center">
-              <h2 className="text-sm font-bold text-gray-500">Projects</h2>
-              <button className="text-gray-500 hover:text-black">+</button>
-            </div>
-            
-            <div className="mt-2">
-              <ProjectItem name="Project Alpha" />
-            </div>
-          </>
-        )}
+        <>
+          <SidebarTab icon={SquarePen} label="New thread" collapsed={isCollapsed} />
+          <SidebarTab icon={AlarmClock} label="Schedule" collapsed={isCollapsed} />
+          <SidebarTab icon={Toolbox} label="Plugins" collapsed={isCollapsed} />
+          <SidebarTab icon={SunMoon} label="Wiki" collapsed={isCollapsed} />
+          
+          {!isCollapsed && (
+            <>
+              <div className="mt-6 flex justify-between items-center">
+                <h2 className="text-sm font-bold text-gray-500">Projects</h2>
+                <button className="text-gray-500 hover:text-black hover:bg-[#e5e5e5] active:bg-[#d4d4d4] p-1 rounded-[4px] transition-all active:scale-95">+</button>
+              </div>
+              
+              <div className="mt-2">
+                <ProjectItem name="Project Alpha" />
+              </div>
+            </>
+          )}
+        </>
       </div>
 
       {/* Bottom section */}
-      {!isCollapsed && (
+      {isCollapsed && (
         <div className="p-4 border-t border-[#e5e5e5] shrink-0">
-          <SidebarTab icon={UserCircleIcon} label="Profile" />
-          <SidebarTab icon={Settings02Icon} label="Settings" />
+          <SidebarTab icon={Settings} label="Profile & Settings" collapsed={isCollapsed} />
         </div>
       )}
     </div>
