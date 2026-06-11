@@ -1,6 +1,6 @@
 // Your rules resume
 import { useState } from 'react';
-import { Pencil, Calendar, Puzzle, Book } from 'lucide-react';
+import { PencilEdit01Icon, Calendar01Icon, Plug01Icon, Book01Icon } from '@hugeicons/core-free-icons';
 import SidebarTab from './SidebarTab';
 import ProjectItem from './ProjectItem';
 
@@ -19,10 +19,10 @@ export default function Sidebar() {
 
       {!isCollapsed && (
         <div className="px-4">
-          <SidebarTab icon={Pencil} label="New thread" />
-          <SidebarTab icon={Calendar} label="Schedule" />
-          <SidebarTab icon={Puzzle} label="Plugins" />
-          <SidebarTab icon={Book} label="Wiki" />
+          <SidebarTab icon={PencilEdit01Icon} label="New thread" />
+          <SidebarTab icon={Calendar01Icon} label="Schedule" />
+          <SidebarTab icon={Plug01Icon} label="Plugins" />
+          <SidebarTab icon={Book01Icon} label="Wiki" />
           
           <div className="mt-6 flex justify-between items-center">
             <h2 className="text-sm font-bold text-gray-500">Projects</h2>

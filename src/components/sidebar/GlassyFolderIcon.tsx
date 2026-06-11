@@ -1,5 +1,4 @@
 // Your rules resume
-import React from 'react';
 
 export default function GlassyFolderIcon() {
   return (

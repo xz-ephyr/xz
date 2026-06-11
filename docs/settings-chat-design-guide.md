@@ -1,3 +1,4 @@
+### Settings Chat Design Guide
 # Settings + Chat UI Design Playbook (Based on Current Implementation)
 
 This document captures repeatable design patterns used in the **Settings** and **Chat** experiences so future pages can match the same product style.
