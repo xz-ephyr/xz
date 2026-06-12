@@ -21,7 +21,7 @@ export default function ProjectItem({ name }: ProjectItemProps) {
       </div>
       {isExpanded && (
         <div className="space-y-1">
-          <div className="text-sm p-2 hover:bg-[#f2f3f6] rounded-[8px] flex items-center gap-3 group text-gray-600 cursor-pointer active:scale-[0.975] transition-transform">
+          <div className="text-sm p-2 hover:bg-[#f2f3f6] rounded-[8px] flex items-center gap-3 group text-gray-600 cursor-pointer active:scale-[0.99] transition-transform">
             <span className="flex-1">Chat Session 1</span>
             <button className="hidden group-hover:block p-1 hover:bg-[#e5e5e5] rounded-[4px]">
               <EllipsisVertical size={16} />
