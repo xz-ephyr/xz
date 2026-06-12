@@ -1,33 +1,28 @@
 import { useState } from 'react';
-import { CornerDownLeft, Paperclip, Sparkles } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
+import { ThinScrollbar } from '../ui/ThinScrollbar';
 
 export default function ChatInput() {
   const [value, setValue] = useState('');
 
   return (
     <div className="w-full max-w-[720px] mx-auto p-4">
-      <div className="bg-white border border-[#e5e5e5] rounded-[12px] shadow-sm overflow-hidden focus-within:ring-1 focus-within:ring-gray-300 transition-all">
-        <textarea
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Ask anything..."
-          className="w-full p-4 resize-none outline-none text-sm min-h-[44px] max-h-[180px] bg-transparent"
-          rows={1}
-        />
-        <div className="flex items-center justify-between px-3 py-2 border-t border-[#f2f3f6] bg-[#f9f9f9]">
-          <div className="flex items-center gap-2">
-            <button className="p-1.5 text-gray-500 hover:text-gray-900 rounded-[6px] hover:bg-[#e5e5e5]">
-              <Paperclip size={18} />
-            </button>
-            <button className="p-1.5 text-gray-500 hover:text-gray-900 rounded-[6px] hover:bg-[#e5e5e5]">
-              <Sparkles size={18} />
-            </button>
-          </div>
+      <div className="bg-white rounded-[12px] transition-all">
+        <ThinScrollbar className="max-h-[145px]">
+          <textarea
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Ask anything..."
+            className="w-full p-4 resize-none outline-none text-sm min-h-[44px] bg-white"
+            rows={1}
+          />
+        </ThinScrollbar>
+        <div className="flex items-center justify-end px-3 py-2 bg-white">
           <button 
             disabled={!value.trim()}
-            className="p-1.5 text-gray-500 hover:text-gray-900 rounded-[6px] hover:bg-[#e5e5e5] disabled:opacity-50 disabled:hover:bg-transparent"
+            className="p-1.5 text-white rounded-full bg-black disabled:opacity-50 transition-opacity"
           >
-            <CornerDownLeft size={18} />
+            <ArrowUp size={18} />
           </button>
         </div>
       </div>
