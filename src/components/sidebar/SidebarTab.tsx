@@ -1,4 +1,4 @@
-import { type ElementType } from 'react';
+import React, { type ElementType } from 'react';
 import { Link } from 'react-router-dom';
 
 interface SidebarTabProps {
@@ -10,7 +10,7 @@ interface SidebarTabProps {
   onClick?: () => void;
 }
 
-export default function SidebarTab({ icon: Icon, label, path, active, collapsed, onClick }: SidebarTabProps) {
+const SidebarTab = React.memo(({ icon: Icon, label, path, active, collapsed, onClick }: SidebarTabProps) => {
   return (
     <Link to={path} onClick={onClick} className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} p-2 rounded-[8px] cursor-pointer ${active ? 'bg-[#e5e5e5]' : 'hover:bg-[#f2f3f6]'} active:scale-[0.99] transition-transform`}>
       <div className="shrink-0">
@@ -20,5 +20,7 @@ export default function SidebarTab({ icon: Icon, label, path, active, collapsed,
       {active && !collapsed && <div className="ml-auto w-1 h-[15px] bg-black rounded-[2px]" />}
     </Link>
   );
-}
+});
+
+export default SidebarTab;
 

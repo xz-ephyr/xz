@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Copy, Check, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react';
 import ChatInput from '../components/chat/ChatInput';
-import { cn } from '@/lib/utils';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -26,16 +25,16 @@ const CopyButton = ({ content, alwaysVisible }: { content: string; alwaysVisible
   );
 };
 
-const UserBubble = ({ content }: { content: string }) => (
+const UserBubble = React.memo(({ content }: { content: string }) => (
   <div className="flex flex-col items-end mb-4 group mt-6">
     <div className="bg-[#f9f9f9] rounded-[8px] px-4 py-2.5 text-sm max-w-[70%]">
       {content}
     </div>
     <CopyButton content={content} alwaysVisible={false} />
   </div>
-);
+));
 
-const AssistantBubble = ({ content }: { content: string }) => {
+const AssistantBubble = React.memo(({ content }: { content: string }) => {
   const [displayedContent, setDisplayedContent] = useState('');
 
   useEffect(() => {
@@ -61,7 +60,7 @@ const AssistantBubble = ({ content }: { content: string }) => {
       </div>
     </div>
   );
-};
+});
 
 export const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -71,9 +70,9 @@ export const ChatPage = () => {
     setMessages([]);
   }, [uuid]);
 
-  const handleSend = (content: string) => {
+  const handleSend = useCallback((content: string) => {
     setMessages((prev) => [...prev, { role: 'user', content }, { role: 'assistant', content: 'This is a simulated AI response.' }]);
-  };
+  }, []);
 
   return (
     <div className="flex flex-col h-screen">
