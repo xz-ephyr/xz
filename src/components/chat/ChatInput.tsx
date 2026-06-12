@@ -18,6 +18,7 @@ export default function ChatInput() {
           />
         </ThinScrollbar>
         <div className="flex items-center justify-end px-3 py-2 bg-white">
+          <div className="flex-1" /> {/* Spacer to push button to right */}
           <button 
             disabled={!value.trim()}
             className="p-1.5 text-white rounded-full bg-black disabled:opacity-50 transition-opacity"
