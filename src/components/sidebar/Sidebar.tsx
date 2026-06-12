@@ -1,6 +1,6 @@
 // Your rules resume
 import { useState } from 'react';
-import { PanelLeft, PanelRight } from 'lucide-react';
+import { SquarePen, AlarmClock, Toolbox, SunMoon, Settings, PanelLeft, PanelRight } from 'lucide-react';
 import SidebarTab from './SidebarTab';
 import ProjectItem from './ProjectItem';
 
@@ -19,10 +19,10 @@ export default function Sidebar() {
 
       <div className={`px-4 flex-1 ${isCollapsed ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         <>
-          <SidebarTab label="New thread" collapsed={isCollapsed} />
-          <SidebarTab label="Schedule" collapsed={isCollapsed} />
-          <SidebarTab label="Plugins" collapsed={isCollapsed} />
-          <SidebarTab label="Wiki" collapsed={isCollapsed} />
+          <SidebarTab icon={SquarePen} label="New thread" collapsed={isCollapsed} />
+          <SidebarTab icon={AlarmClock} label="Schedule" collapsed={isCollapsed} />
+          <SidebarTab icon={Toolbox} label="Plugins" collapsed={isCollapsed} />
+          <SidebarTab icon={SunMoon} label="Wiki" collapsed={isCollapsed} />
           
           {!isCollapsed && (
             <>
@@ -41,7 +41,7 @@ export default function Sidebar() {
 
       {/* Bottom section */}
       <div className="p-4 border-t border-[#e5e5e5] shrink-0">
-        <SidebarTab label="Settings" collapsed={isCollapsed} />
+        <SidebarTab icon={Settings} label="Settings" collapsed={isCollapsed} />
       </div>
     </div>
   );
