@@ -12,7 +12,10 @@ export default function ProjectItem({ name }: ProjectItemProps) {
 
   return (
     <div className="mb-1">
-      <div className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer group" onClick={() => setIsExpanded(!isExpanded)}>
+      <div
+        className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer group"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <GlassyFolderIcon />
         <span className="text-sm font-semibold text-gray-700 flex-1">{name}</span>
         <span className="opacity-0 group-hover:opacity-100 transition-opacity">

@@ -1,6 +1,13 @@
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/sidebar/Sidebar';
-import { OnboardingPage, ChatPage, SchedulePage, PluginsPage, WikiPage, ProjectPage, SettingsPage } from './pages';
+import {
+  OnboardingPage,
+  ChatPage,
+  SchedulePage,
+  PluginsPage,
+  WikiPage,
+  ProjectPage,
+} from './pages';
 
 export default function App() {
   return (
@@ -15,7 +22,6 @@ export default function App() {
             <Route path="/plugins" element={<PluginsPage />} />
             <Route path="/wiki" element={<WikiPage />} />
             <Route path="/project/:uuid" element={<ProjectPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>
       </div>

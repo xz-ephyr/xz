@@ -15,9 +15,9 @@ export default function ChatsList({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="mt-2 space-y-1">
-      {chats.map(chat => (
-        <Link 
-          key={chat.id} 
+      {chats.map((chat) => (
+        <Link
+          key={chat.id}
           to={`/chat/${chat.id}`}
           className="block px-4 py-2 text-sm text-gray-600 hover:bg-[#f2f3f6] rounded-[6px] truncate"
         >
