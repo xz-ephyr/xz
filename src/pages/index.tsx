@@ -4,4 +4,3 @@ export { SchedulePage } from './SchedulePage';
 export { PluginsPage } from './PluginsPage';
 export { WikiPage } from './WikiPage';
 export { ProjectPage } from './ProjectPage';
-export { SettingsPage } from './SettingsPage';

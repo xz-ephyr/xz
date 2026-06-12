@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react';
 import ChatInput from '../components/chat/ChatInput';
+import { cn } from '@/lib/utils';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -52,7 +53,12 @@ const AssistantBubble = ({ content }: { content: string }) => {
       <div className="text-sm py-4 max-w-[70%]">
         {displayedContent}
       </div>
-      <CopyButton content={content} alwaysVisible={true} />
+      <div className="flex gap-2 text-gray-400 items-center">
+        <CopyButton content={content} alwaysVisible={true} />
+        <button className="hover:text-gray-900 transition-colors"><ThumbsUp size={14} /></button>
+        <button className="hover:text-gray-900 transition-colors"><ThumbsDown size={14} /></button>
+        <button className="hover:text-gray-900 transition-colors"><RotateCcw size={14} /></button>
+      </div>
     </div>
   );
 };
@@ -71,17 +77,24 @@ export const ChatPage = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
-      <div className={`flex-1 overflow-y-auto p-4 ${messages.length === 0 ? 'flex items-center justify-center -mt-20' : ''}`}>
-        <div className="max-w-[720px] mx-auto">
+      <div className={`flex-1 overflow-y-auto p-4 ${messages.length === 0 ? 'flex flex-col items-center justify-center' : ''}`}>
+        {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
+        <div className="max-w-[720px] w-full mx-auto">
           {messages.map((m, i) => (
             m.role === 'user' ? <UserBubble key={i} content={m.content} /> : <AssistantBubble key={i} content={m.content} />
           ))}
+          {messages.length === 0 && (
+            <div className="w-full mt-4">
+              <ChatInput onSend={handleSend} />
+            </div>
+          )}
         </div>
       </div>
-      <div className="shrink-0">
-        <ChatInput onSend={handleSend} />
-      </div>
+      {messages.length > 0 && (
+        <div className="shrink-0">
+          <ChatInput onSend={handleSend} />
+        </div>
+      )}
     </div>
   );
 };
