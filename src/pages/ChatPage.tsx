@@ -27,15 +27,19 @@ export const ChatPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-[720px] mx-auto">
-          {messages.map((m, i) => (
-            m.role === 'user' ? <UserBubble key={i} content={m.content} /> : <AssistantBubble key={i} content={m.content} />
-          ))}
+    <div className={`flex flex-col h-screen ${messages.length === 0 ? 'justify-center' : ''}`}>
+      {messages.length > 0 && (
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="max-w-[720px] mx-auto">
+            {messages.map((m, i) => (
+              m.role === 'user' ? <UserBubble key={i} content={m.content} /> : <AssistantBubble key={i} content={m.content} />
+            ))}
+          </div>
         </div>
+      )}
+      <div className={messages.length === 0 ? '' : 'shrink-0'}>
+        <ChatInput onSend={handleSend} />
       </div>
-      <ChatInput onSend={handleSend} />
     </div>
   );
 };
