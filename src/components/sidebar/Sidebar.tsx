@@ -20,7 +20,7 @@ export default function Sidebar() {
 
       <div className={`px-4 flex-1 ${isCollapsed ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         <>
-          <SidebarTab icon={SquarePen} label="New thread" path="/chat/new" collapsed={isCollapsed} onClick={() => window.location.reload()} />
+          <SidebarTab icon={SquarePen} label="New thread" path="/chat/new" collapsed={isCollapsed} />
           <SidebarTab icon={GalleryVerticalEnd} label="Chats" path="/chats" collapsed={isCollapsed} />
           <ChatsList collapsed={isCollapsed} />
           <SidebarTab icon={AlarmClock} label="Schedule" path="/schedule" collapsed={isCollapsed} />

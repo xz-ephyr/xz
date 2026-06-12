@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Copy, Check } from 'lucide-react';
 import ChatInput from '../components/chat/ChatInput';
 
@@ -58,6 +59,11 @@ const AssistantBubble = ({ content }: { content: string }) => {
 
 export const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const { uuid } = useParams();
+
+  useEffect(() => {
+    setMessages([]);
+  }, [uuid]);
 
   const handleSend = (content: string) => {
     setMessages((prev) => [...prev, { role: 'user', content }, { role: 'assistant', content: 'This is a simulated AI response.' }]);
