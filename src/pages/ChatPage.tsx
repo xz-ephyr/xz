@@ -5,7 +5,7 @@ type Message = { role: 'user' | 'assistant'; content: string };
 
 const UserBubble = ({ content }: { content: string }) => (
   <div className="flex justify-end mb-4">
-    <div className="bg-[#f9f9f9] rounded-[8px] p-4 text-sm max-w-[70%]">
+    <div className="bg-[#f9f9f9] rounded-[8px] px-4 py-2.5 text-sm max-w-[70%]">
       {content}
     </div>
   </div>
