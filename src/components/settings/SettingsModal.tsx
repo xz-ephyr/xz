@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 const GEMMA_4_MODELS = ['gemma-4-pro', 'gemma-4-flash', 'gemma-4-nano'];
 
