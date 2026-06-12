@@ -12,14 +12,16 @@ export default function ProjectItem({ name }: ProjectItemProps) {
 
   return (
     <div className="mb-1">
-      <div className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer group" onClick={() => setIsExpanded(!isExpanded)}>
         <GlassyFolderIcon />
         <span className="text-sm font-semibold text-gray-700 flex-1">{name}</span>
-        {isExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+        <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+          {isExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+        </span>
       </div>
       {isExpanded && (
         <div className="space-y-1">
-          <div className="text-sm p-2 hover:bg-[#f2f3f6] rounded-[8px] flex items-center gap-3 group text-gray-600 cursor-pointer">
+          <div className="text-sm p-2 hover:bg-[#f2f3f6] rounded-[8px] flex items-center gap-3 group text-gray-600 cursor-pointer active:scale-95 transition-transform">
             <span className="flex-1">Chat Session 1</span>
             <button className="hidden group-hover:block p-1 hover:bg-[#e5e5e5] rounded-[4px]">
               <EllipsisVertical size={16} />
