@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Copy, Check, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react';
 import ChatInput from '../components/chat/ChatInput';
 
-type Message = { role: 'user' | 'assistant'; content: string };
+type Message = { id: string; role: 'user' | 'assistant'; content: string };
 
 const CopyButton = ({ content, alwaysVisible }: { content: string; alwaysVisible: boolean }) => {
   const [copied, setCopied] = useState(false);
@@ -35,22 +35,10 @@ const UserBubble = React.memo(({ content }: { content: string }) => (
 ));
 
 const AssistantBubble = React.memo(({ content }: { content: string }) => {
-  const [displayedContent, setDisplayedContent] = useState('');
-
-  useEffect(() => {
-    let i = 0;
-    const interval = setInterval(() => {
-      setDisplayedContent(content.slice(0, i + 1));
-      i++;
-      if (i >= content.length) clearInterval(interval);
-    }, 20);
-    return () => clearInterval(interval);
-  }, [content]);
-
   return (
-    <div className="mb-4">
+    <div className="mb-4" data-testid="assistant-bubble">
       <div className="text-sm py-4 max-w-[70%]">
-        {displayedContent}
+        {content}
       </div>
       <div className="flex gap-2 text-gray-400 items-center">
         <CopyButton content={content} alwaysVisible={true} />
@@ -65,13 +53,53 @@ const AssistantBubble = React.memo(({ content }: { content: string }) => {
 export const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const { uuid } = useParams();
+  const timeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
+  const intervalsRef = useRef<Set<NodeJS.Timeout>>(new Set());
 
   useEffect(() => {
     setMessages([]);
   }, [uuid]);
 
+  useEffect(() => {
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      intervalsRef.current.forEach(clearInterval);
+    };
+  }, []);
+
   const handleSend = useCallback((content: string) => {
-    setMessages((prev) => [...prev, { role: 'user', content }, { role: 'assistant', content: 'This is a simulated AI response.' }]);
+    const userMessageId = crypto.randomUUID();
+    const assistantMessageId = crypto.randomUUID();
+
+    // Add user message first (Request First logic)
+    setMessages((prev) => [...prev, { id: userMessageId, role: 'user', content }]);
+
+    // Simulate streaming from "backend"
+    const fullContent = 'This is a simulated AI response.';
+    let currentContent = '';
+
+    // Initial assistant message entry (empty content)
+    const timeoutId = setTimeout(() => {
+      timeoutsRef.current.delete(timeoutId);
+      setMessages((prev) => [...prev, { id: assistantMessageId, role: 'assistant', content: '' }]);
+
+      let i = 0;
+      const intervalId = setInterval(() => {
+        currentContent += fullContent[i];
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessageId ? { ...m, content: currentContent } : m
+          )
+        );
+        i++;
+        if (i >= fullContent.length) {
+          clearInterval(intervalId);
+          intervalsRef.current.delete(intervalId);
+        }
+      }, 30);
+      intervalsRef.current.add(intervalId);
+    }, 100);
+    timeoutsRef.current.add(timeoutId);
   }, []);
 
   return (
