@@ -6,21 +6,20 @@ type Message = { role: 'user' | 'assistant'; content: string };
 
 const CopyButton = ({ content }: { content: string }) => (
   <button 
-    onClick={() => navigator.clipboard.writeText(content)}
-    className="opacity-0 group-hover:opacity-100 p-1 mt-1 text-gray-400 hover:text-gray-900 transition-opacity"
+    onClick={() => navigator.clipboard.writeText(content).catch(err => console.error('Failed to copy!', err))}
+    className="opacity-0 group-hover:opacity-100 flex items-center gap-1 mt-1 text-xs text-gray-400 hover:text-gray-900 transition-opacity"
   >
-    <Copy size={14} />
+    <Copy size={12} />
+    <span>Copy</span>
   </button>
 );
 
 const UserBubble = ({ content }: { content: string }) => (
-  <div className="flex justify-end mb-4 group">
-    <div className="flex flex-col items-end">
-      <div className="bg-[#f9f9f9] rounded-[8px] px-4 py-2.5 text-sm max-w-[70%]">
-        {content}
-      </div>
-      <CopyButton content={content} />
+  <div className="flex flex-col items-end mb-4 group">
+    <div className="bg-[#f9f9f9] rounded-[8px] px-4 py-2.5 text-sm max-w-[70%]">
+      {content}
     </div>
+    <CopyButton content={content} />
   </div>
 );
 
@@ -28,8 +27,8 @@ const AssistantBubble = ({ content }: { content: string }) => (
   <div className="mb-4 group">
     <div className="text-sm p-4">
       {content}
-      <CopyButton content={content} />
     </div>
+    <CopyButton content={content} />
   </div>
 );
 
