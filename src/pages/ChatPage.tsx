@@ -1,20 +1,34 @@
 import { useState } from 'react';
+import { Copy } from 'lucide-react';
 import ChatInput from '../components/chat/ChatInput';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
+const CopyButton = ({ content }: { content: string }) => (
+  <button 
+    onClick={() => navigator.clipboard.writeText(content)}
+    className="opacity-0 group-hover:opacity-100 p-1 mt-1 text-gray-400 hover:text-gray-900 transition-opacity"
+  >
+    <Copy size={14} />
+  </button>
+);
+
 const UserBubble = ({ content }: { content: string }) => (
-  <div className="flex justify-end mb-4">
-    <div className="bg-[#f9f9f9] rounded-[8px] px-4 py-2.5 text-sm max-w-[70%]">
-      {content}
+  <div className="flex justify-end mb-4 group">
+    <div className="flex flex-col items-end">
+      <div className="bg-[#f9f9f9] rounded-[8px] px-4 py-2.5 text-sm max-w-[70%]">
+        {content}
+      </div>
+      <CopyButton content={content} />
     </div>
   </div>
 );
 
 const AssistantBubble = ({ content }: { content: string }) => (
-  <div className="mb-4">
+  <div className="mb-4 group">
     <div className="text-sm p-4">
       {content}
+      <CopyButton content={content} />
     </div>
   </div>
 );
