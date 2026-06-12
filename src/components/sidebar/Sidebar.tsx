@@ -1,6 +1,6 @@
 // Your rules resume
 import { useState } from 'react';
-import { SquarePen, AlarmClock, Toolbox, SunMoon, Settings, PanelLeft, PanelRight } from 'lucide-react';
+import { PanelLeft, PanelRight } from 'lucide-react';
 import SidebarTab from './SidebarTab';
 import ProjectItem from './ProjectItem';
 
@@ -9,7 +9,7 @@ export default function Sidebar() {
 
   return (
     <div 
-      className={`bg-[#f9f9f9] border-r border-[#e5e5e5] h-screen transition-all duration-300 flex flex-col ${isCollapsed ? 'w-[48px]' : 'w-[420px]'}`}
+      className={`bg-[#f9f9f9] border-r border-[#e5e5e5] h-screen transition-[width] duration-300 ease-in-out flex flex-col ${isCollapsed ? 'w-[48px]' : 'w-[420px]'}`}
     >
       <div className="flex justify-end p-2 shrink-0">
         <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-1 hover:bg-[#e5e5e5] rounded-[8px]">
@@ -17,17 +17,17 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <div className="px-4 flex-1 overflow-y-auto">
+      <div className={`px-4 flex-1 ${isCollapsed ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         <>
-          <SidebarTab icon={SquarePen} label="New thread" collapsed={isCollapsed} />
-          <SidebarTab icon={AlarmClock} label="Schedule" collapsed={isCollapsed} />
-          <SidebarTab icon={Toolbox} label="Plugins" collapsed={isCollapsed} />
-          <SidebarTab icon={SunMoon} label="Wiki" collapsed={isCollapsed} />
+          <SidebarTab label="New thread" collapsed={isCollapsed} />
+          <SidebarTab label="Schedule" collapsed={isCollapsed} />
+          <SidebarTab label="Plugins" collapsed={isCollapsed} />
+          <SidebarTab label="Wiki" collapsed={isCollapsed} />
           
           {!isCollapsed && (
             <>
               <div className="mt-6 flex justify-between items-center">
-                <h2 className="text-sm font-bold text-gray-500">Projects</h2>
+                <h2 className="text-sm font-bold text-gray-500 whitespace-nowrap">Projects</h2>
                 <button className="text-gray-500 hover:text-black hover:bg-[#e5e5e5] active:bg-[#d4d4d4] p-1 rounded-[4px] transition-all active:scale-95">+</button>
               </div>
               
@@ -40,11 +40,9 @@ export default function Sidebar() {
       </div>
 
       {/* Bottom section */}
-      {isCollapsed && (
-        <div className="p-4 border-t border-[#e5e5e5] shrink-0">
-          <SidebarTab icon={Settings} label="Profile & Settings" collapsed={isCollapsed} />
-        </div>
-      )}
+      <div className="p-4 border-t border-[#e5e5e5] shrink-0">
+        <SidebarTab label="Settings" collapsed={isCollapsed} />
+      </div>
     </div>
   );
 }
