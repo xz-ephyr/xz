@@ -13,7 +13,7 @@ export default function Sidebar() {
     >
       <div className="flex justify-end p-2 shrink-0">
         <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-1 hover:bg-[#e5e5e5] rounded-[8px]">
-          {isCollapsed ? <PanelRight size={20} /> : <PanelLeft size={20} />}
+          {isCollapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
         </button>
       </div>
 
