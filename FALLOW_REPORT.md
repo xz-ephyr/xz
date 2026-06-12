@@ -1,81 +1,34 @@
-# Fallow Analysis Report
+# Fallow Analysis Report (Post-Fix)
 
-This report contains the output of all available `npx fallow` commands run on the project.
+This report contains the updated output of all available `npx fallow` commands after addressing identified issues.
 
 ## Default Combined Analysis
 ```text
-npm warn exec The following package was not found and will be installed: fallow@2.94.0
-[2m   0.008832487s[0m [33m WARN[0m node_modules directory not found. Run `npm install` / `pnpm install` first for accurate results.
 Warning: shallow clone detected. Hotspot analysis may be incomplete. Use `git fetch --unshallow` for full history.
 
-■ Metrics: dead files 0.0% (0 of 30) · dead exports 0.0% (0 of 32) · MI 95.9 (good)
-  30 files analyzed
-  30 entry points detected (29 plugin, 1 default index)
+■ Metrics: dead files 0.0% (0 of 34) · dead exports 0.0% (0 of 36) · MI 96.2 (good)
+  34 files analyzed
+  34 entry points detected (33 plugin, 1 default index)
 
 ── Dead Code ──────────────────────────────────────
 
-── Dependencies ─────────────────────────────────────
-
-● Unused dependencies (13)
-  @ai-sdk/google
-  @ai-sdk/react
-  @fontsource-variable/outfit
-  @tauri-apps/api
-  @tauri-apps/plugin-process
-  @tauri-apps/plugin-store
-  @tauri-apps/plugin-updater
-  ai
-  class-variance-authority
-  radix-ui
-  ... and 3 more (--format json for full list)
-  Listed in dependencies but never imported — https://docs.fallow.tools/explanations/dead-code#unused-dependencies
-  To suppress: // fallow-ignore-next-line unused-dependencies
-
-● Unused devDependencies (1)
-  @tauri-apps/cli
-  Listed in devDependencies but never imported or referenced — https://docs.fallow.tools/explanations/dead-code#unused-dependencies
-
-● Unlisted dependencies (1)
-  @eslint/js
-  Packages imported in code but missing from package.json — https://docs.fallow.tools/explanations/dead-code#unlisted-dependencies
-
-✗ 13 unused dependencies · 1 dev/optional dependency · 1 unlisted dependency (0.11s)
+✓ No issues found (0.06s)
 
 ── Duplication ────────────────────────────────────
 
-● Duplicates (1 clone groups)
-
-     13 lines  2 instances  dup:47741a4e
-    tests/chat-performance.test.tsx:23-35
-    tests/chat-performance.test.tsx:75-87
-
-  Identical code blocks detected via suffix-array analysis — https://docs.fallow.tools/explanations/duplication#clone-groups
-
-✗ 26 lines (3.4%) duplicated across 1 file (0.04s)
+✓ No code duplication found (0.01s)
 
 ── Complexity ─────────────────────────────────────
 
-■ Metrics: 916 LOC · dead files 0.0% · dead exports 0.0% · avg cyclomatic 1.4 · p90 cyclomatic 2 · maintainability 95.9 (good) · 0 churn hotspots (since 6 months) · 14 unused deps
+■ Metrics: 962 LOC · dead files 0.0% · dead exports 0.0% · avg cyclomatic 1.4 · p90 cyclomatic 2 · maintainability 96.2 (good) · 0 churn hotspots (since 6 months)
 
-● High complexity functions (2)
-  CRAP scores are estimated from export references; run `fallow health --coverage <coverage-final.json>` for exact scores.
-  src/components/sidebar/SidebarTab.tsx
-    :13 SidebarTab
-           6 cyclomatic    4 cognitive   17 lines
-          42.0 CRAP
-  src/components/sidebar/Sidebar.tsx
-    :10 Sidebar
-           5 cyclomatic    4 cognitive   59 lines
-          30.0 CRAP
-  Functions exceeding cyclomatic, cognitive, or CRAP thresholds (https://docs.fallow.tools/explanations/health#complexity-metrics)
+● File health scores (22 files) · sorted by triage concern
 
-● File health scores (18 files) · sorted by triage concern
+   93.3    src/components/sidebar/SidebarTab.tsx           risk
+             28 LOC    1 fan-in    2 fan-out    0% dead  0.14 density  20.0 risk
 
-   95.2    src/components/sidebar/SidebarTab.tsx           risk
-             33 LOC    1 fan-in    0 fan-out    0% dead  0.24 density  42.0 risk
-
-   90.0    src/components/sidebar/Sidebar.tsx              risk
-             69 LOC    1 fan-in    4 fan-out    0% dead  0.12 density  30.0 risk
+   89.5    src/components/sidebar/Sidebar.tsx              risk
+             55 LOC    1 fan-in    5 fan-out    0% dead  0.11 density  12.0 risk
 
    94.9    src/components/sidebar/ProjectItem.tsx          risk
              35 LOC    1 fan-in    1 fan-out    0% dead  0.11 density  12.0 risk
@@ -89,97 +42,53 @@ Warning: shallow clone detected. Hotspot analysis may be incomplete. Use `git fe
    95.2    src/components/settings/SettingsModal.tsx       risk
              69 LOC    0 fan-in    0 fan-out    0% dead  0.16 density  6.0 risk
 
+   96.0    src/components/sidebar/ProjectsSection.tsx      risk
+             23 LOC    1 fan-in    1 fan-out    0% dead  0.09 density  6.0 risk
+
+   98.8    src/components/sidebar/SidebarHeader.tsx        risk
+             17 LOC    1 fan-in    0 fan-out    0% dead  0.12 density  6.0 risk
+
+   98.8    src/components/sidebar/SidebarTabLabel.tsx      risk
+             14 LOC    1 fan-in    0 fan-out    0% dead  0.14 density  6.0 risk
+
    90.9    src/pages/ChatPage.tsx                          risk
             128 LOC    2 fan-in    1 fan-out    0% dead  0.21 density  5.1 risk
 
-   93.0    src/components/chat/ChatInput.tsx               risk
-             51 LOC    1 fan-in    1 fan-out    0% dead  0.14 density  4.9 risk
-
-   93.9    tests/chat-performance.test.tsx                 structure
-            105 LOC    0 fan-in    1 fan-out    0% dead  0.11 density  1.2 risk
-
-   95.0    src/App.tsx                                     risk
-             24 LOC    1 fan-in    2 fan-out    0% dead  0.04 density  2.0 risk
-
-  ... and 8 more files (--format json for full list)
+  ... and 12 more files (--format json for full list)
 
   Sorted by triage concern: the larger of low-MI concern and CRAP risk. The risk / structure tag marks which one placed each file. MI reflects complexity, coupling, and dead code; risk reflects untested complexity (CRAP) and can diverge from MI. Risk: low <15, moderate 15-30, high >=30. CRAP estimated from export references (85% direct, 40% indirect, 0% untested). Run `fallow health --coverage <coverage-final.json>` for exact scores. https://docs.fallow.tools/explanations/health#file-health-scores
 
-✗ 2 above threshold · 71 analyzed · maintainability 95.9 (good) (0.07s)
-
-Failed: dead-code (15 issues), dupes (1 clone groups), health (2 above threshold)
-Setup: `fallow init --agents` writes an agent guide; `fallow hooks install --target agent` adds a commit gate (hide this hint: `fallow init --decline`).
+✗ 0 above threshold · 75 analyzed · maintainability 96.2 (good) (0.01s)
 ```
 
 ## Dead Code Analysis
 ```text
-30 entry points detected (29 plugin, 1 default index)
+34 entry points detected (33 plugin, 1 default index)
 
-── Dependencies ─────────────────────────────────────
-
-● Unused dependencies (13)
-  @ai-sdk/google
-  @ai-sdk/react
-  @fontsource-variable/outfit
-  @tauri-apps/api
-  @tauri-apps/plugin-process
-  @tauri-apps/plugin-store
-  @tauri-apps/plugin-updater
-  ai
-  class-variance-authority
-  radix-ui
-  ... and 3 more (--format json for full list)
-  Listed in dependencies but never imported — https://docs.fallow.tools/explanations/dead-code#unused-dependencies
-  To suppress: // fallow-ignore-next-line unused-dependencies
-
-● Unlisted dependencies (1)
-  @eslint/js
-  Packages imported in code but missing from package.json — https://docs.fallow.tools/explanations/dead-code#unlisted-dependencies
-
-✗ 13 unused dependencies · 1 unlisted dependency (0.06s)
+✓ No issues found (0.04s)
 ```
 
 ## Duplication Analysis
 ```text
-● Duplicates (1 clone groups)
-
-     13 lines  2 instances  dup:47741a4e
-    tests/chat-performance.test.tsx:23-35
-    tests/chat-performance.test.tsx:75-87
-
-  Identical code blocks detected via suffix-array analysis — https://docs.fallow.tools/explanations/duplication#clone-groups
-
-✗ 26 lines (3.4%) duplicated across 1 file (0.01s)
+✓ No code duplication found (0.01s)
 ```
 
 ## Health & Complexity Analysis
 ```text
 Warning: shallow clone detected. Hotspot analysis may be incomplete. Use `git fetch --unshallow` for full history.
 
-● Health score: 65 C
-  Deductions: unused deps -25.0 · unit size -10.0
+● Health score: 90 A
+  Deductions: unit size -10.0
 
-■ Metrics: 916 LOC · dead files 0.0% · dead exports 0.0% · avg cyclomatic 1.4 · p90 cyclomatic 2 · maintainability 95.9 (good) · 0 churn hotspots (since 6 months) · 13 unused deps · duplication 3.4%
+■ Metrics: 962 LOC · dead files 0.0% · dead exports 0.0% · avg cyclomatic 1.4 · p90 cyclomatic 2 · maintainability 96.2 (good) · 0 churn hotspots (since 6 months) · duplication 0.0%
 
-● High complexity functions (2)
-  CRAP scores are estimated from export references; run `fallow health --coverage <coverage-final.json>` for exact scores.
-  src/components/sidebar/SidebarTab.tsx
-    :13 SidebarTab
-           6 cyclomatic    4 cognitive   17 lines
-          42.0 CRAP
-  src/components/sidebar/Sidebar.tsx
-    :10 Sidebar
-           5 cyclomatic    4 cognitive   59 lines
-          30.0 CRAP
-  Functions exceeding cyclomatic, cognitive, or CRAP thresholds (https://docs.fallow.tools/explanations/health#complexity-metrics)
+● File health scores (22 files) · sorted by triage concern
 
-● File health scores (18 files) · sorted by triage concern
+   93.3    src/components/sidebar/SidebarTab.tsx           risk
+             28 LOC    1 fan-in    2 fan-out    0% dead  0.14 density  20.0 risk
 
-   95.2    src/components/sidebar/SidebarTab.tsx           risk
-             33 LOC    1 fan-in    0 fan-out    0% dead  0.24 density  42.0 risk
-
-   90.0    src/components/sidebar/Sidebar.tsx              risk
-             69 LOC    1 fan-in    4 fan-out    0% dead  0.12 density  30.0 risk
+   89.5    src/components/sidebar/Sidebar.tsx              risk
+             55 LOC    1 fan-in    5 fan-out    0% dead  0.11 density  12.0 risk
 
    94.9    src/components/sidebar/ProjectItem.tsx          risk
              35 LOC    1 fan-in    1 fan-out    0% dead  0.11 density  12.0 risk
@@ -193,29 +102,29 @@ Warning: shallow clone detected. Hotspot analysis may be incomplete. Use `git fe
    95.2    src/components/settings/SettingsModal.tsx       risk
              69 LOC    0 fan-in    0 fan-out    0% dead  0.16 density  6.0 risk
 
+   96.0    src/components/sidebar/ProjectsSection.tsx      risk
+             23 LOC    1 fan-in    1 fan-out    0% dead  0.09 density  6.0 risk
+
+   98.8    src/components/sidebar/SidebarHeader.tsx        risk
+             17 LOC    1 fan-in    0 fan-out    0% dead  0.12 density  6.0 risk
+
+   98.8    src/components/sidebar/SidebarTabLabel.tsx      risk
+             14 LOC    1 fan-in    0 fan-out    0% dead  0.14 density  6.0 risk
+
    90.9    src/pages/ChatPage.tsx                          risk
             128 LOC    2 fan-in    1 fan-out    0% dead  0.21 density  5.1 risk
 
-   93.0    src/components/chat/ChatInput.tsx               risk
-             51 LOC    1 fan-in    1 fan-out    0% dead  0.14 density  4.9 risk
-
-   93.9    tests/chat-performance.test.tsx                 structure
-            105 LOC    0 fan-in    1 fan-out    0% dead  0.11 density  1.2 risk
-
-   95.0    src/App.tsx                                     risk
-             24 LOC    1 fan-in    2 fan-out    0% dead  0.04 density  2.0 risk
-
-  ... and 8 more files (--format json for full list)
+  ... and 12 more files (--format json for full list)
 
   Sorted by triage concern: the larger of low-MI concern and CRAP risk. The risk / structure tag marks which one placed each file. MI reflects complexity, coupling, and dead code; risk reflects untested complexity (CRAP) and can diverge from MI. Risk: low <15, moderate 15-30, high >=30. CRAP estimated from export references (85% direct, 40% indirect, 0% untested). Run `fallow health --coverage <coverage-final.json>` for exact scores. https://docs.fallow.tools/explanations/health#file-health-scores
 
-✗ 2 above threshold · 71 analyzed · maintainability 95.9 (good) (0.06s)
+✗ 0 above threshold · 75 analyzed · maintainability 96.2 (good) (0.05s)
 ```
 
 ## Feature Flags
 ```text
 ✓ No feature flags detected (0.07s)
-  Scanned 30 files for:
+  Scanned 34 files for:
     · Env prefixes: FEATURE_*, NEXT_PUBLIC_FEATURE_*, NEXT_PUBLIC_ENABLE_*, REACT_APP_FEATURE_*, REACT_APP_ENABLE_*, VITE_FEATURE_*, VITE_ENABLE_*, NUXT_PUBLIC_FEATURE_*, ENABLE_*, FF_*, FLAG_*, TOGGLE_*
     · SDKs: LaunchDarkly, Statsig, Unleash, GrowthBook, Split, PostHog, ConfigCat, Flagsmith, Optimizely, Eppo, Vercel Flags
   Using a different SDK (in-house, or one not listed)? Add it via `flags.sdkPatterns` in your config.
@@ -236,31 +145,8 @@ Result: 0 security items to check.
 
 ## Audit Analysis
 ```text
-Audit scope: 15 changed files vs 445779283727 (merge-base with origin/main) (4457792..HEAD)
-■ Metrics: dead code 13 · complexity 0 · duplication 0
-
-── Dead Code ──────────────────────────────────────
-
-── Dependencies ─────────────────────────────────────
-
-● Unused dependencies (13)
-  @ai-sdk/google
-  @ai-sdk/react
-  @fontsource-variable/outfit
-  @tauri-apps/api
-  @tauri-apps/plugin-process
-  @tauri-apps/plugin-store
-  @tauri-apps/plugin-updater
-  ai
-  class-variance-authority
-  radix-ui
-  ... and 3 more (--format json for full list)
-  Listed in dependencies but never imported — https://docs.fallow.tools/explanations/dead-code#unused-dependencies
-  To suppress: // fallow-ignore-next-line unused-dependencies
-
-✗ 13 unused dependencies (0.07s)
-✓ No issues in 15 changed files (0.13s)
-  audit gate excluded 13 inherited findings (run with --gate all to enforce)
+Audit scope: 18 changed files vs 445779283727 (merge-base with origin/main) (4457792..HEAD)
+✓ No issues in 18 changed files (0.12s)
 ```
 
 ## Project Structure (List)
@@ -273,7 +159,7 @@ Active plugins:
   - typescript
   - tailwind
   - postcss
-Discovered 30 files
+Discovered 34 files
 eslint.config.js
 index.html
 postcss.config.cjs
@@ -283,8 +169,12 @@ src/components/settings/SettingsModal.tsx
 src/components/sidebar/ChatsList.tsx
 src/components/sidebar/GlassyFolderIcon.tsx
 src/components/sidebar/ProjectItem.tsx
+src/components/sidebar/ProjectsSection.tsx
 src/components/sidebar/Sidebar.tsx
+src/components/sidebar/SidebarHeader.tsx
 src/components/sidebar/SidebarTab.tsx
+src/components/sidebar/SidebarTabIcon.tsx
+src/components/sidebar/SidebarTabLabel.tsx
 src/components/ui/ThinScrollbar.tsx
 src/index.css
 src/lib/utils.ts
@@ -1191,6 +1081,13 @@ no config file found, using defaults
           },
           "default": []
         },
+        "thresholdOverrides": {
+          "description": "Per-file or per-function threshold overrides. These keep exceptional\nfunctions visible as configured numeric ceilings instead of hiding them\nbehind binary suppressions.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HealthThresholdOverride"
+          }
+        },
         "ownership": {
           "description": "Ownership analysis configuration. Controls bot filtering and email\nprivacy mode for `--ownership` output.",
           "$ref": "#/$defs/OwnershipConfig",
@@ -1211,7 +1108,67 @@ no config file found, using defaults
           "type": "boolean",
           "default": true
         }
-      }
+      },
+      "additionalProperties": false
+    },
+    "HealthThresholdOverride": {
+      "description": "Per-file or per-function health threshold override.",
+      "type": "object",
+      "properties": {
+        "files": {
+          "description": "Project-root-relative file globs this override applies to.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "functions": {
+          "description": "Exact emitted function names this override applies to. Empty means every\nfunction in matching files.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maxCyclomatic": {
+          "description": "Local cyclomatic complexity ceiling.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "maxCognitive": {
+          "description": "Local cognitive complexity ceiling.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "maxCrap": {
+          "description": "Local CRAP ceiling.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "reason": {
+          "description": "Human-readable rationale for the exception.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "files"
+      ]
     },
     "OwnershipConfig": {
       "description": "Configuration for ownership analysis (`fallow health --hotspots --ownership`).",
@@ -2555,7 +2512,7 @@ no config file found, using defaults
       "minimum": 0
     },
     "name": {
-      "description": "Pack name, unique across all loaded packs. Part of each finding's\n`\"<pack>/<id>\"` policy identity.",
+      "description": "Pack name, unique across all loaded packs. Must use only ASCII\nletters, digits, `.`, `_`, and `-` so `\"<pack>/<id>\"` is unambiguous in\noutput, baselines, and scoped suppression comments.",
       "type": "string"
     },
     "description": {
@@ -2585,7 +2542,7 @@ no config file found, using defaults
       "type": "object",
       "properties": {
         "id": {
-          "description": "Rule id, unique within the pack. `\"<pack>/<id>\"` is the finding's\npolicy identity across output formats and baselines.",
+          "description": "Rule id, unique within the pack. Must use only ASCII letters, digits,\n`.`, `_`, and `-` so `\"<pack>/<id>\"` is unambiguous in output,\nbaselines, and scoped suppression comments.",
           "type": "string"
         },
         "kind": {
@@ -3186,7 +3143,7 @@ Options:
 ```text
 {
   "name": "fallow",
-  "version": "2.94.0",
+  "version": "2.95.0",
   "manifest_version": "1",
   "description": "Codebase analyzer for TypeScript/JavaScript: unused code, circular dependencies, code duplication, complexity hotspots, and architecture boundary violations",
   "global_flags": [
@@ -6657,6 +6614,6 @@ Options:
 
 ## Version Information
 ```text
-fallow 2.94.0
-verified: yes (cache hit at /app/node_modules/@fallow-cli/linux-x64-gnu/.fallow-verified); fallow 2.94.0 signed
+fallow 2.95.0
+verified: yes (cache hit at /app/node_modules/@fallow-cli/linux-x64-gnu/.fallow-verified); fallow 2.95.0 signed
 ```

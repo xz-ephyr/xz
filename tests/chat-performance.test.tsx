@@ -20,7 +20,7 @@ describe('ChatPage Performance and Streaming', () => {
     performance.now = originalNow;
   });
 
-  test('measures real incremental streaming re-renders', async () => {
+  const setup = () => {
     render(
       <MemoryRouter initialEntries={['/chat/123']}>
         <Routes>
@@ -29,8 +29,14 @@ describe('ChatPage Performance and Streaming', () => {
       </MemoryRouter>
     );
 
-    const input = screen.getByPlaceholderText('Ask anything...');
-    const sendButton = screen.getByRole('button');
+    return {
+      input: screen.getByPlaceholderText('Ask anything...'),
+      sendButton: screen.getByRole('button'),
+    };
+  };
+
+  test('measures real incremental streaming re-renders', async () => {
+    const { input, sendButton } = setup();
 
     fireEvent.change(input, { target: { value: 'Streaming test' } });
 
@@ -73,16 +79,7 @@ describe('ChatPage Performance and Streaming', () => {
   });
 
   test('verifies "request first" logic (user message before assistant)', async () => {
-    render(
-      <MemoryRouter initialEntries={['/chat/123']}>
-        <Routes>
-          <Route path="/chat/:uuid" element={<ChatPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    const input = screen.getByPlaceholderText('Ask anything...');
-    const sendButton = screen.getByRole('button');
+    const { input, sendButton } = setup();
 
     fireEvent.change(input, { target: { value: 'Is user message first?' } });
 
