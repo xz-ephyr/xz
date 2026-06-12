@@ -1,24 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import ChatInput from '../components/chat/ChatInput';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
-const CopyButton = ({ content }: { content: string }) => (
-  <button 
-    onClick={() => navigator.clipboard.writeText(content).catch(err => console.error('Failed to copy!', err))}
-    className="p-1 mt-1 text-gray-400 hover:text-gray-900 transition-opacity"
-  >
-    <Copy size={14} />
-  </button>
-);
+const CopyButton = ({ content, alwaysVisible }: { content: string; alwaysVisible: boolean }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <button 
+      onClick={handleCopy}
+      className={`${alwaysVisible ? '' : 'opacity-0 group-hover:opacity-100'} p-1 mt-1 text-gray-400 hover:text-gray-900 transition-opacity`}
+    >
+      {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+    </button>
+  );
+};
 
 const UserBubble = ({ content }: { content: string }) => (
   <div className="flex flex-col items-end mb-4 group mt-6">
     <div className="bg-[#f9f9f9] rounded-[8px] px-4 py-2.5 text-sm max-w-[70%]">
       {content}
     </div>
-    <CopyButton content={content} />
+    <CopyButton content={content} alwaysVisible={false} />
   </div>
 );
 
@@ -37,10 +48,10 @@ const AssistantBubble = ({ content }: { content: string }) => {
 
   return (
     <div className="mb-4">
-      <div className="text-sm py-4">
+      <div className="text-sm py-4 max-w-[70%]">
         {displayedContent}
       </div>
-      <CopyButton content={content} />
+      <CopyButton content={content} alwaysVisible={true} />
     </div>
   );
 };
