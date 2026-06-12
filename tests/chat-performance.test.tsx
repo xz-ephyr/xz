@@ -34,15 +34,12 @@ describe('ChatPage Performance and Streaming', () => {
 
     fireEvent.change(input, { target: { value: 'Streaming test' } });
 
-    const startTime = performance.now();
-
     await act(async () => {
       fireEvent.click(sendButton);
     });
 
     // 1. User message appears immediately
     expect(screen.getByText('Streaming test')).toBeInTheDocument();
-    console.log(`User message appearance time: ${performance.now() - startTime}ms`);
 
     // 2. Wait for assistant to initialize (100ms delay in code)
     await act(async () => {
@@ -56,20 +53,23 @@ describe('ChatPage Performance and Streaming', () => {
       vi.advanceTimersByTime(30); // First token: 'T'
       mockTime += 30;
     });
-    expect(screen.getByText('T')).toBeInTheDocument();
+
+    const assistantBubbles = screen.getAllByTestId('assistant-bubble');
+    const lastBubble = assistantBubbles[assistantBubbles.length - 1];
+    expect(lastBubble).toHaveTextContent('T');
 
     await act(async () => {
       vi.advanceTimersByTime(30); // Second token: 'Th'
       mockTime += 30;
     });
-    expect(screen.getByText('Th')).toBeInTheDocument();
+    expect(lastBubble).toHaveTextContent('Th');
 
     // 4. Complete streaming
     await act(async () => {
       vi.advanceTimersByTime(1500);
       mockTime += 1500;
     });
-    expect(screen.getByText('This is a simulated AI response.')).toBeInTheDocument();
+    expect(lastBubble).toHaveTextContent('This is a simulated AI response.');
   });
 
   test('verifies "request first" logic (user message before assistant)', async () => {
