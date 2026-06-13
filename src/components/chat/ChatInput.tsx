@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ArrowUp02Icon } from '@hugeicons/core-free-icons';
 import { ThinScrollbar } from '../ui/ThinScrollbar';
 
 interface ChatInputProps {
@@ -17,7 +18,7 @@ export default function ChatInput({ onSend }: ChatInputProps) {
   };
 
   return (
-    <div className="w-full max-w-[720px] mx-auto p-4">
+    <div className="w-full max-w-[720px] mx-auto">
       <div className="bg-[#f2f3f6] rounded-[12px] transition-all">
         <ThinScrollbar className="max-h-[145px]">
           <textarea
@@ -30,7 +31,7 @@ export default function ChatInput({ onSend }: ChatInputProps) {
               }
             }}
             placeholder="Ask anything..."
-            className="w-full p-4 resize-none outline-none text-sm min-h-[44px] bg-transparent"
+            className="w-full py-3 px-4 resize-none outline-none text-sm min-h-[44px] bg-transparent"
             rows={1}
           />
         </ThinScrollbar>
@@ -41,7 +42,7 @@ export default function ChatInput({ onSend }: ChatInputProps) {
             disabled={!value.trim()}
             className="p-1.5 text-white rounded-full bg-black disabled:opacity-50 transition-opacity"
           >
-            <ArrowUp size={18} />
+            <HugeiconsIcon icon={ArrowUp02Icon} size={18} color="currentColor" strokeWidth={1.5} />
           </button>
         </div>
       </div>

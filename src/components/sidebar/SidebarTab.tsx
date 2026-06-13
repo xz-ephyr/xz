@@ -17,7 +17,6 @@ const SidebarTab = React.memo(({ icon: Icon, label, path, active, collapsed, onC
         <Icon size={18} strokeWidth={1.5} />
       </div>
       {!collapsed && <span className="text-sm font-medium whitespace-nowrap">{label}</span>}
-      {active && !collapsed && <div className="ml-auto w-1 h-[15px] bg-black rounded-[2px]" />}
     </Link>
   );
 });

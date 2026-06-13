@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Copy, Check, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react';
+import { Copy01Icon, CheckmarkBadge01Icon, ThumbsUpIcon, ThumbsDownIcon, ArrowTurnBackwardIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import ChatInput from '../components/chat/ChatInput';
 import { getChatStream } from '../services/aiService';
 import { ChatSessionManager } from '../services/ChatSessionManager';
+
+const HugeiconRenderer = ({ icon: Icon, size = 14, className }: { icon: any, size?: number, className?: string }) => (
+  <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} className={className} />
+);
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -20,15 +25,15 @@ const CopyButton = ({ content, alwaysVisible }: { content: string; alwaysVisible
   return (
     <button 
       onClick={handleCopy}
-      className={`${alwaysVisible ? '' : 'opacity-0 group-hover:opacity-100'} p-1 mt-1 text-gray-400 hover:text-gray-900 transition-opacity`}
+      className={`${alwaysVisible ? '' : 'opacity-0 group-hover:opacity-100'} p-1 mt-1 text-gray-600 hover:text-black transition-opacity`}
     >
-      {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+      {copied ? <HugeiconRenderer icon={CheckmarkBadge01Icon} size={18} className="text-green-600" /> : <HugeiconRenderer icon={Copy01Icon} size={18} />}
     </button>
   );
 };
 
 const UserBubble = React.memo(({ content }: { content: string }) => (
-  <div className="flex flex-col items-end mb-4 group mt-6">
+  <div className="flex flex-col items-end mb-6 group">
     <div className="bg-[#f9f9f9] rounded-[8px] px-4 py-2.5 text-sm max-w-[70%]">
       {content}
     </div>
@@ -38,16 +43,16 @@ const UserBubble = React.memo(({ content }: { content: string }) => (
 
 const AssistantBubble = React.memo(({ content, isStreaming }: { content: string, isStreaming: boolean }) => {
   return (
-    <div className="mb-4">
-      <div className="text-sm py-4 max-w-[70%] whitespace-pre-wrap">
+    <div className="mb-6">
+      <div className="text-sm py-4 max-w-full whitespace-pre-wrap">
         {content}
       </div>
       {!isStreaming && (
-        <div className="flex gap-2 text-gray-400 items-center">
+        <div className="flex gap-3 text-gray-600 items-center">
           <CopyButton content={content} alwaysVisible={true} />
-          <button className="hover:text-gray-900 transition-colors"><ThumbsUp size={14} /></button>
-          <button className="hover:text-gray-900 transition-colors"><ThumbsDown size={14} /></button>
-          <button className="hover:text-gray-900 transition-colors"><RotateCcw size={14} /></button>
+          <button className="hover:text-black transition-colors"><HugeiconRenderer icon={ThumbsUpIcon} size={18} /></button>
+          <button className="hover:text-black transition-colors"><HugeiconRenderer icon={ThumbsDownIcon} size={18} /></button>
+          <button className="hover:text-black transition-colors"><HugeiconRenderer icon={ArrowTurnBackwardIcon} size={18} /></button>
         </div>
       )}
     </div>
@@ -135,14 +140,14 @@ export const ChatPage = () => {
           ))}
           {messages.length === 0 && (
             <div className="w-full mt-4 flex flex-col items-center">
-              <h1 className="text-[48px] font-serif-source mb-[10px] text-neutral-800">Hello, how can I help?</h1>
+              <h1 className="text-[43px] font-serif-source mb-[10px] text-neutral-800">Hello, how can I help?</h1>
               <ChatInput onSend={handleSend} />
             </div>
           )}
         </div>
       </div>
       {messages.length > 0 && (
-        <div className="shrink-0">
+        <div className="shrink-0 pb-8 px-4">
           <ChatInput onSend={handleSend} />
         </div>
       )}

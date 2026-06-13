@@ -1,14 +1,21 @@
 // Your rules resume
 import { useState } from 'react';
-import { SquarePen, AlarmClock, Toolbox, SunMoon, Settings, PanelLeft, PanelRight, GalleryVerticalEnd } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { PencilEdit02Icon, AlarmClockIcon, ResourcesAddIcon, TreePalmIcon, Settings02Icon, PanelLeftIcon, PanelRightIcon, FolderLibraryIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import SidebarTab from './SidebarTab';
 import ProjectItem from './ProjectItem';
-import ChatsList from './ChatsList';
 import { SettingsModal } from '../settings/SettingsModal';
+
+// Helper component to render Hugeicons in SidebarTabs
+const HugeiconRenderer = ({ icon: Icon, size = 18 }: { icon: any, size?: number }) => (
+  <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} />
+);
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const location = useLocation();
 
   return (
     <>
@@ -17,18 +24,47 @@ export default function Sidebar() {
       >
         <div className="flex justify-end p-2 shrink-0">
           <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-1 hover:bg-[#e5e5e5] rounded-[8px]">
-            {isCollapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
+            {isCollapsed ? <HugeiconRenderer icon={PanelRightIcon} /> : <HugeiconRenderer icon={PanelLeftIcon} />}
           </button>
         </div>
 
         <div className={`px-4 flex-1 ${isCollapsed ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           <>
-            <SidebarTab icon={SquarePen} label="New thread" path="/chat/new" collapsed={isCollapsed} />
-            <SidebarTab icon={GalleryVerticalEnd} label="Chats" path="/chats" collapsed={isCollapsed} />
-            <ChatsList collapsed={isCollapsed} />
-            <SidebarTab icon={AlarmClock} label="Schedule" path="/schedule" collapsed={isCollapsed} />
-            <SidebarTab icon={Toolbox} label="Plugins" path="/plugins" collapsed={isCollapsed} />
-            <SidebarTab icon={SunMoon} label="Wiki" path="/wiki" collapsed={isCollapsed} />
+            <SidebarTab 
+              icon={() => <HugeiconRenderer icon={PencilEdit02Icon} />} 
+              label="New thread" 
+              path="/chat/new" 
+              active={location.pathname === '/chat/new'}
+              collapsed={isCollapsed} 
+            />
+            <SidebarTab 
+              icon={() => <HugeiconRenderer icon={FolderLibraryIcon} />} 
+              label="Chats" 
+              path="/chats" 
+              active={location.pathname === '/chats'}
+              collapsed={isCollapsed} 
+            />
+            <SidebarTab 
+              icon={() => <HugeiconRenderer icon={AlarmClockIcon} />} 
+              label="Schedule" 
+              path="/schedule" 
+              active={location.pathname === '/schedule'}
+              collapsed={isCollapsed} 
+            />
+            <SidebarTab 
+              icon={() => <HugeiconRenderer icon={ResourcesAddIcon} />} 
+              label="Plugins" 
+              path="/plugins" 
+              active={location.pathname === '/plugins'}
+              collapsed={isCollapsed} 
+            />
+            <SidebarTab 
+              icon={() => <HugeiconRenderer icon={TreePalmIcon} />} 
+              label="Wiki" 
+              path="/wiki" 
+              active={location.pathname === '/wiki'}
+              collapsed={isCollapsed} 
+            />
             
             {!isCollapsed && (
               <>
@@ -48,7 +84,7 @@ export default function Sidebar() {
         {/* Bottom section */}
         <div className="p-4 border-t border-[#e5e5e5] shrink-0">
           <SidebarTab 
-            icon={Settings} 
+            icon={() => <HugeiconRenderer icon={Settings02Icon} />} 
             label="Settings" 
             path="#" 
             onClick={() => setIsSettingsOpen(true)}
