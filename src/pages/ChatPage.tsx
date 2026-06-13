@@ -112,16 +112,40 @@ export const ChatPage = () => {
     setIsStreaming(true);
 
     try {
+      const startTime = Date.now();
+      console.log('Starting stream request');
       const stream = await getChatStream(newMessages, apiKey, currentModel);
       
+      let accumulatedContent = '';
+      let lastUpdateTime = Date.now();
+      let firstTokenReceived = false;
+
       for await (const chunk of stream) {
-        setMessages((prev) => {
-          const updated = [...prev];
-          const lastIdx = updated.length - 1;
-          updated[lastIdx].content += chunk;
-          return updated;
-        });
+        if (!firstTokenReceived) {
+          console.log(`First token received in ${Date.now() - startTime}ms`);
+          firstTokenReceived = true;
+        }
+        accumulatedContent += chunk;
+        const now = Date.now();
+        
+        // Update state every 100ms or on the final chunk
+        if (now - lastUpdateTime > 100) {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const lastIdx = updated.length - 1;
+            updated[lastIdx].content = accumulatedContent;
+            return updated;
+          });
+          lastUpdateTime = now;
+        }
       }
+      // Final update to ensure content is fully synced
+      setMessages((prev) => {
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        updated[lastIdx].content = accumulatedContent;
+        return updated;
+      });
     } catch (error) {
       console.error('Error fetching chat stream:', error);
       setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', content: `Error: Failed to stream response using ${currentModel}.` }]);

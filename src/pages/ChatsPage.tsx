@@ -3,7 +3,7 @@ import { ChatSessionManager } from '../services/ChatSessionManager';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-export default function ChatsPage() {
+export const ChatsPage = () => {
   const [chats, setChats] = useState<ChatSession[]>([]);
 
   useEffect(() => {
@@ -26,4 +26,4 @@ export default function ChatsPage() {
       </div>
     </div>
   );
-}
+};
