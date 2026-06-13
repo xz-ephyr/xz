@@ -84,11 +84,9 @@ export const ChatPage = () => {
     if (currentUuid === 'new') {
       const newSession = ChatSessionManager.create(content.slice(0, 30) + '...');
       currentUuid = newSession.id;
-      // In a real app, we would navigate to the new chat URL here
     }
 
-    const newMessages: Message[] = [...messages, { role: 'user', content }];
-    setMessages(newMessages);
+    setMessages((prev) => [...prev, { role: 'user', content }]);
 
     const apiKey = localStorage.getItem('api-key');
     
@@ -112,12 +110,10 @@ export const ChatPage = () => {
     setIsStreaming(true);
 
     try {
-      const startTime = Date.now();
-      console.log('Starting stream request');
-      const stream = await getChatStream(newMessages, apiKey, currentModel);
+      const stream = await getChatStream([...messages, { role: 'user', content }], apiKey, currentModel);
       
       let accumulatedContent = '';
-      let lastUpdateTime = Date.now();
+      const startTime = Date.now();
       let firstTokenReceived = false;
 
       for await (const chunk of stream) {
@@ -126,26 +122,15 @@ export const ChatPage = () => {
           firstTokenReceived = true;
         }
         accumulatedContent += chunk;
-        const now = Date.now();
         
-        // Update state every 100ms or on the final chunk
-        if (now - lastUpdateTime > 100) {
-          setMessages((prev) => {
-            const updated = [...prev];
-            const lastIdx = updated.length - 1;
-            updated[lastIdx].content = accumulatedContent;
-            return updated;
-          });
-          lastUpdateTime = now;
-        }
+        // Update state on every chunk for responsive UI
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          updated[lastIdx].content = accumulatedContent;
+          return updated;
+        });
       }
-      // Final update to ensure content is fully synced
-      setMessages((prev) => {
-        const updated = [...prev];
-        const lastIdx = updated.length - 1;
-        updated[lastIdx].content = accumulatedContent;
-        return updated;
-      });
     } catch (error) {
       console.error('Error fetching chat stream:', error);
       setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', content: `Error: Failed to stream response using ${currentModel}.` }]);
