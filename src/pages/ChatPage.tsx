@@ -136,7 +136,9 @@ export const ChatPage = () => {
         {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
         <div className="max-w-[720px] w-full mx-auto">
           {messages.map((m, i) => (
-            m.role === 'user' ? <UserBubble key={i} content={m.content} /> : <AssistantBubble key={i} content={m.content} isStreaming={isStreaming && i === messages.length - 1} />
+            <div key={i} className="max-w-[720px] w-full mx-auto">
+              {m.role === 'user' ? <UserBubble content={m.content} /> : <AssistantBubble content={m.content} isStreaming={isStreaming && i === messages.length - 1} />}
+            </div>
           ))}
           {messages.length === 0 && (
             <div className="w-full mt-4 flex flex-col items-center">
