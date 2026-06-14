@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ViewIcon, ViewOffSlashIcon } from '@hugeicons/core-free-icons';
 
 const AI_MODELS = [
   'gemma-4-31b-it',
@@ -15,6 +17,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('api-key') || '');
+  const [showApiKey, setShowApiKey] = useState(false);
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('selected-model') || AI_MODELS[0]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,13 +42,22 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* API Key Section */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-neutral-700">Google API Key</label>
-            <input
-              type="password"
-              className="h-9 bg-neutral-50 rounded-[8px] px-3 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
-              placeholder="Enter your API Key"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                type={showApiKey ? 'text' : 'password'}
+                className="h-9 bg-neutral-50 rounded-[8px] px-3 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors pr-10"
+                placeholder="Enter your API Key"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="absolute right-2 top-2 text-neutral-500 hover:text-neutral-700"
+              >
+                <HugeiconsIcon icon={showApiKey ? ViewOffSlashIcon : ViewIcon} size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Model Selection Section */}
