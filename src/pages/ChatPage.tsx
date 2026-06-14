@@ -89,7 +89,7 @@ export const ChatPage = () => {
     setMessages((prev) => [...prev, { role: 'user', content }]);
 
     const apiKey = localStorage.getItem('api-key');
-    const currentModel = localStorage.getItem('selected-model') || 'gemini-1.5-flash';
+    const currentModel = localStorage.getItem('selected-model') || 'gemini-3.5-flash';
     setMessageCount((prev) => prev + 1);
 
     if (!apiKey) {
