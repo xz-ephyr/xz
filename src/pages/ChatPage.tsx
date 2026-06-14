@@ -89,16 +89,7 @@ export const ChatPage = () => {
     setMessages((prev) => [...prev, { role: 'user', content }]);
 
     const apiKey = localStorage.getItem('api-key');
-    
-    // Model rotation logic
-    const models = [
-       'gemma-4-31b', 
-       'gemma-4-26b', 
-       'gemini-3.1-flash-lite', 
-       'Gemini 3.5 Flash', 
-       'Gemini 2.5 Flash'
-    ];
-    const currentModel = models[messageCount % models.length];
+    const currentModel = localStorage.getItem('selected-model') || 'gemini-3.5-flash';
     setMessageCount((prev) => prev + 1);
 
     if (!apiKey) {
