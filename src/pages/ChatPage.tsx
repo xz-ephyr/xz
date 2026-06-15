@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
 import ChatInput from '../components/chat/ChatInput';
 import { UserBubble } from '../components/chat/UserBubble';
@@ -160,6 +160,8 @@ export const ChatPage = () => {
     setMessages([]);
   }, [uuid, setMessages]);
 
+  const navigate = useNavigate();
+
   const handleSend = useCallback(async (content: string) => {
     if (!apiKey) {
       alert('Please set your Google API Key in settings.');
@@ -167,15 +169,15 @@ export const ChatPage = () => {
     }
 
     if (uuid === 'new') {
-      // In a real app we'd redirect, but here we'll assume ChatPage handles 'new'
-      // or the sidebar handles the creation.
+      const session = ChatSessionManager.create(content.slice(0, 40) + '...', content);
+      navigate(`/chat/${session.id}`, { replace: true });
     }
 
     append({
       role: 'user',
       content,
     });
-  }, [uuid, apiKey, append]);
+  }, [uuid, apiKey, append, navigate]);
 
   const activeArtifact = getActiveArtifact();
   const activeArtifactVersions = activeArtifactId ? getArtifactVersions(activeArtifactId) : [];
