@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
 import ChatInput from '../components/chat/ChatInput';
 import { UserBubble } from '../components/chat/UserBubble';
@@ -13,6 +13,7 @@ import { chatCompletion } from '../services/aiService';
 
 export const ChatPage = () => {
   const { uuid } = useParams();
+  const navigate = useNavigate();
   const {
     activeArtifactId,
     setActiveArtifactId,
@@ -68,9 +69,9 @@ export const ChatPage = () => {
       return;
     }
 
-    let currentUuid = uuid;
-    if (currentUuid === 'new') {
-      ChatSessionManager.create(content.slice(0, 30) + '...');
+    if (uuid === 'new') {
+      const newSession = ChatSessionManager.create(content.slice(0, 30) + '...', content.slice(0, 100));
+      navigate(`/chat/${newSession.id}`, { replace: true });
     }
 
     append({
