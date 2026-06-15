@@ -1,3 +1,10 @@
+export interface Project {
+  id: string;
+  name: string;
+  path: string;
+  createdAt: number;
+}
+
 export interface ChatSession {
   id: string;
   title: string;
@@ -5,4 +12,5 @@ export interface ChatSession {
   projectId?: string;
   archived: boolean;
   createdAt: number;
+  lastMessage?: string;
 }
