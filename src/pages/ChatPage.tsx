@@ -70,7 +70,7 @@ export const ChatPage = () => {
 
     let currentUuid = uuid;
     if (currentUuid === 'new') {
-      ChatSessionManager.create(content.slice(0, 30) + '...');
+      ChatSessionManager.create(content.slice(0, 30) + '...', content.slice(0, 100));
     }
 
     append({
