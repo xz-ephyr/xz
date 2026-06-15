@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
 import ChatInput from '../components/chat/ChatInput';
@@ -10,9 +10,21 @@ import { useArtifacts } from '../hooks/useArtifacts';
 import { ArtifactPane } from '../components/artifacts/ArtifactPane';
 import { ArtifactPreviewCard } from '../components/artifacts/ArtifactPreviewCard';
 import { chatCompletion } from '../services/aiService';
+import { Project } from '../types/chat';
+import { FileSystemService } from '../services/FileSystemService';
+import { ProjectIDE } from '../components/artifacts/ProjectIDE';
+import { IDEPromptModal } from '../components/chat/IDEPromptModal';
+// @ts-ignore
+import { join, normalize } from '@tauri-apps/api/path';
 
 export const ChatPage = () => {
   const { uuid } = useParams();
+  const [project, setProject] = useState<Project | null>(null);
+  const [projectContext, setProjectContext] = useState<string>('');
+  const [showIDEPrompt, setShowIDEPrompt] = useState(false);
+  const [isIDEOpen, setIsIDEOpen] = useState(false);
+  const lastProjectIdRef = useRef<string | null>(null);
+
   const {
     activeArtifactId,
     setActiveArtifactId,
@@ -25,6 +37,39 @@ export const ChatPage = () => {
     closeArtifact
   } = useArtifacts();
 
+  useEffect(() => {
+    if (uuid) {
+      const allSessions = ChatSessionManager.getAll();
+      const currentSession = allSessions.find(s => s.id === uuid);
+
+      if (currentSession?.projectId) {
+        const allProjects = ChatSessionManager.getProjects();
+        const p = allProjects.find(proj => proj.id === currentSession.projectId);
+        if (p) {
+            setProject(p);
+            // Only show prompt if switching to a DIFFERENT project
+            if (lastProjectIdRef.current !== p.id) {
+                setShowIDEPrompt(true);
+                lastProjectIdRef.current = p.id;
+            }
+            loadProjectContext(p.path);
+        }
+      } else {
+        setProject(null);
+        setShowIDEPrompt(false);
+        setIsIDEOpen(false);
+        setProjectContext('');
+        lastProjectIdRef.current = null;
+      }
+    }
+  }, [uuid]);
+
+  const loadProjectContext = async (path: string) => {
+    const tree = await FileSystemService.getTree(path);
+    const summary = FileSystemService.getCompressedTree(tree);
+    setProjectContext(summary);
+  };
+
   const currentModel = getModelForChatRequest(uuid);
   const apiKey = localStorage.getItem('api-key');
 
@@ -35,7 +80,8 @@ export const ChatPage = () => {
         const result = await chatCompletion({
             messages: body.messages,
             apiKey: body.apiKey,
-            modelName: body.model
+            modelName: body.model,
+            projectContext: projectContext
         });
         return result.toTextStreamResponse();
     },
@@ -44,16 +90,35 @@ export const ChatPage = () => {
       model: currentModel,
       apiKey: apiKey,
     },
-    onFinish: (message) => {
-      // @ts-ignore
+    onFinish: async (message: any) => {
       if (message.toolInvocations) {
-        // @ts-ignore
-        message.toolInvocations.forEach((toolInvocation) => {
+        for (const toolInvocation of message.toolInvocations) {
           if (toolInvocation.toolName === 'create_artifact' && toolInvocation.state === 'result') {
-            const { type, title, content } = toolInvocation.args;
+            const { type, title, content, file_path } = toolInvocation.args;
+
             addOrUpdateArtifact(type, title, content);
+
+            // Auto-save in project mode
+            if (project && file_path) {
+                try {
+                    // Simple sanitization to prevent path traversal
+                    const sanitizedPath = file_path.replace(/^(\.\.[/\\])+/, '');
+                    const fullPath = await join(project.path, sanitizedPath);
+                    const normalizedProject = await normalize(project.path);
+                    const normalizedFull = await normalize(fullPath);
+
+                    if (normalizedFull.startsWith(normalizedProject)) {
+                        await FileSystemService.saveFile(fullPath, content);
+                        loadProjectContext(project.path);
+                    } else {
+                        console.error('Blocked attempted path traversal:', file_path);
+                    }
+                } catch (e) {
+                    console.error('Failed to auto-save file:', e);
+                }
+            }
           }
-        });
+        }
       }
     },
   }) as any;
@@ -68,8 +133,7 @@ export const ChatPage = () => {
       return;
     }
 
-    let currentUuid = uuid;
-    if (currentUuid === 'new') {
+    if (uuid === 'new') {
       ChatSessionManager.create(content.slice(0, 30) + '...');
     }
 
@@ -89,10 +153,15 @@ export const ChatPage = () => {
       if (artifactTool?.state === 'result') {
          const id = artifactTool.args.title.toLowerCase().replace(/\s+/g, '-');
          setActiveArtifactId(id);
-         setIsArtifactOpen(true);
+
+         if (project && !isIDEOpen) {
+             setIsArtifactOpen(true);
+         } else if (!project) {
+             setIsArtifactOpen(true);
+         }
       }
     }
-  }, [messages, setActiveArtifactId, setIsArtifactOpen]);
+  }, [messages, setActiveArtifactId, setIsArtifactOpen, project, isIDEOpen]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
@@ -122,7 +191,11 @@ export const ChatPage = () => {
                             onClick={() => {
                               setActiveArtifactId(ti.args.title.toLowerCase().replace(/\s+/g, '-'));
                               setViewingVersion(null);
-                              setIsArtifactOpen(true);
+                              if (project) {
+                                  setIsIDEOpen(true);
+                              } else {
+                                  setIsArtifactOpen(true);
+                              }
                             }}
                           />
                         );
@@ -136,7 +209,9 @@ export const ChatPage = () => {
 
             {messages.length === 0 && (
               <div className="w-full mt-4 flex flex-col items-center">
-                <h1 className="text-[43px] font-serif-source mb-[10px] text-neutral-800 text-center">Hello, how can I help?</h1>
+                <h1 className="text-[43px] font-serif-source mb-[10px] text-neutral-800 text-center">
+                    {project ? `Working on ${project.name}` : 'Hello, how can I help?'}
+                </h1>
                 <ChatInput onSend={handleSend} isLoading={isLoading} />
               </div>
             )}
@@ -150,7 +225,7 @@ export const ChatPage = () => {
         )}
       </div>
 
-      {isArtifactOpen && (
+      {isArtifactOpen && !isIDEOpen && (
         <ArtifactPane
           isOpen={isArtifactOpen}
           onClose={closeArtifact}
@@ -160,6 +235,25 @@ export const ChatPage = () => {
             setViewingVersion(a.version);
           }}
         />
+      )}
+
+      {isIDEOpen && project && (
+          <ProjectIDE
+            key={`${project.id}-${projectContext.length}`}
+            project={project}
+            onClose={() => setIsIDEOpen(false)}
+            onSave={() => loadProjectContext(project.path)}
+          />
+      )}
+
+      {showIDEPrompt && (
+          <IDEPromptModal
+            onOpenIDE={() => {
+                setIsIDEOpen(true);
+                setShowIDEPrompt(false);
+            }}
+            onContinueChat={() => setShowIDEPrompt(false)}
+          />
       )}
     </div>
   );
