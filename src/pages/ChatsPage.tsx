@@ -83,19 +83,19 @@ const ChatListItem = ({
   };
 
   return (
-    <Link
-      to={`/chat/${chat.id}`}
+    <div
       className={cn(
-        "group block relative w-full",
+        "group relative w-full rounded-[12px] transition-all duration-200",
+        "hover:bg-[#f5f5f5] active:bg-[#eeeeee]",
+        "flex items-center gap-4 px-4 py-3 h-[60px]",
         isMenuOpen ? "z-20" : "z-0 hover:z-10"
       )}
     >
-      <div className={cn(
-        "flex items-center gap-4 px-4 py-3 rounded-[12px] transition-all duration-200",
-        "hover:bg-[#f5f5f5] active:bg-[#eeeeee]",
-        "h-[60px]"
-      )}>
-        <div className="flex-1 min-w-0">
+      <Link
+        to={`/chat/${chat.id}`}
+        className="flex-1 min-w-0 h-full flex items-center"
+      >
+        <div className="w-full">
           {isEditing ? (
             <form onSubmit={submitRename} onClick={(e) => e.stopPropagation()}>
               <input
@@ -117,48 +117,48 @@ const ChatListItem = ({
             </div>
           )}
         </div>
+      </Link>
 
-        <div className="shrink-0 relative" ref={menuRef}>
-          <button
-            onClick={toggleMenu}
-            className={cn(
-                "p-1.5 hover:bg-neutral-200 rounded-md text-neutral-500 transition-all opacity-0 group-hover:opacity-100",
-                isMenuOpen && "opacity-100 bg-neutral-200"
-            )}
-            aria-label="Chat actions"
-          >
-            <HugeiconRenderer icon={MoreVerticalIcon} size={18} />
-          </button>
-
-          {isMenuOpen && (
-            <div className="absolute right-0 mt-1 w-40 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in zoom-in duration-100 origin-top-right">
-              <button
-                onClick={handleRename}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-              >
-                <HugeiconRenderer icon={PencilEdit02Icon} size={16} className="text-neutral-400" />
-                <span>Rename</span>
-              </button>
-              <button
-                onClick={handleArchive}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-              >
-                <HugeiconRenderer icon={ArchiveIcon} size={16} className="text-neutral-400" />
-                <span>{chat.archived ? "Unarchive" : "Archive"}</span>
-              </button>
-              <div className="h-px bg-neutral-100 my-1.5" />
-              <button
-                onClick={handleDelete}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <HugeiconRenderer icon={Delete02Icon} size={16} className="text-red-400" />
-                <span>Delete</span>
-              </button>
-            </div>
+      <div className="shrink-0 relative" ref={menuRef}>
+        <button
+          onClick={toggleMenu}
+          className={cn(
+              "p-1.5 hover:bg-neutral-200 rounded-md text-neutral-500 transition-all opacity-0 group-hover:opacity-100",
+              isMenuOpen && "opacity-100 bg-neutral-200"
           )}
-        </div>
+          aria-label="Chat actions"
+        >
+          <HugeiconRenderer icon={MoreVerticalIcon} size={18} />
+        </button>
+
+        {isMenuOpen && (
+          <div className="absolute right-0 mt-1 w-40 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in zoom-in duration-100 origin-top-right">
+            <button
+              onClick={handleRename}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+            >
+              <HugeiconRenderer icon={PencilEdit02Icon} size={16} className="text-neutral-400" />
+              <span>Rename</span>
+            </button>
+            <button
+              onClick={handleArchive}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+            >
+              <HugeiconRenderer icon={ArchiveIcon} size={16} className="text-neutral-400" />
+              <span>{chat.archived ? "Unarchive" : "Archive"}</span>
+            </button>
+            <div className="h-px bg-neutral-100 my-1.5" />
+            <button
+              onClick={handleDelete}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <HugeiconRenderer icon={Delete02Icon} size={16} className="text-red-400" />
+              <span>Delete</span>
+            </button>
+          </div>
+        )}
       </div>
-    </Link>
+    </div>
   );
 };
 
