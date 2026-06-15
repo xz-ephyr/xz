@@ -36,6 +36,7 @@ export const ChatSessionManager = {
     const session: ChatSession = {
       id: crypto.randomUUID(),
       title,
+      lastMessage,
       projectId,
       archived: false,
       createdAt: Date.now(),

@@ -134,7 +134,8 @@ export const ChatPage = () => {
     }
 
     if (uuid === 'new') {
-      ChatSessionManager.create(content.slice(0, 30) + '...');
+      const newSession = ChatSessionManager.create(content.slice(0, 30) + '...', content.slice(0, 100));
+      navigate(`/chat/${newSession.id}`, { replace: true });
     }
 
     append({
