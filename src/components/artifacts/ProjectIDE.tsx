@@ -62,6 +62,7 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
   const [isSaving, setIsSaving] = useState(false);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [openBreadcrumb, setOpenBreadcrumb] = useState<string | null>(null);
+  const [breadcrumbRect, setBreadcrumbRect] = useState<{ top: number, left: number } | null>(null);
 
   useEffect(() => {
     loadTree();
@@ -167,11 +168,15 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
     }));
   }, [activeFile, project.path]);
 
-  const findNodeByPath = (nodes: FileEntry[], path: string): FileEntry | null => {
+  const findNodeByPath = (nodes: FileEntry[], relativePath: string): FileEntry | null => {
+    const targetPath = relativePath.startsWith('/') ? relativePath : '/' + relativePath;
     for (const node of nodes) {
-      if (node.path.endsWith(path)) return node;
+      const nodeRelativePath = node.path.replace(project.path, '').replace(/\\/g, '/');
+      const normalizedNodePath = nodeRelativePath.startsWith('/') ? nodeRelativePath : '/' + nodeRelativePath;
+
+      if (normalizedNodePath === targetPath) return node;
       if (node.children) {
-        const found = findNodeByPath(node.children, path);
+        const found = findNodeByPath(node.children, relativePath);
         if (found) return found;
       }
     }
@@ -239,42 +244,70 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
           {activeFile ? (
             <>
               {/* Breadcrumbs */}
-              <div className="h-9 border-b border-neutral-200 flex items-center px-3 bg-white shrink-0 overflow-x-auto no-scrollbar">
-                <div className="flex items-center gap-1 text-xs text-neutral-500">
+              <div className="h-9 border-b border-neutral-200 flex items-center px-3 bg-white shrink-0 relative">
+                <div className="flex items-center gap-1 text-xs text-neutral-500 overflow-x-auto no-scrollbar flex-1 h-full">
                   {breadcrumbs.map((bc, i) => (
                     <React.Fragment key={bc.path}>
-                      {i > 0 && <HugeiconRenderer icon={ArrowRight01Icon} size={10} className="text-neutral-300" />}
-                      <div className="relative">
+                      {i > 0 && <HugeiconRenderer icon={ArrowRight01Icon} size={10} className="text-neutral-300 shrink-0" />}
+                      <div className="relative shrink-0">
                         <button
-                          onClick={() => setOpenBreadcrumb(openBreadcrumb === bc.path ? null : bc.path)}
+                          onClick={(e) => {
+                            if (openBreadcrumb === bc.path) {
+                              setOpenBreadcrumb(null);
+                              setBreadcrumbRect(null);
+                            } else {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setOpenBreadcrumb(bc.path);
+                              setBreadcrumbRect({ top: rect.bottom, left: rect.left });
+                            }
+                          }}
                           className={`px-1.5 py-1 rounded hover:bg-neutral-100 transition-colors flex items-center gap-1 ${bc.isLast ? 'text-neutral-900 font-medium' : ''}`}
                         >
                           {bc.name}
                         </button>
-
-                        {openBreadcrumb === bc.path && (
-                          <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-neutral-200 rounded-md shadow-lg z-[100] py-1 max-h-64 overflow-y-auto">
-                            {(() => {
-                              const segments = bc.path.split('/');
-                              const parentPath = segments.slice(0, -1).join('/');
-                              const parentNode = parentPath === '' ? { children: tree } : findNodeByPath(tree, parentPath);
-                              return parentNode?.children?.map(child => (
-                                <button
-                                  key={child.path}
-                                  onClick={() => handleFileClick(child)}
-                                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-neutral-100 flex items-center gap-2 truncate"
-                                >
-                                  <HugeiconRenderer icon={child.isDirectory ? Folder02Icon : File02Icon} size={12} className={child.isDirectory ? 'text-blue-500' : 'text-neutral-400'} />
-                                  <span className={child.path === activeFile.path ? 'text-blue-600 font-medium' : 'text-neutral-700'}>{child.name}</span>
-                                </button>
-                              ));
-                            })()}
-                          </div>
-                        )}
                       </div>
                     </React.Fragment>
                   ))}
                 </div>
+
+                {/* Fixed position dropdown rendered outside the overflow container */}
+                {openBreadcrumb && breadcrumbRect && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-[90]"
+                      onClick={() => {
+                        setOpenBreadcrumb(null);
+                        setBreadcrumbRect(null);
+                      }}
+                    />
+                    <div
+                      style={{
+                        top: `${breadcrumbRect.top + 4}px`,
+                        left: `${breadcrumbRect.left}px`,
+                        position: 'fixed'
+                      }}
+                      className="w-48 bg-white border border-neutral-200 rounded-md shadow-lg z-[100] py-1 max-h-64 overflow-y-auto"
+                    >
+                      {(() => {
+                        const bc = breadcrumbs.find(b => b.path === openBreadcrumb);
+                        if (!bc) return null;
+                        const segments = bc.path.split('/');
+                        const parentPath = segments.slice(0, -1).join('/');
+                        const parentNode = parentPath === '' ? { children: tree } : findNodeByPath(tree, parentPath);
+                        return parentNode?.children?.map(child => (
+                          <button
+                            key={child.path}
+                            onClick={() => handleFileClick(child)}
+                            className="w-full text-left px-3 py-1.5 text-xs hover:bg-neutral-100 flex items-center gap-2 truncate"
+                          >
+                            <HugeiconRenderer icon={child.isDirectory ? Folder02Icon : File02Icon} size={12} className={child.isDirectory ? 'text-blue-500' : 'text-neutral-400'} />
+                            <span className={child.path === activeFile.path ? 'text-blue-600 font-medium' : 'text-neutral-700'}>{child.name}</span>
+                          </button>
+                        ));
+                      })()}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex-1 overflow-auto text-sm relative">

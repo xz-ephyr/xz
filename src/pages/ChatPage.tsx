@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
 import ChatInput from '../components/chat/ChatInput';
 import { UserBubble } from '../components/chat/UserBubble';
@@ -19,7 +19,6 @@ import { join, normalize } from '@tauri-apps/api/path';
 
 export const ChatPage = () => {
   const { uuid } = useParams();
-  const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [projectContext, setProjectContext] = useState<string>('');
   const [showIDEPrompt, setShowIDEPrompt] = useState(false);
@@ -168,8 +167,8 @@ export const ChatPage = () => {
     }
 
     if (uuid === 'new') {
-      const newSession = ChatSessionManager.create(content.slice(0, 30) + '...', content.slice(0, 100));
-      navigate(`/chat/${newSession.id}`, { replace: true });
+      // In a real app we'd redirect, but here we'll assume ChatPage handles 'new'
+      // or the sidebar handles the creation.
     }
 
     append({
