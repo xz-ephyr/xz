@@ -13,12 +13,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ChatSession } from '../types/chat';
 import { ChatSessionManager } from '../services/ChatSessionManager';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../lib/utils';
 
 const HugeiconRenderer = ({ icon: Icon, size = 18, className = "" }: { icon: any, size?: number, className?: string }) => (
   <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} className={className} />
@@ -90,7 +85,10 @@ const ChatListItem = ({
   return (
     <Link
       to={`/chat/${chat.id}`}
-      className="group block relative w-full"
+      className={cn(
+        "group block relative w-full",
+        isMenuOpen ? "z-20" : "z-0 hover:z-10"
+      )}
     >
       <div className={cn(
         "flex items-center gap-4 px-4 py-3 rounded-[12px] transition-all duration-200",
