@@ -46,9 +46,12 @@ export function useArtifacts() {
     setIsOpen(true);
   }, []);
 
-  const getArtifactVersions = useCallback((id: string) => {
-    return artifacts[id] || [];
-  }, [artifacts]);
+  const getArtifactVersions = useCallback(
+    (id: string) => {
+      return artifacts[id] || [];
+    },
+    [artifacts]
+  );
 
   const getActiveArtifact = useCallback(() => {
     if (!activeArtifactId) return null;
@@ -56,7 +59,7 @@ export function useArtifacts() {
     if (versions.length === 0) return null;
 
     if (viewingVersion !== null) {
-      return versions.find(v => v.version === viewingVersion) || versions[versions.length - 1];
+      return versions.find((v) => v.version === viewingVersion) || versions[versions.length - 1];
     }
 
     return versions[versions.length - 1];

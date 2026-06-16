@@ -13,7 +13,8 @@ export const IDEPromptModal: React.FC<IDEPromptModalProps> = ({ onOpenIDE, onCon
       <div className="bg-white rounded-2xl shadow-2xl border border-neutral-200 p-6 max-w-sm w-full animate-in fade-in zoom-in duration-200">
         <h3 className="text-lg font-bold text-neutral-900 mb-2">Open Project IDE?</h3>
         <p className="text-sm text-neutral-600 mb-6 leading-relaxed">
-          Would you like to open the full project in the code editor, or just continue with the normal chat session?
+          Would you like to open the full project in the code editor, or just continue with the
+          normal chat session?
         </p>
         <div className="grid grid-cols-2 gap-3">
           <button

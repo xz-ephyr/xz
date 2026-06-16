@@ -27,10 +27,10 @@ export const ChatSessionManager = {
   getAll: (projectId?: string | null): ChatSession[] => {
     const sessions = getStoredSessions();
     if (projectId === undefined) return sessions;
-    if (projectId === null) return sessions.filter(s => !s.projectId);
-    return sessions.filter(s => s.projectId === projectId);
+    if (projectId === null) return sessions.filter((s) => !s.projectId);
+    return sessions.filter((s) => s.projectId === projectId);
   },
-  
+
   create: (title: string, lastMessage?: string, projectId?: string): ChatSession => {
     const sessions = getStoredSessions();
     const session: ChatSession = {
@@ -47,13 +47,13 @@ export const ChatSessionManager = {
   },
 
   delete: (id: string) => {
-    const sessions = getStoredSessions().filter(s => s.id !== id);
+    const sessions = getStoredSessions().filter((s) => s.id !== id);
     setStoredSessions(sessions);
   },
 
   archive: (id: string) => {
     const sessions = getStoredSessions();
-    const session = sessions.find(s => s.id === id);
+    const session = sessions.find((s) => s.id === id);
     if (session) {
       session.archived = !session.archived;
       setStoredSessions(sessions);
@@ -62,7 +62,7 @@ export const ChatSessionManager = {
 
   rename: (id: string, newTitle: string) => {
     const sessions = getStoredSessions();
-    const session = sessions.find(s => s.id === id);
+    const session = sessions.find((s) => s.id === id);
     if (session) {
       session.title = newTitle;
       setStoredSessions(sessions);
@@ -88,10 +88,10 @@ export const ChatSessionManager = {
   },
 
   deleteProject: (id: string) => {
-    const projects = getStoredProjects().filter(p => p.id !== id);
+    const projects = getStoredProjects().filter((p) => p.id !== id);
     setStoredProjects(projects);
     // Also delete associated sessions
-    const sessions = getStoredSessions().filter(s => s.projectId !== id);
+    const sessions = getStoredSessions().filter((s) => s.projectId !== id);
     setStoredSessions(sessions);
-  }
+  },
 };

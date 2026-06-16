@@ -35,7 +35,11 @@ function parseBlocks(markdown: string): Block[] {
 
     if (codeFence) {
       if (inCodeBlock) {
-        blocks.push({ type: 'code', language: codeLanguage || undefined, content: codeLines.join('\n') });
+        blocks.push({
+          type: 'code',
+          language: codeLanguage || undefined,
+          content: codeLines.join('\n'),
+        });
         codeLines = [];
         codeLanguage = '';
         inCodeBlock = false;
@@ -85,7 +89,11 @@ function parseBlocks(markdown: string): Block[] {
   });
 
   if (inCodeBlock) {
-    blocks.push({ type: 'code', language: codeLanguage || undefined, content: codeLines.join('\n') });
+    blocks.push({
+      type: 'code',
+      language: codeLanguage || undefined,
+      content: codeLines.join('\n'),
+    });
   }
 
   flushParagraph();
@@ -102,17 +110,26 @@ function renderInline(text: string): React.ReactNode[] {
 
     if (part.startsWith('`') && part.endsWith('`')) {
       return (
-        <code key={index} className="rounded bg-neutral-100 px-1 py-0.5 text-[0.9em] text-neutral-800">
+        <code
+          key={index}
+          className="rounded bg-neutral-100 px-1 py-0.5 text-[0.9em] text-neutral-800 font-mono"
+        >
           {part.slice(1, -1)}
         </code>
       );
     }
 
-    if ((part.startsWith('**') && part.endsWith('**')) || (part.startsWith('__') && part.endsWith('__'))) {
+    if (
+      (part.startsWith('**') && part.endsWith('**')) ||
+      (part.startsWith('__') && part.endsWith('__'))
+    ) {
       return <strong key={index}>{part.slice(2, -2)}</strong>;
     }
 
-    if ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) {
+    if (
+      (part.startsWith('*') && part.endsWith('*')) ||
+      (part.startsWith('_') && part.endsWith('_'))
+    ) {
       return <em key={index}>{part.slice(1, -1)}</em>;
     }
 
@@ -128,23 +145,37 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
   const blocks = parseBlocks(content);
 
   return (
-    <div className="space-y-3 break-words [overflow-wrap:anywhere]">
+    <div className="space-y-3 break-words [overflow-wrap:anywhere] font-serif-source">
       {blocks.map((block, index) => {
         if (block.type === 'heading') {
           if (block.level === 1) {
-            return <h1 key={index} className="text-xl font-semibold">{renderInline(block.content)}</h1>;
+            return (
+              <h1 key={index} className="text-xl font-semibold">
+                {renderInline(block.content)}
+              </h1>
+            );
           }
 
           if (block.level === 2) {
-            return <h2 key={index} className="text-lg font-semibold">{renderInline(block.content)}</h2>;
+            return (
+              <h2 key={index} className="text-lg font-semibold">
+                {renderInline(block.content)}
+              </h2>
+            );
           }
 
-          return <h3 key={index} className="text-base font-semibold">{renderInline(block.content)}</h3>;
+          return (
+            <h3 key={index} className="text-base font-semibold">
+              {renderInline(block.content)}
+            </h3>
+          );
         }
 
         if (block.type === 'list') {
           const ListTag = block.ordered ? 'ol' : 'ul';
-          const listClassName = block.ordered ? 'list-decimal space-y-1 pl-5' : 'list-disc space-y-1 pl-5';
+          const listClassName = block.ordered
+            ? 'list-decimal space-y-1 pl-5'
+            : 'list-disc space-y-1 pl-5';
 
           return (
             <ListTag key={index} className={listClassName}>
@@ -157,8 +188,15 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
 
         if (block.type === 'code') {
           return (
-            <pre key={index} className="overflow-x-auto rounded-lg bg-neutral-950 p-3 text-xs text-neutral-100">
-              {block.language && <div className="mb-2 text-[11px] uppercase tracking-wide text-neutral-400">{block.language}</div>}
+            <pre
+              key={index}
+              className="overflow-x-auto rounded-lg bg-neutral-950 p-3 text-xs text-neutral-100"
+            >
+              {block.language && (
+                <div className="mb-2 text-[11px] uppercase tracking-wide text-neutral-400">
+                  {block.language}
+                </div>
+              )}
               <code className="whitespace-pre">{block.content}</code>
             </pre>
           );

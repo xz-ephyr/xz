@@ -4,15 +4,12 @@ import {
   Download01Icon,
   ArrowDown01Icon,
   CodeIcon,
-  ViewIcon
+  ViewIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Artifact } from '../../hooks/useArtifacts';
 import { ArtifactRenderer } from './ArtifactRenderer';
-// @ts-ignore
-import { save } from '@tauri-apps/plugin-dialog';
-// @ts-ignore
-import { writeTextFile } from '@tauri-apps/plugin-fs';
+import { isTauri } from '../../lib/tauri';
 
 interface ArtifactPaneProps {
   isOpen: boolean;
@@ -22,8 +19,22 @@ interface ArtifactPaneProps {
   onVersionSelect: (artifact: Artifact) => void;
 }
 
-const HugeiconRenderer = ({ icon: Icon, size = 18, className }: { icon: any, size?: number, className?: string }) => (
-  <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} className={className} />
+const HugeiconRenderer = ({
+  icon: Icon,
+  size = 18,
+  className,
+}: {
+  icon: any;
+  size?: number;
+  className?: string;
+}) => (
+  <HugeiconsIcon
+    icon={Icon}
+    size={size}
+    color="currentColor"
+    strokeWidth={1.5}
+    className={className}
+  />
 );
 
 export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
@@ -31,7 +42,7 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
   onClose,
   artifacts,
   activeArtifact,
-  onVersionSelect
+  onVersionSelect,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [view, setView] = useState<'preview' | 'code'>('preview');
@@ -40,26 +51,28 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
 
   const handleDownload = async () => {
     try {
-      const path = await save({
-        defaultPath: activeArtifact.title,
-        filters: [
-          { name: 'All Files', extensions: ['*'] }
-        ]
-      });
-
-      if (path) {
-        try {
-            await writeTextFile(path, activeArtifact.content);
-        } catch (e) {
-            console.error('Failed to write file via plugin-fs, falling back to blob', e);
-            const blob = new Blob([activeArtifact.content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = activeArtifact.title;
-            a.click();
-            URL.revokeObjectURL(url);
+      if (isTauri()) {
+        // Desktop path: use native save dialog
+        // @ts-ignore
+        const { save } = await import('@tauri-apps/plugin-dialog');
+        // @ts-ignore
+        const { writeTextFile } = await import('@tauri-apps/plugin-fs');
+        const path = await save({
+          defaultPath: activeArtifact.title,
+          filters: [{ name: 'All Files', extensions: ['*'] }],
+        });
+        if (path) {
+          await writeTextFile(path, activeArtifact.content);
         }
+      } else {
+        // Web path: browser blob download
+        const blob = new Blob([activeArtifact.content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = activeArtifact.title;
+        a.click();
+        URL.revokeObjectURL(url);
       }
     } catch (err) {
       console.error('Download error:', err);
@@ -76,7 +89,11 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
               className="flex items-center gap-1.5 px-2 py-1.5 hover:bg-neutral-100 rounded-md transition-colors text-sm font-medium text-neutral-700"
             >
               v{activeArtifact.version}
-              <HugeiconRenderer icon={ArrowDown01Icon} size={14} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <HugeiconRenderer
+                icon={ArrowDown01Icon}
+                size={14}
+                className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+              />
             </button>
 
             {isDropdownOpen && (
@@ -91,7 +108,9 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center justify-between ${a.version === activeArtifact.version ? 'bg-neutral-50 text-black font-medium' : 'text-neutral-600'}`}
                   >
                     Version {a.version}
-                    {a.version === activeArtifact.version && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />}
+                    {a.version === activeArtifact.version && (
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                    )}
                   </button>
                 ))}
               </div>
@@ -146,11 +165,7 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
       </div>
 
       <div className="flex-1 overflow-hidden relative">
-        <ArtifactRenderer
-          type={activeArtifact.type}
-          content={activeArtifact.content}
-          mode={view}
-        />
+        <ArtifactRenderer type={activeArtifact.type} content={activeArtifact.content} mode={view} />
       </div>
     </div>
   );

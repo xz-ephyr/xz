@@ -8,7 +8,11 @@ interface ArtifactPreviewCardProps {
   onClick: () => void;
 }
 
-export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({ title, type, onClick }) => {
+export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
+  title,
+  type,
+  onClick,
+}) => {
   return (
     <div
       onClick={onClick}

@@ -5,8 +5,6 @@ interface ThinScrollbarProps {
   className?: string;
 }
 
-export const ThinScrollbar = ({ children, className = "" }: ThinScrollbarProps) => (
-  <div className={`thin-scrollbar overflow-y-auto ${className}`}>
-    {children}
-  </div>
+export const ThinScrollbar = ({ children, className = '' }: ThinScrollbarProps) => (
+  <div className={`thin-scrollbar overflow-y-auto ${className}`}>{children}</div>
 );

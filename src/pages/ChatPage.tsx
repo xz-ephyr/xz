@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useMatch } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import ChatInput from '../components/chat/ChatInput';
@@ -15,8 +15,29 @@ import { Project } from '../types/chat';
 import { FileSystemService } from '../services/FileSystemService';
 import { ProjectIDE } from '../components/artifacts/ProjectIDE';
 import { IDEPromptModal } from '../components/chat/IDEPromptModal';
-// @ts-ignore
-import { join, normalize } from '@tauri-apps/api/path';
+import { isTauri } from '../lib/tauri';
+
+// Safe path helpers — work in both Tauri and web environments
+const safejoin = async (base: string, segment: string): Promise<string> => {
+  if (isTauri()) {
+    // @ts-ignore
+    const { join } = await import('@tauri-apps/api/path');
+    return join(base, segment);
+  }
+  // Web fallback: simple string join
+  const sep = base.endsWith('/') ? '' : '/';
+  return base + sep + segment;
+};
+
+const safeNormalize = async (p: string): Promise<string> => {
+  if (isTauri()) {
+    // @ts-ignore
+    const { normalize } = await import('@tauri-apps/api/path');
+    return normalize(p);
+  }
+  // Web fallback: collapse double slashes
+  return p.replace(/\/+/g, '/');
+};
 
 const mapUIMessageToLegacyMessage = (m: any): any => {
   if (!m) return m;
@@ -30,6 +51,15 @@ const mapUIMessageToLegacyMessage = (m: any): any => {
       .join('');
   }
 
+  // Extract reasoning from parts if missing
+  let reasoning = m.reasoning || '';
+  if (!reasoning && Array.isArray(m.parts)) {
+    reasoning = m.parts
+      .filter((part: any) => part.type === 'reasoning')
+      .map((part: any) => part.reasoning || (part as any).text || '')
+      .join('');
+  }
+
   // Extract toolInvocations from parts
   let toolInvocations = m.toolInvocations;
   if (!toolInvocations && Array.isArray(m.parts)) {
@@ -38,12 +68,17 @@ const mapUIMessageToLegacyMessage = (m: any): any => {
       .map((part: any) => {
         const toolName = part.toolName || part.type.replace(/^tool-/, '');
         return {
-          state: part.state === 'output-available' ? 'result' : part.state === 'input-available' ? 'call' : part.state,
+          state:
+            part.state === 'output-available'
+              ? 'result'
+              : part.state === 'input-available'
+                ? 'call'
+                : part.state,
           toolCallId: part.toolCallId,
           toolName: toolName,
           args: part.input,
           result: part.output,
-          error: part.errorText
+          error: part.errorText,
         };
       });
   }
@@ -51,12 +86,17 @@ const mapUIMessageToLegacyMessage = (m: any): any => {
   return {
     ...m,
     content,
-    toolInvocations
+    reasoning,
+    toolInvocations,
   };
 };
 
 export const ChatPage = () => {
   const { uuid } = useParams();
+  const projectRouteMatch = useMatch('/project/:uuid');
+  // If on /project/:uuid route, load the project directly by its id
+  const projectRouteId = projectRouteMatch?.params?.uuid ?? null;
+  const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [projectContext, setProjectContext] = useState<string>('');
   const [showIDEPrompt, setShowIDEPrompt] = useState(false);
@@ -73,14 +113,17 @@ export const ChatPage = () => {
     setIsResizing(false);
   }, []);
 
-  const resize = useCallback((e: MouseEvent) => {
-    if (isResizing) {
-      const newWidth = 100 - (e.clientX / window.innerWidth) * 100;
-      if (newWidth > 20 && newWidth < 80) {
-        setPaneWidth(newWidth);
+  const resize = useCallback(
+    (e: MouseEvent) => {
+      if (isResizing) {
+        const newWidth = 100 - (e.clientX / window.innerWidth) * 100;
+        if (newWidth > 20 && newWidth < 80) {
+          setPaneWidth(newWidth);
+        }
       }
-    }
-  }, [isResizing]);
+    },
+    [isResizing]
+  );
 
   useEffect(() => {
     if (isResizing) {
@@ -105,25 +148,36 @@ export const ChatPage = () => {
     addOrUpdateArtifact,
     getArtifactVersions,
     getActiveArtifact,
-    closeArtifact
+    closeArtifact,
   } = useArtifacts();
 
   useEffect(() => {
     if (uuid) {
       const allSessions = ChatSessionManager.getAll();
-      const currentSession = allSessions.find(s => s.id === uuid);
+      const currentSession = allSessions.find((s) => s.id === uuid);
 
       if (currentSession?.projectId) {
         const allProjects = ChatSessionManager.getProjects();
-        const p = allProjects.find(proj => proj.id === currentSession.projectId);
+        const p = allProjects.find((proj) => proj.id === currentSession.projectId);
         if (p) {
-            setProject(p);
-            // Only show prompt if switching to a DIFFERENT project
-            if (lastProjectIdRef.current !== p.id) {
-                setShowIDEPrompt(true);
-                lastProjectIdRef.current = p.id;
-            }
-            loadProjectContext(p.path);
+          setProject(p);
+          if (lastProjectIdRef.current !== p.id) {
+            setShowIDEPrompt(true);
+            lastProjectIdRef.current = p.id;
+          }
+          loadProjectContext(p.path);
+        }
+      } else if (projectRouteId) {
+        // On /project/:uuid route — uuid IS the project id, not a session id
+        const allProjects = ChatSessionManager.getProjects();
+        const p = allProjects.find((proj) => proj.id === projectRouteId);
+        if (p) {
+          setProject(p);
+          if (lastProjectIdRef.current !== p.id) {
+            setShowIDEPrompt(true);
+            lastProjectIdRef.current = p.id;
+          }
+          loadProjectContext(p.path);
         }
       } else {
         setProject(null);
@@ -133,7 +187,7 @@ export const ChatPage = () => {
         lastProjectIdRef.current = null;
       }
     }
-  }, [uuid]);
+  }, [uuid, projectRouteId]);
 
   const loadProjectContext = async (path: string) => {
     const tree = await FileSystemService.getTree(path);
@@ -144,17 +198,23 @@ export const ChatPage = () => {
   const currentModel = getModelForChatRequest(uuid);
   const apiKey = localStorage.getItem('api-key');
 
-  const { messages: rawMessages, sendMessage, isLoading, setMessages } = useChat({
+  const {
+    messages: rawMessages,
+    sendMessage,
+    isLoading,
+    setMessages,
+  } = useChat({
     transport: new DefaultChatTransport({
       fetch: async (_url: any, options: any) => {
-          const body = JSON.parse(options?.body as string);
-          const result = await chatCompletion({
-              messages: body.messages,
-              apiKey: body.apiKey,
-              modelName: body.model,
-              projectContext: projectContext
-          });
-          return result.toTextStreamResponse();
+        const body = JSON.parse(options?.body as string);
+        const result = await chatCompletion({
+          messages: body.messages,
+          apiKey: body.apiKey,
+          modelName: body.model,
+          projectContext: projectContext,
+          projectPath: project?.path,
+        });
+        return (result as any).toUIMessageStreamResponse();
       },
       body: {
         model: currentModel,
@@ -166,29 +226,59 @@ export const ChatPage = () => {
       const message = mapUIMessageToLegacyMessage(event.message);
       if (message.toolInvocations) {
         for (const toolInvocation of message.toolInvocations) {
-          if (toolInvocation.toolName === 'create_artifact' && toolInvocation.state === 'result') {
-            const { type, title, content, file_path } = toolInvocation.args;
+          if (toolInvocation.state === 'result') {
+            const toolName = toolInvocation.toolName;
+            const result = toolInvocation.result;
 
-            addOrUpdateArtifact(type, title, content);
+            if (result && result.error) {
+              console.error(`Tool ${toolName} failed:`, result.error);
+              continue;
+            }
 
-            // Auto-save in project mode
-            if (project && file_path) {
+            if (toolName === 'create_artifact') {
+              const { type, title, content, file_path } = toolInvocation.args;
+              addOrUpdateArtifact(type, title, content);
+
+              // Auto-save in project mode
+              if (project && file_path) {
                 try {
-                    // Simple sanitization to prevent path traversal
-                    const sanitizedPath = file_path.replace(/^(\.\.[/\\])+/, '');
-                    const fullPath = await join(project.path, sanitizedPath);
-                    const normalizedProject = await normalize(project.path);
-                    const normalizedFull = await normalize(fullPath);
+                  // Simple sanitization to prevent path traversal
+                  const sanitizedPath = file_path.replace(/^(\.\.[/\\])+/, '');
+                  const fullPath = await safejoin(project.path, sanitizedPath);
+                  const normalizedProject = await safeNormalize(project.path);
+                  const normalizedFull = await safeNormalize(fullPath);
 
-                    if (normalizedFull.startsWith(normalizedProject)) {
-                        await FileSystemService.saveFile(fullPath, content);
-                        loadProjectContext(project.path);
-                    } else {
-                        console.error('Blocked attempted path traversal:', file_path);
-                    }
+                  if (normalizedFull.startsWith(normalizedProject)) {
+                    await FileSystemService.saveFile(fullPath, content);
+                    loadProjectContext(project.path);
+                  } else {
+                    console.error('Blocked attempted path traversal:', file_path);
+                  }
                 } catch (e) {
-                    console.error('Failed to auto-save file:', e);
+                  console.error('Failed to auto-save file:', e);
                 }
+              }
+            } else if (toolName === 'write_file' || toolName === 'edit_file') {
+              const file_path = toolInvocation.args.file_path;
+              const content = result.content || toolInvocation.args.content;
+              if (content) {
+                const ext = file_path.split('.').pop() || '';
+                const type = ['ts', 'tsx', 'js', 'jsx'].includes(ext)
+                  ? 'react'
+                  : ['html'].includes(ext)
+                    ? 'html'
+                    : 'markdown';
+                addOrUpdateArtifact(type, file_path, content);
+              }
+              if (project) {
+                loadProjectContext(project.path);
+              }
+            } else if (toolName === 'write_to_plan') {
+              const { filename, content } = toolInvocation.args;
+              addOrUpdateArtifact('markdown', filename, content);
+              if (project) {
+                loadProjectContext(project.path);
+              }
             }
           }
         }
@@ -202,21 +292,52 @@ export const ChatPage = () => {
     setMessages([]);
   }, [uuid, setMessages]);
 
-  const handleSend = useCallback(async (content: string) => {
-    if (!apiKey) {
-      alert('Please set your Google API Key in settings.');
-      return;
-    }
+  // Listen for the reset-chat event dispatched by the sidebar's "New thread" tab
+  // This fires only when the user is already on /chat/new and clicks it again.
+  useEffect(() => {
+    const handleResetChat = () => {
+      setMessages([]);
+    };
+    window.addEventListener('reset-chat', handleResetChat);
+    return () => window.removeEventListener('reset-chat', handleResetChat);
+  }, [setMessages]);
 
-    if (uuid === 'new') {
-      // In a real app we'd redirect, but here we'll assume ChatPage handles 'new'
-      // or the sidebar handles the creation.
+  // Pick up the pending first message stored before redirect from /chat/new
+  useEffect(() => {
+    if (uuid && uuid !== 'new') {
+      const pendingMessage = sessionStorage.getItem('pending-first-message');
+      if (pendingMessage) {
+        sessionStorage.removeItem('pending-first-message');
+        sendMessage({ text: pendingMessage });
+      }
     }
+  }, [uuid]); // intentionally omitting sendMessage to only run once on route change
 
-    sendMessage({
-      text: content,
-    });
-  }, [uuid, apiKey, sendMessage]);
+  const handleSend = useCallback(
+    async (content: string) => {
+      if (!apiKey) {
+        alert('Please set your Google API Key in settings.');
+        return;
+      }
+
+      // On first send from /chat/new: create a real session and redirect to it.
+      // The message is then sent in the new route context.
+      if (uuid === 'new') {
+        const snippet = content.trim().slice(0, 60);
+        const title = snippet.length > 0 ? snippet : 'New conversation';
+        const session = ChatSessionManager.create(title);
+        // Store the pending first message so the new ChatPage can pick it up
+        sessionStorage.setItem('pending-first-message', content);
+        navigate(`/chat/${session.id}`);
+        return;
+      }
+
+      sendMessage({
+        text: content,
+      });
+    },
+    [uuid, apiKey, sendMessage, navigate]
+  );
 
   const activeArtifact = getActiveArtifact();
   const activeArtifactVersions = activeArtifactId ? getArtifactVersions(activeArtifactId) : [];
@@ -224,16 +345,18 @@ export const ChatPage = () => {
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.toolInvocations) {
-      const artifactTool = lastMessage.toolInvocations.find((ti: any) => ti.toolName === 'create_artifact');
+      const artifactTool = lastMessage.toolInvocations.find(
+        (ti: any) => ti.toolName === 'create_artifact'
+      );
       if (artifactTool?.state === 'result') {
-         const id = artifactTool.args.title.toLowerCase().replace(/\s+/g, '-');
-         setActiveArtifactId(id);
+        const id = artifactTool.args.title.toLowerCase().replace(/\s+/g, '-');
+        setActiveArtifactId(id);
 
-         if (project && !isIDEOpen) {
-             setIsArtifactOpen(true);
-         } else if (!project) {
-             setIsArtifactOpen(true);
-         }
+        if (project && !isIDEOpen) {
+          setIsArtifactOpen(true);
+        } else if (!project) {
+          setIsArtifactOpen(true);
+        }
       }
     }
   }, [messages, setActiveArtifactId, setIsArtifactOpen, project, isIDEOpen]);
@@ -241,7 +364,9 @@ export const ChatPage = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <div className={`flex flex-col flex-1 min-w-0 bg-white transition-all duration-300 relative`}>
-        <div className={`flex-1 overflow-y-auto ${messages.length === 0 ? 'flex flex-col items-center justify-center p-4' : ''}`}>
+        <div
+          className={`flex-1 overflow-y-auto ${messages.length === 0 ? 'flex flex-col items-center justify-start pt-[15vh] p-4' : ''}`}
+        >
           {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
           <div className="max-w-[720px] w-full mx-auto px-4">
             {messages.map((m: any, i: number) => (
@@ -255,21 +380,51 @@ export const ChatPage = () => {
                       model={currentModel}
                       isStreaming={isLoading && i === messages.length - 1}
                       toolInvocations={m.toolInvocations}
+                      reasoning={m.reasoning}
                     />
                     {m.toolInvocations?.map((ti: any, idx: number) => {
-                      if (ti.toolName === 'create_artifact' && ti.state === 'result') {
+                      const isArtifactTool = ti.toolName === 'create_artifact';
+                      const isWriteFileTool = ti.toolName === 'write_file';
+                      const isEditFileTool = ti.toolName === 'edit_file';
+                      const isWritePlanTool = ti.toolName === 'write_to_plan';
+
+                      if (
+                        (isArtifactTool || isWriteFileTool || isEditFileTool || isWritePlanTool) &&
+                        ti.state === 'result'
+                      ) {
+                        let title = '';
+                        let type: any = 'markdown';
+
+                        if (isArtifactTool) {
+                          title = ti.args.title;
+                          type = ti.args.type;
+                        } else if (isWriteFileTool || isEditFileTool) {
+                          title = ti.args.file_path;
+                          const ext = title.split('.').pop() || '';
+                          type = ['ts', 'tsx', 'js', 'jsx'].includes(ext)
+                            ? 'react'
+                            : ['html'].includes(ext)
+                              ? 'html'
+                              : 'markdown';
+                        } else if (isWritePlanTool) {
+                          title = ti.args.filename;
+                          type = 'markdown';
+                        }
+
+                        const artifactId = title.toLowerCase().replace(/\s+/g, '-');
+
                         return (
                           <ArtifactPreviewCard
                             key={idx}
-                            title={ti.args.title}
-                            type={ti.args.type}
+                            title={title}
+                            type={type}
                             onClick={() => {
-                              setActiveArtifactId(ti.args.title.toLowerCase().replace(/\s+/g, '-'));
+                              setActiveArtifactId(artifactId);
                               setViewingVersion(null);
                               if (project) {
-                                  setIsIDEOpen(true);
+                                setIsIDEOpen(true);
                               } else {
-                                  setIsArtifactOpen(true);
+                                setIsArtifactOpen(true);
                               }
                             }}
                           />
@@ -283,11 +438,11 @@ export const ChatPage = () => {
             ))}
 
             {messages.length === 0 && (
-              <div className="w-full mt-4 flex flex-col items-center">
-                <h1 className="text-[43px] font-serif-source mb-[10px] text-neutral-800 text-center">
-                    {project ? `Working on ${project.name}` : 'Hello, how can I help?'}
+              <div className="w-full mt-4 flex flex-col items-center overflow-visible pb-10">
+                <h1 className="text-[38px] font-serif-source mb-[10px] text-neutral-800 text-center">
+                  {project ? `Working on ${project.name}` : 'Hello, how can I help?'}
                 </h1>
-                <ChatInput onSend={handleSend} isLoading={isLoading} />
+                <ChatInput onSend={handleSend} isLoading={isLoading} isIdle={true} />
               </div>
             )}
           </div>
@@ -323,24 +478,24 @@ export const ChatPage = () => {
           )}
 
           {isIDEOpen && project && (
-              <ProjectIDE
-                key={`${project.id}-${projectContext.length}`}
-                project={project}
-                onClose={() => setIsIDEOpen(false)}
-                onSave={() => loadProjectContext(project.path)}
-              />
+            <ProjectIDE
+              key={`${project.id}-${projectContext.length}`}
+              project={project}
+              onClose={() => setIsIDEOpen(false)}
+              onSave={() => loadProjectContext(project.path)}
+            />
           )}
         </div>
       )}
 
       {showIDEPrompt && (
-          <IDEPromptModal
-            onOpenIDE={() => {
-                setIsIDEOpen(true);
-                setShowIDEPrompt(false);
-            }}
-            onContinueChat={() => setShowIDEPrompt(false)}
-          />
+        <IDEPromptModal
+          onOpenIDE={() => {
+            setIsIDEOpen(true);
+            setShowIDEPrompt(false);
+          }}
+          onContinueChat={() => setShowIDEPrompt(false)}
+        />
       )}
     </div>
   );

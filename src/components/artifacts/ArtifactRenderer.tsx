@@ -16,7 +16,11 @@ interface ArtifactRendererProps {
   mode?: 'preview' | 'code';
 }
 
-export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ type, content, mode = 'preview' }) => {
+export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
+  type,
+  content,
+  mode = 'preview',
+}) => {
   const getLanguage = (type: string) => {
     switch (type) {
       case 'react':
@@ -101,28 +105,30 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ type, conten
     case 'sheet':
       return (
         <div className="h-full overflow-auto p-4 bg-white">
-           <table className="min-w-full border-collapse border border-neutral-200 text-sm">
-             <tbody>
-                {content.split('\n').map((line, i) => (
-                  <tr key={i}>
-                    {line.split(',').map((cell, j) => (
-                      <td key={j} className="border border-neutral-200 px-3 py-1.5">{cell}</td>
-                    ))}
-                  </tr>
-                ))}
-             </tbody>
-           </table>
+          <table className="min-w-full border-collapse border border-neutral-200 text-sm">
+            <tbody>
+              {content.split('\n').map((line, i) => (
+                <tr key={i}>
+                  {line.split(',').map((cell, j) => (
+                    <td key={j} className="border border-neutral-200 px-3 py-1.5">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       );
     case 'slides':
       return (
         <div className="flex items-center justify-center h-full bg-neutral-800 text-white p-8">
-           <div className="text-center max-w-xl">
-             <h2 className="text-3xl font-bold mb-4">Slide Preview</h2>
-             <div className="bg-neutral-700 aspect-video flex items-center justify-center p-4 rounded-lg">
-                <p className="text-lg">{content.split('\n')[0] || 'Slide Content'}</p>
-             </div>
-           </div>
+          <div className="text-center max-w-xl">
+            <h2 className="text-3xl font-bold mb-4">Slide Preview</h2>
+            <div className="bg-neutral-700 aspect-video flex items-center justify-center p-4 rounded-lg">
+              <p className="text-lg">{content.split('\n')[0] || 'Slide Content'}</p>
+            </div>
+          </div>
         </div>
       );
     default:

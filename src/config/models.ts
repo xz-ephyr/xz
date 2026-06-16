@@ -54,5 +54,7 @@ export function getNextRotatingModel(sessionId: string | undefined): AIModel {
 }
 
 export function getModelForChatRequest(sessionId: string | undefined): AIModel {
-  return getStoredModelMode() === MODEL_MODES.rotate ? getNextRotatingModel(sessionId) : getStoredSelectedModel();
+  return getStoredModelMode() === MODEL_MODES.rotate
+    ? getNextRotatingModel(sessionId)
+    : getStoredSelectedModel();
 }

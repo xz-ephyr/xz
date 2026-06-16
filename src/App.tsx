@@ -1,6 +1,6 @@
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
-import { OnboardingPage, ChatPage, ChatsPage, SchedulePage, PluginsPage, WikiPage, ProjectPage } from './pages';
+import { OnboardingPage, ChatPage, ChatsPage, SchedulePage, PluginsPage, WikiPage } from './pages';
 
 export default function App() {
   return (
@@ -13,7 +13,7 @@ export default function App() {
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/plugins" element={<PluginsPage />} />
           <Route path="/wiki" element={<WikiPage />} />
-          <Route path="/project/:uuid" element={<ProjectPage />} />
+          <Route path="/project/:uuid" element={<ChatPage />} />
         </Routes>
       </Layout>
     </Router>

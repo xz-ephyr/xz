@@ -23,7 +23,7 @@ import {
   Search01Icon,
   ArrowRight01Icon,
   Tick01Icon,
-  CloudSavingDone01Icon
+  CloudSavingDone01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { FileEntry, FileSystemService } from '../../services/FileSystemService';
@@ -35,11 +35,35 @@ interface ProjectIDEProps {
   onSave?: (path: string, content: string) => void;
 }
 
-const HugeiconRenderer = ({ icon: Icon, size = 16, className }: { icon: any, size?: number, className?: string }) => (
-  <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} className={className} />
+const HugeiconRenderer = ({
+  icon: Icon,
+  size = 16,
+  className,
+}: {
+  icon: any;
+  size?: number;
+  className?: string;
+}) => (
+  <HugeiconsIcon
+    icon={Icon}
+    size={size}
+    color="currentColor"
+    strokeWidth={1.5}
+    className={className}
+  />
 );
 
-const FileNode = ({ node, depth = 0, activePath, onClick }: { node: FileEntry, depth?: number, activePath?: string, onClick: (node: FileEntry) => void }) => (
+const FileNode = ({
+  node,
+  depth = 0,
+  activePath,
+  onClick,
+}: {
+  node: FileEntry;
+  depth?: number;
+  activePath?: string;
+  onClick: (node: FileEntry) => void;
+}) => (
   <div>
     <div
       className={`flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-100 cursor-pointer text-sm ${activePath === node.path ? 'bg-neutral-100 text-blue-600 font-medium' : 'text-neutral-600'}`}
@@ -49,9 +73,16 @@ const FileNode = ({ node, depth = 0, activePath, onClick }: { node: FileEntry, d
       <HugeiconRenderer icon={node.isDirectory ? Folder02Icon : File02Icon} size={14} />
       <span className="truncate">{node.name}</span>
     </div>
-    {node.isDirectory && node.children?.map(child => (
-      <FileNode key={child.path} node={child} depth={depth + 1} activePath={activePath} onClick={onClick} />
-    ))}
+    {node.isDirectory &&
+      node.children?.map((child) => (
+        <FileNode
+          key={child.path}
+          node={child}
+          depth={depth + 1}
+          activePath={activePath}
+          onClick={onClick}
+        />
+      ))}
   </div>
 );
 
@@ -62,7 +93,7 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
   const [isSaving, setIsSaving] = useState(false);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [openBreadcrumb, setOpenBreadcrumb] = useState<string | null>(null);
-  const [breadcrumbRect, setBreadcrumbRect] = useState<{ top: number, left: number } | null>(null);
+  const [breadcrumbRect, setBreadcrumbRect] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     loadTree();
@@ -97,18 +128,30 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
   const getLanguageName = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
     switch (ext) {
-      case 'js': return 'JavaScript';
-      case 'jsx': return 'JavaScript React';
-      case 'ts': return 'TypeScript';
-      case 'tsx': return 'TypeScript React';
-      case 'py': return 'Python';
-      case 'html': return 'HTML';
-      case 'css': return 'CSS';
-      case 'scss': return 'SCSS';
-      case 'json': return 'JSON';
-      case 'rs': return 'Rust';
-      case 'md': return 'Markdown';
-      default: return ext?.toUpperCase() || 'Plain Text';
+      case 'js':
+        return 'JavaScript';
+      case 'jsx':
+        return 'JavaScript React';
+      case 'ts':
+        return 'TypeScript';
+      case 'tsx':
+        return 'TypeScript React';
+      case 'py':
+        return 'Python';
+      case 'html':
+        return 'HTML';
+      case 'css':
+        return 'CSS';
+      case 'scss':
+        return 'SCSS';
+      case 'json':
+        return 'JSON';
+      case 'rs':
+        return 'Rust';
+      case 'md':
+        return 'Markdown';
+      default:
+        return ext?.toUpperCase() || 'Plain Text';
     }
   };
 
@@ -164,7 +207,7 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
     return parts.map((name, index) => ({
       name,
       path: parts.slice(0, index + 1).join('/'),
-      isLast: index === parts.length - 1
+      isLast: index === parts.length - 1,
     }));
   }, [activeFile, project.path]);
 
@@ -172,7 +215,9 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
     const targetPath = relativePath.startsWith('/') ? relativePath : '/' + relativePath;
     for (const node of nodes) {
       const nodeRelativePath = node.path.replace(project.path, '').replace(/\\/g, '/');
-      const normalizedNodePath = nodeRelativePath.startsWith('/') ? nodeRelativePath : '/' + nodeRelativePath;
+      const normalizedNodePath = nodeRelativePath.startsWith('/')
+        ? nodeRelativePath
+        : '/' + nodeRelativePath;
 
       if (normalizedNodePath === targetPath) return node;
       if (node.children) {
@@ -220,22 +265,29 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
         {/* Sidebar / Explorer */}
         <div className="w-60 border-r border-neutral-200 overflow-y-auto bg-[#f8f9fa] py-2 shrink-0">
           <div className="px-3 mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Explorer</span>
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+              Explorer
+            </span>
           </div>
           <div className="px-4 mb-4">
-             <div className="relative">
-                <input
-                    type="text"
-                    placeholder="Search files..."
-                    className="w-full bg-white border border-neutral-200 rounded-md py-1.5 pl-8 pr-3 text-xs outline-none focus:border-blue-400"
-                />
-                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400">
-                    <HugeiconRenderer icon={Search01Icon} size={12} />
-                </div>
-             </div>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search files..."
+                className="w-full bg-white border border-neutral-200 rounded-md py-1.5 pl-8 pr-3 text-xs outline-none focus:border-blue-400"
+              />
+              <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400">
+                <HugeiconRenderer icon={Search01Icon} size={12} />
+              </div>
+            </div>
           </div>
-          {tree.map(node => (
-            <FileNode key={node.path} node={node} activePath={activeFile?.path} onClick={handleFileClick} />
+          {tree.map((node) => (
+            <FileNode
+              key={node.path}
+              node={node}
+              activePath={activeFile?.path}
+              onClick={handleFileClick}
+            />
           ))}
         </div>
 
@@ -248,7 +300,13 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
                 <div className="flex items-center gap-1 text-xs text-neutral-500 overflow-x-auto no-scrollbar flex-1 h-full">
                   {breadcrumbs.map((bc, i) => (
                     <React.Fragment key={bc.path}>
-                      {i > 0 && <HugeiconRenderer icon={ArrowRight01Icon} size={10} className="text-neutral-300 shrink-0" />}
+                      {i > 0 && (
+                        <HugeiconRenderer
+                          icon={ArrowRight01Icon}
+                          size={10}
+                          className="text-neutral-300 shrink-0"
+                        />
+                      )}
                       <div className="relative shrink-0">
                         <button
                           onClick={(e) => {
@@ -284,24 +342,37 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
                       style={{
                         top: `${breadcrumbRect.top + 4}px`,
                         left: `${breadcrumbRect.left}px`,
-                        position: 'fixed'
+                        position: 'fixed',
                       }}
                       className="w-48 bg-white border border-neutral-200 rounded-md shadow-lg z-[100] py-1 max-h-64 overflow-y-auto"
                     >
                       {(() => {
-                        const bc = breadcrumbs.find(b => b.path === openBreadcrumb);
+                        const bc = breadcrumbs.find((b) => b.path === openBreadcrumb);
                         if (!bc) return null;
                         const segments = bc.path.split('/');
                         const parentPath = segments.slice(0, -1).join('/');
-                        const parentNode = parentPath === '' ? { children: tree } : findNodeByPath(tree, parentPath);
-                        return parentNode?.children?.map(child => (
+                        const parentNode =
+                          parentPath === '' ? { children: tree } : findNodeByPath(tree, parentPath);
+                        return parentNode?.children?.map((child) => (
                           <button
                             key={child.path}
                             onClick={() => handleFileClick(child)}
                             className="w-full text-left px-3 py-1.5 text-xs hover:bg-neutral-100 flex items-center gap-2 truncate"
                           >
-                            <HugeiconRenderer icon={child.isDirectory ? Folder02Icon : File02Icon} size={12} className={child.isDirectory ? 'text-blue-500' : 'text-neutral-400'} />
-                            <span className={child.path === activeFile.path ? 'text-blue-600 font-medium' : 'text-neutral-700'}>{child.name}</span>
+                            <HugeiconRenderer
+                              icon={child.isDirectory ? Folder02Icon : File02Icon}
+                              size={12}
+                              className={child.isDirectory ? 'text-blue-500' : 'text-neutral-400'}
+                            />
+                            <span
+                              className={
+                                child.path === activeFile.path
+                                  ? 'text-blue-600 font-medium'
+                                  : 'text-neutral-700'
+                              }
+                            >
+                              {child.name}
+                            </span>
                           </button>
                         ));
                       })()}
@@ -341,7 +412,11 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
               <div className="h-6 border-t border-neutral-200 bg-neutral-50 flex items-center justify-between px-3 shrink-0 text-[10px] text-neutral-500 font-medium">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5 hover:text-neutral-900 cursor-default">
-                    <HugeiconRenderer icon={CloudSavingDone01Icon} size={12} className="text-green-500" />
+                    <HugeiconRenderer
+                      icon={CloudSavingDone01Icon}
+                      size={12}
+                      className="text-green-500"
+                    />
                     <span>In Sync</span>
                   </div>
                   <div className="flex items-center gap-1 hover:text-neutral-900 cursor-default">
@@ -353,7 +428,9 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 hover:text-neutral-900 cursor-default">
-                    <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>
+                    <span>
+                      Ln {cursorPos.line}, Col {cursorPos.col}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1 hover:text-neutral-900 cursor-default">
                     <span>{getLanguageName(activeFile.name)}</span>
@@ -367,10 +444,10 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 p-8">
-               <div className="w-16 h-16 bg-neutral-50 rounded-full flex items-center justify-center mb-4">
-                 <HugeiconRenderer icon={File02Icon} size={32} />
-               </div>
-               <p className="text-sm">Select a file to start editing</p>
+              <div className="w-16 h-16 bg-neutral-50 rounded-full flex items-center justify-center mb-4">
+                <HugeiconRenderer icon={File02Icon} size={32} />
+              </div>
+              <p className="text-sm">Select a file to start editing</p>
             </div>
           )}
         </div>

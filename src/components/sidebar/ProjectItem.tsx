@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MoreVerticalIcon, ArrowDown01Icon, ArrowUp01Icon, Folder02Icon, PencilEdit02Icon, Delete02Icon } from '@hugeicons/core-free-icons';
+import {
+  MoreVerticalIcon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  Folder02Icon,
+  PencilEdit02Icon,
+  Delete02Icon,
+} from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Project, ChatSession } from '../../types/chat';
 import { ChatSessionManager } from '../../services/ChatSessionManager';
@@ -10,8 +17,22 @@ interface ProjectItemProps {
   onDelete: (id: string) => void;
 }
 
-const HugeiconRenderer = ({ icon: Icon, size = 16, className }: { icon: any, size?: number, className?: string }) => (
-  <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} className={className} />
+const HugeiconRenderer = ({
+  icon: Icon,
+  size = 16,
+  className,
+}: {
+  icon: any;
+  size?: number;
+  className?: string;
+}) => (
+  <HugeiconsIcon
+    icon={Icon}
+    size={size}
+    color="currentColor"
+    strokeWidth={1.5}
+    className={className}
+  />
 );
 
 export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
@@ -27,13 +48,13 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
 
   const handleNewChat = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newSession = ChatSessionManager.create('New Project Chat', project.id);
+    const newSession = ChatSessionManager.create(`${project.name} — Chat`, undefined, project.id);
     setSessions(ChatSessionManager.getAll(project.id));
     navigate(`/chat/${newSession.id}`);
   };
 
   return (
-    <div className="mb-1">
+    <div className="mb-1" onMouseLeave={() => setShowMenu(false)}>
       <div
         className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer group relative"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -51,14 +72,18 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
           </button>
           <button
             onClick={(e) => {
-                e.stopPropagation();
-                setShowMenu(!showMenu);
+              e.stopPropagation();
+              setShowMenu(!showMenu);
             }}
             className="p-1 hover:bg-[#e5e5e5] rounded-[4px]"
           >
             <HugeiconRenderer icon={MoreVerticalIcon} size={14} />
           </button>
-          {isExpanded ? <HugeiconRenderer icon={ArrowDown01Icon} size={14} /> : <HugeiconRenderer icon={ArrowUp01Icon} size={14} />}
+          {isExpanded ? (
+            <HugeiconRenderer icon={ArrowDown01Icon} size={14} />
+          ) : (
+            <HugeiconRenderer icon={ArrowUp01Icon} size={14} />
+          )}
         </div>
 
         {showMenu && (
@@ -80,9 +105,6 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
 
       {isExpanded && (
         <div className="ml-4 border-l border-neutral-200 pl-2 mt-1 space-y-1">
-          {sessions.length === 0 && (
-            <div className="text-[10px] text-neutral-400 py-1 pl-2">No chats yet</div>
-          )}
           {sessions.map((session) => (
             <div
               key={session.id}

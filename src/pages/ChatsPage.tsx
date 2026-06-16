@@ -8,27 +8,41 @@ import {
   Folder01Icon,
   MoreVerticalIcon,
   FilterIcon,
-  CheckmarkCircle02Icon
+  CheckmarkCircle02Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ChatSession } from '../types/chat';
 import { ChatSessionManager } from '../services/ChatSessionManager';
 import { cn } from '../lib/utils';
 
-const HugeiconRenderer = ({ icon: Icon, size = 18, className = "" }: { icon: any, size?: number, className?: string }) => (
-  <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} className={className} />
+const HugeiconRenderer = ({
+  icon: Icon,
+  size = 18,
+  className = '',
+}: {
+  icon: any;
+  size?: number;
+  className?: string;
+}) => (
+  <HugeiconsIcon
+    icon={Icon}
+    size={size}
+    color="currentColor"
+    strokeWidth={1.5}
+    className={className}
+  />
 );
 
 const ChatListItem = ({
   chat,
   onDelete,
   onArchive,
-  onRename
+  onRename,
 }: {
-  chat: ChatSession,
-  onDelete: (id: string) => void,
-  onArchive: (id: string) => void,
-  onRename: (id: string, newTitle: string) => void
+  chat: ChatSession;
+  onDelete: (id: string) => void;
+  onArchive: (id: string) => void;
+  onRename: (id: string, newTitle: string) => void;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
@@ -85,16 +99,13 @@ const ChatListItem = ({
   return (
     <div
       className={cn(
-        "group relative w-full rounded-[12px] transition-all duration-200",
-        "hover:bg-[#f5f5f5] active:bg-[#eeeeee]",
-        "flex items-center gap-4 px-4 py-3 h-[60px]",
-        isMenuOpen ? "z-20" : "z-0 hover:z-10"
+        'group relative w-full rounded-[12px] transition-all duration-200',
+        'hover:bg-[#f5f5f5] active:bg-[#eeeeee]',
+        'flex items-center gap-4 px-4 py-3 h-[60px]',
+        isMenuOpen ? 'z-20' : 'z-0 hover:z-10'
       )}
     >
-      <Link
-        to={`/chat/${chat.id}`}
-        className="flex-1 min-w-0 h-full flex items-center"
-      >
+      <Link to={`/chat/${chat.id}`} className="flex-1 min-w-0 h-full flex items-center">
         <div className="w-full">
           {isEditing ? (
             <form onSubmit={submitRename} onClick={(e) => e.stopPropagation()}>
@@ -110,9 +121,7 @@ const ChatListItem = ({
             <div className="flex flex-col">
               <span className="text-sm font-medium text-neutral-900 truncate">{chat.title}</span>
               {chat.lastMessage && (
-                <span className="text-xs text-neutral-500 truncate mt-0.5">
-                  {chat.lastMessage}
-                </span>
+                <span className="text-xs text-neutral-500 truncate mt-0.5">{chat.lastMessage}</span>
               )}
             </div>
           )}
@@ -123,8 +132,8 @@ const ChatListItem = ({
         <button
           onClick={toggleMenu}
           className={cn(
-              "p-1.5 hover:bg-neutral-200 rounded-md text-neutral-500 transition-all opacity-0 group-hover:opacity-100",
-              isMenuOpen && "opacity-100 bg-neutral-200"
+            'p-1.5 hover:bg-neutral-200 rounded-md text-neutral-500 transition-all opacity-0 group-hover:opacity-100',
+            isMenuOpen && 'opacity-100 bg-neutral-200'
           )}
           aria-label="Chat actions"
         >
@@ -145,7 +154,7 @@ const ChatListItem = ({
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
             >
               <HugeiconRenderer icon={ArchiveIcon} size={16} className="text-neutral-400" />
-              <span>{chat.archived ? "Unarchive" : "Archive"}</span>
+              <span>{chat.archived ? 'Unarchive' : 'Archive'}</span>
             </button>
             <div className="h-px bg-neutral-100 my-1.5" />
             <button
@@ -170,7 +179,8 @@ export const ChatsPage = () => {
   const filterRef = useRef<HTMLDivElement>(null);
 
   const refreshChats = () => {
-    setChats(ChatSessionManager.getAll());
+    // Only fetch sessions that are NOT tied to a project (null = no projectId)
+    setChats(ChatSessionManager.getAll(null));
   };
 
   useEffect(() => {
@@ -191,9 +201,10 @@ export const ChatsPage = () => {
 
   const filteredChats = useMemo(() => {
     return chats
-      .filter(chat => {
-        const matchesSearch = chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             (chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase()));
+      .filter((chat) => {
+        const matchesSearch =
+          chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase());
 
         if (filter === 'archived') return chat.archived && matchesSearch;
         return !chat.archived && matchesSearch;
@@ -240,44 +251,78 @@ export const ChatsPage = () => {
             </div>
 
             <div className="relative" ref={filterRef}>
-                <button
-                    onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    className={cn(
-                        "p-3 rounded-2xl border transition-all flex items-center justify-center h-[46px] w-[46px]",
-                        isFilterOpen ? "bg-neutral-900 border-neutral-900 text-white shadow-md" : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                    )}
-                    aria-label="Filter chats"
-                >
-                    <HugeiconRenderer icon={FilterIcon} size={20} />
-                </button>
-
-                {isFilterOpen && (
-                    <div className="absolute right-0 mt-2 w-52 bg-white border border-neutral-200 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
-                        <div className="px-4 py-2 text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Filter by</div>
-                        <button
-                            onClick={() => { setFilter('active'); setIsFilterOpen(false); }}
-                            className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors group/item"
-                        >
-                            <span className={cn("font-medium", filter === 'active' ? "text-neutral-900" : "text-neutral-600")}>Active Chats</span>
-                            {filter === 'active' && <HugeiconRenderer icon={CheckmarkCircle02Icon} size={18} className="text-neutral-900" />}
-                        </button>
-                        <button
-                            onClick={() => { setFilter('archived'); setIsFilterOpen(false); }}
-                            className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors group/item"
-                        >
-                            <span className={cn("font-medium", filter === 'archived' ? "text-neutral-900" : "text-neutral-600")}>Archived Chats</span>
-                            {filter === 'archived' && <HugeiconRenderer icon={CheckmarkCircle02Icon} size={18} className="text-neutral-900" />}
-                        </button>
-                    </div>
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={cn(
+                  'p-3 rounded-2xl transition-all flex items-center justify-center h-[46px] w-[46px] bg-transparent text-neutral-600 active:scale-95 active:bg-neutral-100',
+                  isFilterOpen && 'bg-neutral-100 text-neutral-900'
                 )}
+                aria-label="Filter chats"
+              >
+                <HugeiconRenderer icon={FilterIcon} size={20} />
+              </button>
+
+              {isFilterOpen && (
+                <div className="absolute right-0 mt-2 w-52 bg-white border border-neutral-200 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
+                  <div className="px-4 py-2 text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
+                    Filter by
+                  </div>
+                  <button
+                    onClick={() => {
+                      setFilter('active');
+                      setIsFilterOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors group/item"
+                  >
+                    <span
+                      className={cn(
+                        'font-medium',
+                        filter === 'active' ? 'text-neutral-900' : 'text-neutral-600'
+                      )}
+                    >
+                      Active Chats
+                    </span>
+                    {filter === 'active' && (
+                      <HugeiconRenderer
+                        icon={CheckmarkCircle02Icon}
+                        size={18}
+                        className="text-neutral-900"
+                      />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFilter('archived');
+                      setIsFilterOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors group/item"
+                  >
+                    <span
+                      className={cn(
+                        'font-medium',
+                        filter === 'archived' ? 'text-neutral-900' : 'text-neutral-600'
+                      )}
+                    >
+                      Archived Chats
+                    </span>
+                    {filter === 'archived' && (
+                      <HugeiconRenderer
+                        icon={CheckmarkCircle02Icon}
+                        size={18}
+                        className="text-neutral-900"
+                      />
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* List Section */}
-        <div className="space-y-0.5">
+        <div className="space-y-0.5 overflow-visible">
           {filteredChats.length > 0 ? (
-            filteredChats.map(chat => (
+            filteredChats.map((chat) => (
               <ChatListItem
                 key={chat.id}
                 chat={chat}
@@ -292,19 +337,23 @@ export const ChatsPage = () => {
                 <HugeiconRenderer icon={searchQuery ? Search01Icon : Folder01Icon} size={36} />
               </div>
               <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                {searchQuery ? "No matches found" : (filter === 'archived' ? "No archived conversations" : "Your chat list is empty")}
+                {searchQuery
+                  ? 'No matches found'
+                  : filter === 'archived'
+                    ? 'No archived conversations'
+                    : 'Your chat list is empty'}
               </h3>
               <p className="text-sm text-neutral-500 max-w-[320px] leading-relaxed">
                 {searchQuery
                   ? `We couldn't find any results for "${searchQuery}". Try a different search term.`
-                  : "Every conversation you start will appear here for easy access and organization."}
+                  : 'Every conversation you start will appear here for easy access and organization.'}
               </p>
               {!searchQuery && filter === 'active' && (
                 <Link
-                    to="/chat/new"
-                    className="mt-8 px-6 py-2.5 bg-neutral-900 text-white text-sm font-semibold rounded-full hover:bg-neutral-800 transition-all hover:shadow-lg active:scale-95"
+                  to="/chat/new"
+                  className="mt-8 px-6 py-2.5 bg-neutral-900 text-white text-sm font-semibold rounded-full hover:bg-neutral-800 transition-all hover:shadow-lg active:scale-95"
                 >
-                    Start a new thread
+                  Start a new thread
                 </Link>
               )}
             </div>

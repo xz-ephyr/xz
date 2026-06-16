@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 interface ThinkingIndicatorProps {
   model?: string;
+  reasoning?: string;
 }
 
-export function ThinkingIndicator({ model }: ThinkingIndicatorProps) {
+export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -28,9 +29,19 @@ export function ThinkingIndicator({ model }: ThinkingIndicatorProps) {
       </button>
 
       {isExpanded && (
-        <div className="mt-3 max-w-md rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 text-xs leading-5 text-neutral-500">
-          <p>Waiting for the first response token from the model.</p>
-          {model && <p className="mt-1 text-neutral-600">Model: {model}</p>}
+        <div className="mt-3 max-w-[720px] rounded-lg border border-neutral-100 bg-neutral-50 px-4 py-3 text-xs leading-5 text-neutral-500 shadow-sm">
+          {reasoning ? (
+            <div className="max-h-[300px] overflow-y-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-neutral-600 pr-2 thin-scrollbar-style">
+              {reasoning}
+            </div>
+          ) : (
+            <p>Waiting for the first response token from the model.</p>
+          )}
+          {model && (
+            <p className="mt-2 pt-2 border-t border-neutral-200/50 text-[10px] text-neutral-400">
+              Model: {model}
+            </p>
+          )}
         </div>
       )}
     </div>
