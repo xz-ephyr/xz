@@ -6,6 +6,12 @@ export const AI_MODELS = [
   'gemma-4-26b-a4b-it',
 ] as const;
 
+export const THINKING_MODELS: ReadonlyArray<AIModel> = [
+  'gemini-2.5-pro',
+  'gemma-4-31b-it',
+  'gemma-4-26b-a4b-it'
+];
+
 export type AIModel = (typeof AI_MODELS)[number];
 
 export const DEFAULT_MODEL: AIModel = AI_MODELS[0];

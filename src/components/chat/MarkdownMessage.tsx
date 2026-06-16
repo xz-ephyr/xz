@@ -145,7 +145,7 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
   const blocks = parseBlocks(content);
 
   return (
-    <div className="space-y-3 break-words [overflow-wrap:anywhere] font-serif-source">
+    <div className="space-y-3 break-words [overflow-wrap:anywhere]">
       {blocks.map((block, index) => {
         if (block.type === 'heading') {
           if (block.level === 1) {

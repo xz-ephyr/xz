@@ -99,11 +99,14 @@ export const ChatPage = () => {
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [projectContext, setProjectContext] = useState<string>('');
+  const [isThinkingEnabled, setIsThinkingEnabled] = useState(false);
   const [showIDEPrompt, setShowIDEPrompt] = useState(false);
   const [isIDEOpen, setIsIDEOpen] = useState(false);
   const [paneWidth, setPaneWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const lastProjectIdRef = useRef<string | null>(null);
+
+  const toggleThinking = () => setIsThinkingEnabled((prev) => !prev);
 
   // ✅ FIX #3: Refs hold the latest projectContext and project so the useChat transport
   // closure (created once at hook init) always reads the current values. Without this,
@@ -228,6 +231,7 @@ export const ChatPage = () => {
           modelName: body.model,
           projectContext: projectContextRef.current,  // ✅ always current value
           projectPath: projectRef.current?.path,      // ✅ always current value
+          isThinkingEnabled: isThinkingEnabled,
         });
         return (result as any).toUIMessageStreamResponse();
       },
@@ -396,6 +400,15 @@ export const ChatPage = () => {
                       isStreaming={isLoading && i === messages.length - 1}
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
+                      onCopy={() => navigator.clipboard.writeText(m.content)}
+                      onThumbsUp={() => console.log('Thumbs up')}
+                      onThumbsDown={() => console.log('Thumbs down')}
+                      onRegenerate={() => {
+                        const userMessage = messages[i - 1];
+                        if (userMessage) {
+                          sendMessage({ text: userMessage.content });
+                        }
+                      }}
                     />
                     {m.toolInvocations?.map((ti: any, idx: number) => {
                       const isArtifactTool = ti.toolName === 'create_artifact';
@@ -457,7 +470,7 @@ export const ChatPage = () => {
                 <h1 className="text-[38px] font-serif-source mb-[10px] text-neutral-800 text-center">
                   {project ? `Working on ${project.name}` : 'Hello, how can I help?'}
                 </h1>
-                <ChatInput onSend={handleSend} isLoading={isLoading} isIdle={true} />
+                <ChatInput onSend={handleSend} isLoading={isLoading} isIdle={true} isThinkingEnabled={isThinkingEnabled} onToggleThinking={toggleThinking} />
               </div>
             )}
           </div>
@@ -465,7 +478,7 @@ export const ChatPage = () => {
 
         {messages.length > 0 && (
           <div className="shrink-0 pb-8 w-full max-w-[720px] mx-auto px-4 bg-white">
-            <ChatInput onSend={handleSend} isLoading={isLoading} />
+            <ChatInput onSend={handleSend} isLoading={isLoading} isThinkingEnabled={isThinkingEnabled} onToggleThinking={toggleThinking} />
           </div>
         )}
       </div>

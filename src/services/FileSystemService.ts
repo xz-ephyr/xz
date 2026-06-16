@@ -25,7 +25,7 @@ const getTauriPath = async () => {
 
 export const FileSystemService = {
   getTree: async (basePath: string, depth = 0): Promise<FileEntry[]> => {
-    if (depth > 5) return [];
+    if (depth > 20) return [];
 
     if (isTauri()) {
       try {
@@ -35,7 +35,7 @@ export const FileSystemService = {
         const result: FileEntry[] = [];
 
         for (const entry of entries) {
-          if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+          if (entry.name === 'node_modules' || entry.name === '.git') continue;
           const fullPath = await join(basePath, entry.name);
           const isDirectory = entry.isDirectory;
           result.push({

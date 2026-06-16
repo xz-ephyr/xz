@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MarkdownMessage } from './MarkdownMessage';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -7,6 +7,8 @@ import {
   ThumbsDownIcon,
   ArrowTurnBackwardIcon,
   Copy01Icon,
+  ArrowDown01Icon,
+  Idea01Icon,
 } from '@hugeicons/core-free-icons';
 
 const HugeiconRenderer = ({
@@ -33,14 +35,26 @@ interface AssistantBubbleProps {
   model?: string;
   toolInvocations?: any[];
   reasoning?: string;
+  onCopy: () => void;
+  onThumbsUp: () => void;
+  onThumbsDown: () => void;
+  onRegenerate: () => void;
 }
 
 export const AssistantBubble = React.memo(
-  ({ content, isStreaming, model, toolInvocations, reasoning }: AssistantBubbleProps) => {
-    // ✅ FIX #6: Show ThinkingIndicator when streaming with no text content yet AND no
-    // tool call has completed. The old check (`toolInvocations.length === 0`) meant that
-    // the moment any tool invocation appeared (even mid-flight), the thinking indicator
-    // disappeared and the bubble went blank — no text, no indicator, just empty space.
+  ({
+    content,
+    isStreaming,
+    model,
+    toolInvocations,
+    reasoning,
+    onCopy,
+    onThumbsUp,
+    onThumbsDown,
+    onRegenerate,
+  }: AssistantBubbleProps) => {
+    const [isReasoningOpen, setIsReasoningOpen] = useState(false);
+    
     const hasPendingTool = toolInvocations?.some((ti) => ti.state !== 'result');
     const showThinking = isStreaming && !content.trim() && !hasPendingTool;
 
@@ -63,6 +77,26 @@ export const AssistantBubble = React.memo(
                 <span className="thinking-shimmer-text">⏳ Generating application...</span>
               </div>
             )}
+            
+            {reasoning && (
+              <div className="border border-neutral-200 rounded-lg overflow-hidden">
+                <button 
+                  onClick={() => setIsReasoningOpen(!isReasoningOpen)}
+                  className="w-full px-3 py-2 flex items-center justify-between text-xs font-medium text-neutral-600 bg-neutral-50 hover:bg-neutral-100"
+                >
+                  <span className="flex items-center gap-2">
+                    <HugeiconRenderer icon={Idea01Icon} size={14} /> 
+                    {isReasoningOpen ? 'Hide' : 'Show'} reasoning
+                  </span>
+                  <HugeiconRenderer icon={ArrowDown01Icon} size={12} className={isReasoningOpen ? 'rotate-180' : ''} />
+                </button>
+                {isReasoningOpen && (
+                  <div className="px-3 py-2 text-neutral-600 bg-white border-t border-neutral-100 text-xs italic whitespace-pre-wrap">
+                    {reasoning}
+                  </div>
+                )}
+              </div>
+            )}
 
             {content && <MarkdownMessage content={content} />}
           </div>
@@ -71,16 +105,16 @@ export const AssistantBubble = React.memo(
         {!isStreaming && !isArtifactGenerating && (
           <div className="flex items-center justify-between gap-3 text-gray-600 -ml-1">
             <div className="flex gap-3 items-center">
-              <button className="hover:text-black transition-colors">
+              <button onClick={onCopy} className="hover:text-black transition-colors">
                 <HugeiconRenderer icon={Copy01Icon} size={18} />
               </button>
-              <button className="hover:text-black transition-colors">
+              <button onClick={onThumbsUp} className="hover:text-black transition-colors">
                 <HugeiconRenderer icon={ThumbsUpIcon} size={18} />
               </button>
-              <button className="hover:text-black transition-colors">
+              <button onClick={onThumbsDown} className="hover:text-black transition-colors">
                 <HugeiconRenderer icon={ThumbsDownIcon} size={18} />
               </button>
-              <button className="hover:text-black transition-colors">
+              <button onClick={onRegenerate} className="hover:text-black transition-colors">
                 <HugeiconRenderer icon={ArrowTurnBackwardIcon} size={18} />
               </button>
             </div>

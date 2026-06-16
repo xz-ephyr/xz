@@ -33,12 +33,14 @@ export function chatCompletion({
   modelName,
   projectContext,
   projectPath,
+  isThinkingEnabled,
 }: {
   messages: any[];
   apiKey: string;
   modelName: string;
   projectContext?: string;
   projectPath?: string;
+  isThinkingEnabled?: boolean;
 }) {
   const google = createGoogleGenerativeAI({
     apiKey,
@@ -77,6 +79,16 @@ export function chatCompletion({
     model: google(modelName),
     system: fullSystemPrompt,
     messages: normalizedMessages,
+    providerOptions: isThinkingEnabled
+      ? {
+          google: {
+            thinkingConfig: {
+              thinkingBudget: 1024,
+            },
+          },
+        }
+      : undefined,
+    // @ts-ignore
     maxSteps: 5,
     tools: {
       create_artifact: tool({
