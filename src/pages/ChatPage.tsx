@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import ChatInput from '../components/chat/ChatInput';
 import { UserBubble } from '../components/chat/UserBubble';
 import { AssistantBubble } from '../components/chat/AssistantBubble';
@@ -16,6 +17,43 @@ import { ProjectIDE } from '../components/artifacts/ProjectIDE';
 import { IDEPromptModal } from '../components/chat/IDEPromptModal';
 // @ts-ignore
 import { join, normalize } from '@tauri-apps/api/path';
+
+const mapUIMessageToLegacyMessage = (m: any): any => {
+  if (!m) return m;
+
+  // Extract content from parts if missing
+  let content = m.content || '';
+  if (!content && Array.isArray(m.parts)) {
+    content = m.parts
+      .filter((part: any) => part.type === 'text')
+      .map((part: any) => part.text)
+      .join('');
+  }
+
+  // Extract toolInvocations from parts
+  let toolInvocations = m.toolInvocations;
+  if (!toolInvocations && Array.isArray(m.parts)) {
+    toolInvocations = m.parts
+      .filter((part: any) => part.type === 'dynamic-tool' || part.type.startsWith('tool-'))
+      .map((part: any) => {
+        const toolName = part.toolName || part.type.replace(/^tool-/, '');
+        return {
+          state: part.state === 'output-available' ? 'result' : part.state === 'input-available' ? 'call' : part.state,
+          toolCallId: part.toolCallId,
+          toolName: toolName,
+          args: part.input,
+          result: part.output,
+          error: part.errorText
+        };
+      });
+  }
+
+  return {
+    ...m,
+    content,
+    toolInvocations
+  };
+};
 
 export const ChatPage = () => {
   const { uuid } = useParams();
@@ -106,24 +144,26 @@ export const ChatPage = () => {
   const currentModel = getModelForChatRequest(uuid);
   const apiKey = localStorage.getItem('api-key');
 
-  const { messages, append, isLoading, setMessages } = useChat({
-    // @ts-ignore
-    fetch: async (url: any, options: any) => {
-        const body = JSON.parse(options?.body as string);
-        const result = await chatCompletion({
-            messages: body.messages,
-            apiKey: body.apiKey,
-            modelName: body.model,
-            projectContext: projectContext
-        });
-        return result.toTextStreamResponse();
-    },
-    initialMessages: [],
-    body: {
-      model: currentModel,
-      apiKey: apiKey,
-    },
-    onFinish: async (message: any) => {
+  const { messages: rawMessages, sendMessage, isLoading, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      fetch: async (_url: any, options: any) => {
+          const body = JSON.parse(options?.body as string);
+          const result = await chatCompletion({
+              messages: body.messages,
+              apiKey: body.apiKey,
+              modelName: body.model,
+              projectContext: projectContext
+          });
+          return result.toTextStreamResponse();
+      },
+      body: {
+        model: currentModel,
+        apiKey: apiKey,
+      },
+    }),
+    messages: [],
+    onFinish: async (event: any) => {
+      const message = mapUIMessageToLegacyMessage(event.message);
       if (message.toolInvocations) {
         for (const toolInvocation of message.toolInvocations) {
           if (toolInvocation.toolName === 'create_artifact' && toolInvocation.state === 'result') {
@@ -156,6 +196,8 @@ export const ChatPage = () => {
     },
   }) as any;
 
+  const messages = rawMessages.map(mapUIMessageToLegacyMessage);
+
   useEffect(() => {
     setMessages([]);
   }, [uuid, setMessages]);
@@ -171,11 +213,10 @@ export const ChatPage = () => {
       // or the sidebar handles the creation.
     }
 
-    append({
-      role: 'user',
-      content,
+    sendMessage({
+      text: content,
     });
-  }, [uuid, apiKey, append]);
+  }, [uuid, apiKey, sendMessage]);
 
   const activeArtifact = getActiveArtifact();
   const activeArtifactVersions = activeArtifactId ? getArtifactVersions(activeArtifactId) : [];
