@@ -9,6 +9,7 @@ import {
   Copy01Icon,
   ArrowDown01Icon,
   Idea01Icon,
+  Tick01Icon,
 } from '@hugeicons/core-free-icons';
 
 const HugeiconRenderer = ({
@@ -54,6 +55,13 @@ export const AssistantBubble = React.memo(
     onRegenerate,
   }: AssistantBubbleProps) => {
     const [isReasoningOpen, setIsReasoningOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+      onCopy();
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
     
     const hasPendingTool = toolInvocations?.some((ti) => ti.state !== 'result');
     const showThinking = isStreaming && !content.trim() && !hasPendingTool;
@@ -109,8 +117,8 @@ export const AssistantBubble = React.memo(
         {!isStreaming && !isArtifactGenerating && (
           <div className="flex items-center justify-between gap-3 text-gray-600 -ml-1">
             <div className="flex gap-3 items-center">
-              <button onClick={onCopy} className="hover:text-black transition-colors">
-                <HugeiconRenderer icon={Copy01Icon} size={18} />
+              <button onClick={handleCopy} className="hover:text-black transition-colors" title="Copy response">
+                <HugeiconRenderer icon={copied ? Tick01Icon : Copy01Icon} size={18} className={copied ? 'text-green-600' : ''} />
               </button>
               <button onClick={onThumbsUp} className="hover:text-black transition-colors">
                 <HugeiconRenderer icon={ThumbsUpIcon} size={18} />

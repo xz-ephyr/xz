@@ -96,7 +96,7 @@ export function chatCompletion({
         parameters: createArtifactTool.parameters,
         // @ts-ignore
         execute: async (args: any) => {
-          return { success: true, ...args };
+          return { success: true, type: args.type, title: args.title, content: args.content };
         },
       }),
       read_file: tool({

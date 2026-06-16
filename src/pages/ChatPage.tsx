@@ -367,7 +367,7 @@ export const ChatPage = () => {
       const artifactTool = lastMessage.toolInvocations.find(
         (ti: any) => ti.toolName === 'create_artifact'
       );
-      if (artifactTool?.state === 'result') {
+      if (artifactTool?.state === 'result' && artifactTool?.args?.title) {
         const id = artifactTool.args.title.toLowerCase().replace(/\s+/g, '-');
         setActiveArtifactId(id);
 
