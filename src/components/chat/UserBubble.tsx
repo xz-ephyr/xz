@@ -10,8 +10,8 @@ export const UserBubble = React.memo(({ content }: { content: string }) => {
 
   useEffect(() => {
     if (contentRef.current) {
-      // Check if the content height exceeds 55px
-      if (contentRef.current.scrollHeight > 55) {
+      // Check if the content height exceeds 65px
+      if (contentRef.current.scrollHeight > 65) {
         setShouldShowToggle(true);
       } else {
         setShouldShowToggle(false);
@@ -22,12 +22,14 @@ export const UserBubble = React.memo(({ content }: { content: string }) => {
   return (
     <div className="flex flex-col items-end mb-6 group w-full">
       <div 
-        className="relative bg-[#f9f9f9] rounded-[8px] border border-neutral-200/50 text-base max-w-[calc(100%-55px)] transition-all duration-300 ease-in-out"
+        className={`relative bg-[#f9f9f9] rounded-[8px] text-sm max-w-[calc(100%-75px)] transition-all duration-300 ease-in-out ${
+          shouldShowToggle ? 'border border-neutral-200/50 shadow-sm' : ''
+        }`}
       >
         <div
           ref={contentRef}
           className={`px-4 py-2.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere] transition-all duration-300 ease-in-out ${
-            shouldShowToggle && !isExpanded ? 'max-h-[55px] overflow-hidden pb-6' : ''
+            shouldShowToggle && !isExpanded ? 'max-h-[65px] overflow-hidden pb-6' : ''
           }`}
         >
           {content}
