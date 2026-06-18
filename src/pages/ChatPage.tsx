@@ -252,7 +252,11 @@ export const ChatPage = () => {
             }
 
             if (toolName === 'create_artifact') {
-              const { type, title, content, file_path } = toolInvocation.args;
+              const args = toolInvocation.args || {};
+              const type = args.type || 'markdown';
+              const title = args.title || 'Untitled Artifact';
+              const content = args.content || '';
+              const file_path = args.file_path;
               addOrUpdateArtifact(type, title, content);
 
               // Auto-save in project mode
@@ -389,7 +393,7 @@ export const ChatPage = () => {
                     <AssistantBubble
                       content={m.content}
                       model={currentModel}
-                      isStreaming={isLoading && i === messages.length - 1}
+                      isStreaming={isLoading && messages.slice(i + 1).every((msg: any) => msg.role !== 'user')}
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
                       onCopy={() => navigator.clipboard.writeText(m.content)}
@@ -416,9 +420,8 @@ export const ChatPage = () => {
                         let type: any = 'markdown';
 
                         if (isArtifactTool) {
-                          if (!ti.args?.title) return null;
-                          title = ti.args.title;
-                          type = ti.args.type || 'markdown';
+                          title = ti.args?.title || 'Untitled Artifact';
+                          type = ti.args?.type || 'markdown';
                         } else if (isWriteFileTool || isEditFileTool) {
                           if (!ti.args?.file_path) return null;
                           title = ti.args.file_path;

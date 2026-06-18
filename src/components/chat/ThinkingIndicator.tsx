@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Idea01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 
 interface ThinkingIndicatorProps {
   model?: string;
@@ -9,41 +11,52 @@ export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) 
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="py-4 text-sm text-neutral-700" role="status" aria-live="polite">
+    <div className="py-2 text-sm text-neutral-700" role="status" aria-live="polite">
       <button
         type="button"
         onClick={() => setIsExpanded((current) => !current)}
         aria-expanded={isExpanded}
-        className="group flex items-center gap-2 rounded-md bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
-        aria-label={isExpanded ? 'Hide response status' : 'Show response status'}
+        className="group flex items-center gap-2.5 rounded-md bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 w-fit transition-opacity hover:opacity-80"
+        aria-label={isExpanded ? 'Hide reasoning process' : 'Show reasoning process'}
       >
-        <span className="thinking-shimmer-text text-xl font-medium">Thinking...</span>
-        <span
-          className={`flex h-6 w-6 items-center justify-center text-neutral-900 transition-transform duration-300 ${
+        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 border border-blue-100">
+           <HugeiconsIcon icon={Idea01Icon} size={14} className="text-blue-600 animate-pulse" />
+        </div>
+        <span className="text-[15px] font-medium text-neutral-600">
+           {reasoning ? 'Reasoning...' : 'Starting reasoning process...'}
+        </span>
+        <HugeiconsIcon
+          icon={ArrowDown01Icon}
+          size={14}
+          className={`text-neutral-400 transition-transform duration-300 ${
             isExpanded ? 'rotate-180' : 'rotate-0'
           }`}
-          aria-hidden="true"
-        >
-          <span className="h-2.5 w-2.5 rotate-45 border-b-2 border-r-2 border-current" />
-        </span>
+        />
       </button>
 
-      {isExpanded && (
-        <div className="mt-3 max-w-[720px] rounded-lg border border-neutral-100 bg-neutral-50 px-4 py-3 text-xs leading-5 text-neutral-500 shadow-sm">
-          {reasoning ? (
-            <div className="max-h-[300px] overflow-y-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-neutral-600 pr-2 thin-scrollbar-style">
-              {reasoning}
-            </div>
-          ) : (
-            <p>Waiting for the first response token from the model.</p>
-          )}
-          {model && (
-            <p className="mt-2 pt-2 border-t border-neutral-200/50 text-[10px] text-neutral-400">
-              Model: {model}
-            </p>
-          )}
+      <div 
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+          isExpanded ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="max-w-[720px] rounded-lg border border-neutral-200/60 bg-[#fafafa] px-5 py-4 text-[13px] leading-relaxed text-neutral-600 shadow-sm relative">
+            <div className="absolute left-0 top-3 bottom-3 w-0.5 bg-blue-500 rounded-r-full" />
+            {reasoning ? (
+              <div className="max-h-[300px] overflow-y-auto whitespace-pre-wrap font-mono thin-scrollbar">
+                {reasoning}
+              </div>
+            ) : (
+              <p className="animate-pulse">Waiting for the first response token from the model...</p>
+            )}
+            {model && (
+              <p className="mt-3 pt-3 border-t border-neutral-200/60 text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+                Model: {model}
+              </p>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

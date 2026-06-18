@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowUp02Icon, PlusSignIcon, Idea01Icon, Cancel01Icon, StopIcon } from '@hugeicons/core-free-icons';
 import { ThinScrollbar } from '../ui/ThinScrollbar';
@@ -15,6 +15,19 @@ interface ChatInputProps {
 export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkingEnabled, onToggleThinking }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustHeight();
+  }, [value]);
 
   const handleSend = () => {
     if (value.trim() && !isLoading) {
@@ -94,6 +107,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
           <div className="bg-[#fafafa] rounded-[12px] transition-all relative z-10 border border-neutral-200/60">
             <ThinScrollbar className="max-h-[145px]">
               <textarea
+                ref={textareaRef}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 onKeyDown={(e) => {
@@ -103,7 +117,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
                   }
                 }}
                 placeholder={isLoading ? 'Generating...' : 'Ask anything...'}
-                className="w-full py-3 px-4 resize-none outline-none text-base min-h-[44px] bg-transparent"
+                className="w-full py-3 px-4 resize-none outline-none text-base min-h-[48px] bg-transparent overflow-hidden"
                 rows={1}
                 disabled={isLoading}
               />
@@ -123,6 +137,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
         <div className="bg-[#f2f3f6] rounded-[12px] transition-all relative z-10 border border-neutral-200/60 shadow-sm">
           <ThinScrollbar className="max-h-[145px]">
             <textarea
+              ref={textareaRef}
               value={value}
               onChange={(e) => setValue(e.target.value)}
               onKeyDown={(e) => {
@@ -132,7 +147,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
                 }
               }}
               placeholder={isLoading ? 'Generating...' : 'Ask anything...'}
-              className="w-full py-3 px-4 resize-none outline-none text-sm min-h-[44px] bg-transparent"
+              className="w-full py-3 px-4 resize-none outline-none text-[15px] min-h-[48px] bg-transparent overflow-hidden"
               rows={1}
               disabled={isLoading}
             />

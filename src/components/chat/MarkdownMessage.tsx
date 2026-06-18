@@ -1,208 +1,117 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
-
-type Block =
-  | { type: 'code'; content: string; language?: string }
-  | { type: 'heading'; level: 1 | 2 | 3; content: string }
-  | { type: 'list'; ordered: boolean; items: string[] }
-  | { type: 'paragraph'; content: string };
-
-function parseBlocks(markdown: string): Block[] {
-  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
-  const blocks: Block[] = [];
-  let paragraph: string[] = [];
-  let listItems: string[] = [];
-  let listOrdered = false;
-  let codeLines: string[] = [];
-  let codeLanguage = '';
-  let inCodeBlock = false;
-
-  const flushParagraph = () => {
-    if (paragraph.length > 0) {
-      blocks.push({ type: 'paragraph', content: paragraph.join('\n') });
-      paragraph = [];
-    }
-  };
-
-  const flushList = () => {
-    if (listItems.length > 0) {
-      blocks.push({ type: 'list', ordered: listOrdered, items: listItems });
-      listItems = [];
-    }
-  };
-
-  lines.forEach((line) => {
-    const codeFence = line.match(/^```\s*([\w-]*)\s*$/);
-
-    if (codeFence) {
-      if (inCodeBlock) {
-        blocks.push({
-          type: 'code',
-          language: codeLanguage || undefined,
-          content: codeLines.join('\n'),
-        });
-        codeLines = [];
-        codeLanguage = '';
-        inCodeBlock = false;
-      } else {
-        flushParagraph();
-        flushList();
-        inCodeBlock = true;
-        codeLanguage = codeFence[1] || '';
-      }
-      return;
-    }
-
-    if (inCodeBlock) {
-      codeLines.push(line);
-      return;
-    }
-
-    if (!line.trim()) {
-      flushParagraph();
-      flushList();
-      return;
-    }
-
-    const heading = line.match(/^(#{1,3})\s+(.+)$/);
-    if (heading) {
-      flushParagraph();
-      flushList();
-      blocks.push({ type: 'heading', level: heading[1].length as 1 | 2 | 3, content: heading[2] });
-      return;
-    }
-
-    const unorderedItem = line.match(/^\s*[-*+]\s+(.+)$/);
-    const orderedItem = line.match(/^\s*\d+[.)]\s+(.+)$/);
-    if (unorderedItem || orderedItem) {
-      flushParagraph();
-      const ordered = Boolean(orderedItem);
-      if (listItems.length > 0 && listOrdered !== ordered) {
-        flushList();
-      }
-      listOrdered = ordered;
-      listItems.push((orderedItem || unorderedItem)?.[1] || '');
-      return;
-    }
-
-    flushList();
-    paragraph.push(line);
-  });
-
-  if (inCodeBlock) {
-    blocks.push({
-      type: 'code',
-      language: codeLanguage || undefined,
-      content: codeLines.join('\n'),
-    });
-  }
-
-  flushParagraph();
-  flushList();
-
-  return blocks;
-}
-
-function renderInline(text: string): React.ReactNode[] {
-  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g);
-
-  return parts.map((part, index) => {
-    if (!part) return null;
-
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return (
-        <code
-          key={index}
-          className="rounded bg-neutral-100 px-1 py-0.5 text-[0.9em] text-neutral-800 font-mono"
-        >
-          {part.slice(1, -1)}
-        </code>
-      );
-    }
-
-    if (
-      (part.startsWith('**') && part.endsWith('**')) ||
-      (part.startsWith('__') && part.endsWith('__'))
-    ) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
-    }
-
-    if (
-      (part.startsWith('*') && part.endsWith('*')) ||
-      (part.startsWith('_') && part.endsWith('_'))
-    ) {
-      return <em key={index}>{part.slice(1, -1)}</em>;
-    }
-
-    return part;
-  });
-}
 
 interface MarkdownMessageProps {
   content: string;
 }
 
 export function MarkdownMessage({ content }: MarkdownMessageProps) {
-  const blocks = parseBlocks(content);
-
   return (
-    <div className="space-y-3 break-words [overflow-wrap:anywhere]">
-      {blocks.map((block, index) => {
-        if (block.type === 'heading') {
-          if (block.level === 1) {
+    <div className="text-[15px] leading-relaxed break-words text-neutral-900">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code({ node, inline, className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || '');
+            const language = match ? match[1] : '';
+            
+            // Handle block code
+            if (!inline && match) {
+              return (
+                <CodeBlock
+                  language={language}
+                  content={String(children).replace(/\n$/, '')}
+                />
+              );
+            }
+            // Handle inline code or generic code block without language
+            if (!inline) {
+               return (
+                <CodeBlock
+                  language=""
+                  content={String(children).replace(/\n$/, '')}
+                />
+              );
+            }
             return (
-              <h1 key={index} className="text-2xl font-semibold">
-                {renderInline(block.content)}
-              </h1>
+              <code className="rounded bg-neutral-100/80 border border-neutral-200/50 px-1.5 py-0.5 text-[0.85em] text-neutral-800 font-mono" {...props}>
+                {children}
+              </code>
             );
-          }
-
-          if (block.level === 2) {
+          },
+          p({ children }) {
+            return <p className="mb-4 last:mb-0">{children}</p>;
+          },
+          ul({ children }) {
+            return <ul className="list-disc pl-5 mb-4 space-y-1">{children}</ul>;
+          },
+          ol({ children }) {
+            return <ol className="list-decimal pl-5 mb-4 space-y-1">{children}</ol>;
+          },
+          li({ children }) {
+            return <li>{children}</li>;
+          },
+          h1({ children }) {
+            return <h1 className="text-2xl font-semibold mb-4 mt-6 text-neutral-900">{children}</h1>;
+          },
+          h2({ children }) {
+            return <h2 className="text-xl font-semibold mb-3 mt-5 text-neutral-900">{children}</h2>;
+          },
+          h3({ children }) {
+            return <h3 className="text-lg font-semibold mb-3 mt-4 text-neutral-900">{children}</h3>;
+          },
+          h4({ children }) {
+            return <h4 className="text-base font-semibold mb-2 mt-4 text-neutral-900">{children}</h4>;
+          },
+          table({ children }) {
             return (
-              <h2 key={index} className="text-xl font-semibold">
-                {renderInline(block.content)}
-              </h2>
+              <div className="overflow-x-auto mb-4 w-full">
+                <table className="min-w-full divide-y divide-neutral-200 border border-neutral-200 rounded-lg">
+                  {children}
+                </table>
+              </div>
             );
+          },
+          thead({ children }) {
+            return <thead className="bg-neutral-50/80">{children}</thead>;
+          },
+          th({ children }) {
+            return <th className="px-4 py-2.5 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider border-b border-neutral-200">{children}</th>;
+          },
+          tbody({ children }) {
+            return <tbody className="bg-white divide-y divide-neutral-100">{children}</tbody>;
+          },
+          td({ children }) {
+            return <td className="px-4 py-2.5 whitespace-nowrap text-sm text-neutral-700">{children}</td>;
+          },
+          blockquote({ children }) {
+            return (
+              <blockquote className="border-l-4 border-neutral-300 pl-4 py-1 italic text-neutral-600 mb-4 bg-neutral-50/50 rounded-r-lg">
+                {children}
+              </blockquote>
+            );
+          },
+          a({ href, children }) {
+            return (
+              <a 
+                href={href} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-600 hover:text-blue-700 hover:underline font-medium transition-colors"
+              >
+                {children}
+              </a>
+            );
+          },
+          hr() {
+            return <hr className="my-6 border-neutral-200" />;
           }
-
-          return (
-            <h3 key={index} className="text-lg font-semibold">
-              {renderInline(block.content)}
-            </h3>
-          );
-        }
-
-        if (block.type === 'list') {
-          const ListTag = block.ordered ? 'ol' : 'ul';
-          const listClassName = block.ordered
-            ? 'list-decimal space-y-1 pl-5 text-base'
-            : 'list-disc space-y-1 pl-5 text-base';
-
-          return (
-            <ListTag key={index} className={listClassName}>
-              {block.items.map((item, itemIndex) => (
-                <li key={itemIndex}>{renderInline(item)}</li>
-              ))}
-            </ListTag>
-          );
-        }
-
-        if (block.type === 'code') {
-          return (
-            <CodeBlock
-              key={index}
-              content={block.content}
-              language={block.language}
-            />
-          );
-        }
-
-        return (
-          <p key={index} className="whitespace-pre-wrap leading-7 text-base">
-            {renderInline(block.content)}
-          </p>
-        );
-      })}
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }

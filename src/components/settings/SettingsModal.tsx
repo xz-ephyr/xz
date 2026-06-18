@@ -76,7 +76,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[4px] z-50">
-      <div className="bg-white rounded-[16px] w-[580px] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden max-h-[85vh]">
+      <div className="bg-white rounded-[16px] w-[1160px] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden max-h-[85vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/50">
           <h2 className="text-[18px] font-bold text-neutral-800 flex items-center gap-2">

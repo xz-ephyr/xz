@@ -7,10 +7,9 @@ import {
   ThumbsDownIcon,
   ArrowTurnBackwardIcon,
   Copy01Icon,
-  ArrowDown01Icon,
-  Idea01Icon,
   Tick01Icon,
 } from '@hugeicons/core-free-icons';
+import { useTypewriter } from '../../hooks/useTypewriter';
 
 const HugeiconRenderer = ({
   icon: Icon,
@@ -42,6 +41,36 @@ interface AssistantBubbleProps {
   onRegenerate: () => void;
 }
 
+const ThoughtLabel = ({ isActivelyThinking, isOpen, onClick }: { isActivelyThinking: boolean, isOpen: boolean, onClick: () => void }) => {
+  const [seconds, setSeconds] = useState(0);
+
+  React.useEffect(() => {
+    if (!isActivelyThinking) return;
+    const interval = setInterval(() => {
+      setSeconds(s => s + 0.1);
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isActivelyThinking]);
+
+  const displayTime = seconds > 0 ? `${seconds.toFixed(1)}s` : '';
+  const label = isActivelyThinking 
+    ? `Thinking... ${displayTime}` 
+    : `Thought for ${displayTime}`;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-center bg-transparent p-0 text-left outline-none w-fit"
+      aria-expanded={isOpen}
+    >
+      <span className={isActivelyThinking ? 'thinking-shimmer-text text-base font-medium cursor-pointer' : 'text-base font-medium text-neutral-400 cursor-pointer'}>
+        {label}
+      </span>
+    </button>
+  );
+};
+
 export const AssistantBubble = React.memo(
   ({
     content,
@@ -70,51 +99,47 @@ export const AssistantBubble = React.memo(
     const isArtifactGenerating = artifactTool && artifactTool.state !== 'result';
     const intentMessage = artifactTool?.args?.intent_message;
 
+    const showThought = reasoning || showThinking;
+    
+    const typewrittenReasoning = useTypewriter(reasoning || '', isStreaming);
+    const typewrittenContent = useTypewriter(content || '', isStreaming);
+
     return (
       <div className="mb-6 w-full">
-        {showThinking ? (
-          <ThinkingIndicator model={model} reasoning={reasoning} />
-        ) : (
-          <div className="text-base py-4 break-words [overflow-wrap:anywhere] flex flex-col gap-2">
-            {intentMessage && (
-              <div className="font-medium text-neutral-800 mb-1">{intentMessage}</div>
-            )}
+        <div className="text-base py-4 break-words flex flex-col gap-2">
+          {intentMessage && (
+            <div className="font-medium text-neutral-800 mb-1">{intentMessage}</div>
+          )}
 
-            {isArtifactGenerating && (
-              <div className="flex items-center gap-2 text-neutral-500 italic">
-                <span className="thinking-shimmer-text">⏳ Generating application...</span>
-              </div>
-            )}
-            
-            {reasoning && (
-              <div className="border border-neutral-200 rounded-lg overflow-hidden">
-                <button 
-                  onClick={() => setIsReasoningOpen(!isReasoningOpen)}
-                  className="w-full px-3 py-2 flex items-center justify-between text-xs font-medium text-neutral-600 bg-neutral-50 hover:bg-neutral-100"
-                >
-                  <span className="flex items-center gap-2">
-                    <HugeiconRenderer icon={Idea01Icon} size={14} /> 
-                    {isReasoningOpen ? 'Hide' : 'Show'} reasoning
-                  </span>
-                  <HugeiconRenderer icon={ArrowDown01Icon} size={12} className={isReasoningOpen ? 'rotate-180' : ''} />
-                </button>
-                {isReasoningOpen && (
-                  <div className="px-3 py-2 text-neutral-600 bg-white border-t border-neutral-100 text-xs whitespace-pre-wrap">
-                    {reasoning}
-                  </div>
-                )}
-              </div>
-            )}
+          {isArtifactGenerating && (
+            <div className="flex items-center gap-2 text-neutral-500 italic">
+              <span className="thinking-shimmer-text">⏳ Generating application...</span>
+            </div>
+          )}
+          
+          {showThought && (
+            <div className="flex flex-col gap-2">
+              <ThoughtLabel 
+                isActivelyThinking={showThinking} 
+                isOpen={isReasoningOpen} 
+                onClick={() => setIsReasoningOpen(!isReasoningOpen)} 
+              />
+              {isReasoningOpen && typewrittenReasoning && (
+                <div className="w-full whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-neutral-500 thin-scrollbar pt-1">
+                  {typewrittenReasoning}
+                </div>
+              )}
+            </div>
+          )}
 
-            {content && (
-              <div className="font-medium text-neutral-900">
-                <MarkdownMessage content={content} />
-              </div>
-            )}
-          </div>
-        )}
+          {typewrittenContent && (
+            <div className="font-medium text-neutral-900">
+              <MarkdownMessage content={typewrittenContent} />
+            </div>
+          )}
+        </div>
 
-        {!isStreaming && !isArtifactGenerating && (
+        {!isStreaming && !hasPendingTool && (
           <div className="flex items-center justify-between gap-3 text-gray-600 -ml-1">
             <div className="flex gap-3 items-center">
               <button onClick={handleCopy} className="hover:text-black transition-colors" title="Copy response">

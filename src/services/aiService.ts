@@ -139,7 +139,7 @@ export function chatCompletion({
             description: createArtifactTool.description,
             parameters: createArtifactTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async (args: any) => ({ success: true, type: args.type, title: args.title, content: args.content }),
+            execute: async (args: any) => ({ success: true, type: args.type || 'markdown', title: args.title || 'Untitled Artifact', content: args.content || '' }),
           }),
           read_file: tool({
             description: readFileTool.description,
