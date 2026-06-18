@@ -9,7 +9,6 @@ import {
   Copy01Icon,
   Tick01Icon,
 } from '@hugeicons/core-free-icons';
-import { useTypewriter } from '../../hooks/useTypewriter';
 
 const HugeiconRenderer = ({
   icon: Icon,
@@ -100,9 +99,6 @@ export const AssistantBubble = React.memo(
     const intentMessage = artifactTool?.args?.intent_message;
 
     const showThought = reasoning || showThinking;
-    
-    const typewrittenReasoning = useTypewriter(reasoning || '', isStreaming);
-    const typewrittenContent = useTypewriter(content || '', isStreaming);
 
     return (
       <div className="mb-6 w-full">
@@ -124,17 +120,17 @@ export const AssistantBubble = React.memo(
                 isOpen={isReasoningOpen} 
                 onClick={() => setIsReasoningOpen(!isReasoningOpen)} 
               />
-              {isReasoningOpen && typewrittenReasoning && (
+              {isReasoningOpen && reasoning && (
                 <div className="w-full whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-neutral-500 thin-scrollbar pt-1">
-                  {typewrittenReasoning}
+                  {reasoning}
                 </div>
               )}
             </div>
           )}
 
-          {typewrittenContent && (
+          {content && (
             <div className="font-medium text-neutral-900">
-              <MarkdownMessage content={typewrittenContent} />
+              <MarkdownMessage content={content} />
             </div>
           )}
         </div>
