@@ -371,7 +371,7 @@ export const ChatPage = () => {
           className={`flex-1 overflow-y-auto ${messages.length === 0 ? 'flex flex-col items-center justify-start pt-[15vh] p-4' : ''}`}
         >
           {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
-          <div className="max-w-[720px] w-full mx-auto px-4">
+          <div className="w-full mx-auto px-4" style={{ maxWidth: 'min(720px, 100%)' }}>
             {error && (
               <div className="my-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {getAIErrorMessage(error)}
@@ -478,7 +478,7 @@ export const ChatPage = () => {
         </div>
 
         {messages.length > 0 && (
-          <div className="shrink-0 pb-8 w-full max-w-[720px] mx-auto px-4 bg-white">
+          <div className="shrink-0 pb-8 w-full mx-auto px-4 bg-white" style={{ maxWidth: 'min(720px, 100%)' }}>
             <ChatInput
               onSend={handleSend}
               isLoading={isLoading}

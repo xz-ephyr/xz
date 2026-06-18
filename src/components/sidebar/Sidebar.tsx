@@ -16,8 +16,10 @@ import SidebarTab from './SidebarTab';
 import ProjectItem from './ProjectItem';
 import { SettingsModal } from '../settings/SettingsModal';
 import { ChatSessionManager } from '../../services/ChatSessionManager';
+import { FileSystemService } from '../../services/FileSystemService';
 import { Project } from '../../types/chat';
 import { isTauri } from '../../lib/tauri';
+
 
 // Helper component to render Hugeicons in SidebarTabs
 const HugeiconRenderer = ({ icon: Icon, size = 18 }: { icon: any; size?: number }) => (
@@ -100,8 +102,8 @@ export default function Sidebar() {
         if ('showDirectoryPicker' in window) {
           const dirHandle = await (window as any).showDirectoryPicker();
           const folderName = dirHandle.name || 'New Project';
-          const fakePath = `/web-projects/${folderName}`;
-          const newProject = ChatSessionManager.createProject(folderName, fakePath);
+          const projectPath = await FileSystemService.importDirectory(dirHandle);
+          const newProject = ChatSessionManager.createProject(folderName, projectPath);
           setProjects(ChatSessionManager.getProjects());
           navigate(`/project/${newProject.id}`);
         } else {

@@ -229,7 +229,7 @@ export const ChatsPage = () => {
 
   return (
     <div className="flex-1 bg-white overflow-y-auto thin-scrollbar">
-      <div className="max-w-[800px] mx-auto px-6 py-12">
+      <div className="mx-auto px-6 py-12" style={{ maxWidth: 'min(800px, 100%)' }}>
         {/* Header */}
         <div className="flex flex-col gap-6 mb-8">
           <div className="flex items-center justify-between">

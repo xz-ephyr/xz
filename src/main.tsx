@@ -1,11 +1,13 @@
-// Your rules resume
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App'; // Assuming we need to recreate App.tsx too or it's missing
-import './index.css'; // Assuming we need to recreate this too
+import App from './App';
+import { ZoomProvider } from './components/layout/ZoomProvider';
+import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <ZoomProvider>
+      <App />
+    </ZoomProvider>
   </React.StrictMode>
 );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ViewIcon, ViewOffSlashIcon, Settings02Icon, Key01Icon, ZapIcon, GlobeIcon } from '@hugeicons/core-free-icons';
+import { useZoomContext } from '../layout/ZoomProvider';
 import {
   MODEL_MODE_STORAGE_KEY,
   MODEL_MODES,
@@ -72,11 +73,67 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     onClose();
   };
 
+  function ZoomSlider() {
+    const { zoom, zoomIn, zoomOut, resetZoom, setZoomLevel } = useZoomContext();
+
+    const presets = [0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 2];
+
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+            Zoom
+          </label>
+          <button
+            onClick={resetZoom}
+            className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors underline underline-offset-2"
+          >
+            Reset to 100%
+          </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={zoomOut}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors text-neutral-700 text-lg font-medium"
+            title="Zoom out (Ctrl+-)"
+          >
+            −
+          </button>
+          <div className="flex-1 flex items-center gap-1">
+            {presets.map((level) => (
+              <button
+                key={level}
+                onClick={() => setZoomLevel(level)}
+                className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  zoom === level
+                    ? 'bg-black text-white shadow-sm'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                }`}
+              >
+                {Math.round(level * 100)}%
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={zoomIn}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors text-neutral-700 text-lg font-medium"
+            title="Zoom in (Ctrl+=)"
+          >
+            +
+          </button>
+        </div>
+        <p className="text-xs text-neutral-500">
+          Use Ctrl/Cmd + scroll or Ctrl/Cmd + +/- to zoom. Current: {Math.round(zoom * 100)}%
+        </p>
+      </div>
+    );
+  }
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[4px] z-50">
-      <div className="bg-white rounded-[16px] w-[1160px] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden max-h-[85vh]">
+      <div className="bg-white rounded-[16px] w-[min(1160px,90vw)] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden max-h-[85vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/50">
           <h2 className="text-[18px] font-bold text-neutral-800 flex items-center gap-2">
@@ -141,6 +198,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="border-t border-neutral-100 pt-6">
+                <ZoomSlider />
               </div>
             </div>
           ) : (

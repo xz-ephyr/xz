@@ -10,6 +10,42 @@ export interface FileEntry {
 // In-memory virtual filesystem for web-browser mode
 const webVirtualFS: Record<string, string> = {};
 
+// Restore previously saved files from localStorage on initialisation
+try {
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('vfs:')) {
+      const path = key.slice(4);
+      const content = localStorage.getItem(key);
+      if (content !== null) {
+        webVirtualFS[path] = content;
+      }
+    }
+  }
+} catch {
+  // localStorage not available
+}
+
+// Recursively read all files from a FileSystemDirectoryHandle into the virtual FS
+async function importDirectoryHandle(
+  dirHandle: FileSystemDirectoryHandle,
+  basePath: string,
+): Promise<void> {
+  for await (const [name, handle] of (dirHandle as any).entries()) {
+    const fullPath = basePath + '/' + name;
+    if (handle.kind === 'directory') {
+      await importDirectoryHandle(handle as FileSystemDirectoryHandle, fullPath);
+    } else {
+      try {
+        const file = await (handle as FileSystemFileHandle).getFile();
+        webVirtualFS[fullPath] = await file.text();
+      } catch {
+        // skip files that can't be read
+      }
+    }
+  }
+}
+
 // ------------------------------------------------------------------
 // Tauri-only dynamic imports (to avoid crashing in a browser build)
 // ------------------------------------------------------------------
@@ -116,6 +152,13 @@ export const FileSystemService = {
 
     // Web fallback: read from virtual FS
     return webVirtualFS[path] ?? '';
+  },
+
+  importDirectory: async (dirHandle: FileSystemDirectoryHandle): Promise<string> => {
+    const name = dirHandle.name;
+    webVirtualFS['/web-projects/' + name + '/'] = ''; // mark root
+    await importDirectoryHandle(dirHandle, '/web-projects/' + name);
+    return '/web-projects/' + name;
   },
 
   saveFile: async (path: string, content: string): Promise<void> => {
