@@ -84,7 +84,7 @@ export const FileSystemService = {
     }
   },
 
-  // Highly compressed tree for AI context (< 100 tokens target)
+  // Highly compressed tree for AI context (limited to the first 50 lines)
   getCompressedTree: (tree: FileEntry[]): string => {
     const summarize = (entries: FileEntry[], indent = ''): string => {
       return entries
@@ -127,7 +127,7 @@ export const FileSystemService = {
         if (dirPath) {
           try {
             await mkdir(dirPath, { recursive: true });
-          } catch (_e) {
+          } catch {
             // Directory may already exist — ignore
           }
         }
@@ -146,7 +146,7 @@ export const FileSystemService = {
       if (content.length < 500_000) {
         localStorage.setItem(storageKey, content);
       }
-    } catch (_e) {
+    } catch {
       // localStorage quota exceeded — in-memory only
     }
   },

@@ -13,17 +13,8 @@ import {
   writeToPlanTool,
 } from './ai/config';
 import { FileSystemService } from './FileSystemService';
-import { isTauri } from '../lib/tauri';
+import { resolveProjectPath } from '../lib/projectPaths';
 import { API_KEYS, getModelDefinition } from '../config/models';
-
-const safeJoin = async (base: string, segment: string): Promise<string> => {
-  if (isTauri()) {
-    const { join } = await import('@tauri-apps/api/path');
-    return join(base, segment);
-  }
-  const sep = base.endsWith('/') || base.endsWith('\\') ? '' : '/';
-  return base + sep + segment;
-};
 
 export function chatCompletion({
   messages,
@@ -45,20 +36,59 @@ export function chatCompletion({
     groq: createGroq({ apiKey: getApiKey(API_KEYS.groq) }),
     mistral: createMistral({ apiKey: getApiKey(API_KEYS.mistral) }),
     openai: createOpenAI({ apiKey: getApiKey(API_KEYS.openai) }),
-    openrouter: createOpenAI({ baseURL: 'https://openrouter.ai/api/v1', apiKey: getApiKey(API_KEYS.openrouter) }),
-    cerebras: createOpenAI({ baseURL: 'https://api.cerebras.ai/v1', apiKey: getApiKey(API_KEYS.cerebras) }),
-    opencodezen: createOpenAI({ baseURL: 'https://api.opencodezen.com/v1', apiKey: getApiKey(API_KEYS.opencodezen) }),
-    github: createOpenAI({ baseURL: 'https://models.inference.ai.azure.com', apiKey: getApiKey(API_KEYS.github) }),
-    cloudflare: createOpenAI({ baseURL: 'https://api.cloudflare.com/client/v4/accounts/default/ai/v1', apiKey: getApiKey(API_KEYS.cloudflare) }),
-    cohere: createOpenAI({ baseURL: 'https://api.cohere.ai/v1', apiKey: getApiKey(API_KEYS.cohere) }),
-    zai: createOpenAI({ baseURL: 'https://open.bigmodel.cn/api/paas/v4', apiKey: getApiKey(API_KEYS.zai) }),
-    nvidia: createOpenAI({ baseURL: 'https://integrate.api.nvidia.com/v1', apiKey: getApiKey(API_KEYS.nvidia) }),
-    huggingface: createOpenAI({ baseURL: 'https://api-inference.huggingface.co/v1', apiKey: getApiKey(API_KEYS.huggingface) }),
-    ollama: createOpenAI({ baseURL: 'https://api.ollama.cloud/v1', apiKey: getApiKey(API_KEYS.ollama) }),
-    kilo: createOpenAI({ baseURL: 'https://api.kilo.gateway.ai/v1', apiKey: getApiKey(API_KEYS.kilo) }),
-    pollinations: createOpenAI({ baseURL: 'https://openai.pollinations.ai', apiKey: getApiKey(API_KEYS.pollinations) }),
+    openrouter: createOpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: getApiKey(API_KEYS.openrouter),
+    }),
+    cerebras: createOpenAI({
+      baseURL: 'https://api.cerebras.ai/v1',
+      apiKey: getApiKey(API_KEYS.cerebras),
+    }),
+    opencodezen: createOpenAI({
+      baseURL: 'https://api.opencodezen.com/v1',
+      apiKey: getApiKey(API_KEYS.opencodezen),
+    }),
+    github: createOpenAI({
+      baseURL: 'https://models.inference.ai.azure.com',
+      apiKey: getApiKey(API_KEYS.github),
+    }),
+    cloudflare: createOpenAI({
+      baseURL: 'https://api.cloudflare.com/client/v4/accounts/default/ai/v1',
+      apiKey: getApiKey(API_KEYS.cloudflare),
+    }),
+    cohere: createOpenAI({
+      baseURL: 'https://api.cohere.ai/v1',
+      apiKey: getApiKey(API_KEYS.cohere),
+    }),
+    zai: createOpenAI({
+      baseURL: 'https://open.bigmodel.cn/api/paas/v4',
+      apiKey: getApiKey(API_KEYS.zai),
+    }),
+    nvidia: createOpenAI({
+      baseURL: 'https://integrate.api.nvidia.com/v1',
+      apiKey: getApiKey(API_KEYS.nvidia),
+    }),
+    huggingface: createOpenAI({
+      baseURL: 'https://api-inference.huggingface.co/v1',
+      apiKey: getApiKey(API_KEYS.huggingface),
+    }),
+    ollama: createOpenAI({
+      baseURL: 'https://api.ollama.cloud/v1',
+      apiKey: getApiKey(API_KEYS.ollama),
+    }),
+    kilo: createOpenAI({
+      baseURL: 'https://api.kilo.gateway.ai/v1',
+      apiKey: getApiKey(API_KEYS.kilo),
+    }),
+    pollinations: createOpenAI({
+      baseURL: 'https://openai.pollinations.ai',
+      apiKey: getApiKey(API_KEYS.pollinations),
+    }),
     llm7: createOpenAI({ baseURL: 'https://api.llm7.ai/v1', apiKey: getApiKey(API_KEYS.llm7) }),
-    ovh: createOpenAI({ baseURL: 'https://api.ovh.com/v1/ai/endpoints', apiKey: getApiKey(API_KEYS.ovh) }),
+    ovh: createOpenAI({
+      baseURL: 'https://api.ovh.com/v1/ai/endpoints',
+      apiKey: getApiKey(API_KEYS.ovh),
+    }),
     reka: createOpenAI({ baseURL: 'https://api.reka.ai/v1', apiKey: getApiKey(API_KEYS.reka) }),
   };
 
@@ -139,7 +169,12 @@ export function chatCompletion({
             description: createArtifactTool.description,
             parameters: createArtifactTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async (args: any) => ({ success: true, type: args.type || 'markdown', title: args.title || 'Untitled Artifact', content: args.content || '' }),
+            execute: async (args: any) => ({
+              success: true,
+              type: args.type || 'markdown',
+              title: args.title || 'Untitled Artifact',
+              content: args.content || '',
+            }),
           }),
           read_file: tool({
             description: readFileTool.description,
@@ -148,11 +183,13 @@ export function chatCompletion({
             execute: async ({ file_path }: { file_path: string }) => {
               if (!projectPath) return { error: 'Not in project mode.' };
               try {
-                const sanitizedPath = file_path.replace(/^(\.\.[\\/])+/, '');
-                const fullPath = await safeJoin(projectPath, sanitizedPath);
+                const fullPath = await resolveProjectPath(projectPath, file_path);
+                if (!fullPath) return { error: `Path escapes project: ${file_path}.` };
                 const content = await FileSystemService.getFileContent(fullPath);
                 return { content, file_path };
-              } catch (e: any) { return { error: `Failed to read: ${e.message || e}` }; }
+              } catch (e: any) {
+                return { error: `Failed to read: ${e.message || e}` };
+              }
             },
           }),
           write_file: tool({
@@ -160,30 +197,44 @@ export function chatCompletion({
             parameters: writeFileTool.parameters,
             // @ts-expect-error - dynamic types
             execute: async ({ file_path, content }: { file_path: string; content: string }) => {
-              if (!projectPath) return { success: true, is_artifact: true, title: file_path, content };
+              if (!projectPath)
+                return { success: true, is_artifact: true, title: file_path, content };
               try {
-                const sanitizedPath = file_path.replace(/^(\.\.[\\/])+/, '');
-                const fullPath = await safeJoin(projectPath, sanitizedPath);
+                const fullPath = await resolveProjectPath(projectPath, file_path);
+                if (!fullPath) return { error: `Path escapes project: ${file_path}.` };
                 await FileSystemService.saveFile(fullPath, content);
                 return { success: true, file_path, content };
-              } catch (e: any) { return { error: `Failed to write: ${e.message || e}` }; }
+              } catch (e: any) {
+                return { error: `Failed to write: ${e.message || e}` };
+              }
             },
           }),
           edit_file: tool({
             description: editFileTool.description,
             parameters: editFileTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async ({ file_path, target_content, replacement_content }: { file_path: string; target_content: string; replacement_content: string }) => {
+            execute: async ({
+              file_path,
+              target_content,
+              replacement_content,
+            }: {
+              file_path: string;
+              target_content: string;
+              replacement_content: string;
+            }) => {
               if (!projectPath) return { error: 'Not in project mode.' };
               try {
-                const sanitizedPath = file_path.replace(/^(\.\.[\\/])+/, '');
-                const fullPath = await safeJoin(projectPath, sanitizedPath);
+                const fullPath = await resolveProjectPath(projectPath, file_path);
+                if (!fullPath) return { error: `Path escapes project: ${file_path}.` };
                 const currentContent = await FileSystemService.getFileContent(fullPath);
-                if (!currentContent.includes(target_content)) return { error: `Target content not found in ${file_path}.` };
+                if (!currentContent.includes(target_content))
+                  return { error: `Target content not found in ${file_path}.` };
                 const updatedContent = currentContent.replace(target_content, replacement_content);
                 await FileSystemService.saveFile(fullPath, updatedContent);
                 return { success: true, file_path, content: updatedContent };
-              } catch (e: any) { return { error: `Failed to edit: ${e.message || e}` }; }
+              } catch (e: any) {
+                return { error: `Failed to edit: ${e.message || e}` };
+              }
             },
           }),
           write_to_plan: tool({
@@ -193,10 +244,13 @@ export function chatCompletion({
             execute: async ({ filename, content }: { filename: string; content: string }) => {
               if (projectPath) {
                 try {
-                  const fullPath = await safeJoin(projectPath, filename);
+                  const fullPath = await resolveProjectPath(projectPath, filename);
+                  if (!fullPath) return { error: `Path escapes project: ${filename}.` };
                   await FileSystemService.saveFile(fullPath, content);
                   return { success: true, filename, content };
-                } catch (e: any) { return { error: `Failed to write plan: ${e.message || e}` }; }
+                } catch (e: any) {
+                  return { error: `Failed to write plan: ${e.message || e}` };
+                }
               }
               return { success: true, is_artifact: true, title: filename, content };
             },
