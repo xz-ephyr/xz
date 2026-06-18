@@ -3,7 +3,7 @@ import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGateway } from '@ai-sdk/gateway';
-import { streamText, tool } from 'ai';
+import { convertToModelMessages, streamText, stepCountIs, tool } from 'ai';
 import {
   SYSTEM_PROMPT,
   createArtifactTool,
@@ -16,18 +16,32 @@ import { FileSystemService } from './FileSystemService';
 import { resolveProjectPath } from '../lib/projectPaths';
 import { API_KEYS, getModelDefinition } from '../config/models';
 
-export function chatCompletion({
+export function getAIErrorMessage(error: unknown) {
+  if (error == null) return 'The AI request failed for an unknown reason.';
+  if (typeof error === 'string') return error;
+  if (error instanceof Error) return error.message;
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return 'The AI request failed and the error could not be serialized.';
+  }
+}
+
+export async function chatCompletion({
   messages,
   modelName,
   projectContext,
   projectPath,
   isThinkingEnabled,
+  abortSignal,
 }: {
   messages: any[];
   modelName: string;
   projectContext?: string;
   projectPath?: string;
   isThinkingEnabled?: boolean;
+  abortSignal?: AbortSignal;
 }) {
   const getApiKey = (key: string) => localStorage.getItem(key) || '';
 
@@ -124,20 +138,9 @@ export function chatCompletion({
     ? `${SYSTEM_PROMPT}\n\n### PROJECT CONTEXT\nBelow is the current file tree of the project:\n${projectContext}\n\nMaintain this structure when creating or updating files.`
     : SYSTEM_PROMPT;
 
-  const normalizedMessages = messages
-    .filter((m: any) => m.role !== 'system')
-    .map((m: any) => {
-      if (m.role === 'tool') return m;
-      const role = m.role as 'user' | 'assistant';
-      if (Array.isArray(m.parts) && m.parts.length > 0) {
-        const text = m.parts
-          .filter((p: any) => p.type === 'text')
-          .map((p: any) => p.text ?? '')
-          .join('');
-        if (text) return { role, content: text };
-      }
-      return { role, content: m.content ?? '' };
-    });
+  const normalizedMessages = await convertToModelMessages(
+    messages.filter((m: any) => m.role !== 'system')
+  );
 
   const getStreamResult = (modelIdx: number): any => {
     const currentModelName = uniqueChain[modelIdx];
@@ -161,9 +164,12 @@ export function chatCompletion({
         system: fullSystemPrompt,
         messages: normalizedMessages,
         providerOptions,
-        // @ts-expect-error - dynamic types
-        maxSteps: 5,
-        experimental_retry: { maxRetries: 1 },
+        abortSignal,
+        maxRetries: 2,
+        stopWhen: stepCountIs(5),
+        onError({ error }) {
+          console.error(`AI stream failed for ${currentModelName}:`, getAIErrorMessage(error));
+        },
         tools: {
           create_artifact: tool({
             description: createArtifactTool.description,

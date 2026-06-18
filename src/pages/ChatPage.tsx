@@ -11,7 +11,7 @@ import { resolveProjectPath } from '../lib/projectPaths';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { ArtifactPane } from '../components/artifacts/ArtifactPane';
 import { ArtifactPreviewCard } from '../components/artifacts/ArtifactPreviewCard';
-import { chatCompletion } from '../services/aiService';
+import { chatCompletion, getAIErrorMessage } from '../services/aiService';
 import { Project } from '../types/chat';
 import { FileSystemService } from '../services/FileSystemService';
 import { ProjectIDE } from '../components/artifacts/ProjectIDE';
@@ -204,6 +204,7 @@ export const ChatPage = () => {
     isLoading,
     stop,
     setMessages,
+    error,
   } = useChat({
     transport: new DefaultChatTransport({
       fetch: async (_url: any, options: any) => {
@@ -214,14 +215,20 @@ export const ChatPage = () => {
           projectContext: projectContextRef.current, // ✅ always current value
           projectPath: projectRef.current?.path, // ✅ always current value
           isThinkingEnabled: isThinkingEnabled,
+          abortSignal: options?.signal,
         });
-        return (result as any).toUIMessageStreamResponse();
+        return (result as any).toUIMessageStreamResponse({
+          getErrorMessage: getAIErrorMessage,
+        });
       },
       body: {
         model: currentModel,
       },
     }),
     messages: [],
+    onError: (chatError: Error) => {
+      console.error('Chat stream failed:', getAIErrorMessage(chatError));
+    },
     onFinish: async (event: any) => {
       const message = mapUIMessageToLegacyMessage(event.message);
       if (message.toolInvocations) {
@@ -365,6 +372,11 @@ export const ChatPage = () => {
         >
           {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
           <div className="max-w-[720px] w-full mx-auto px-4">
+            {error && (
+              <div className="my-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {getAIErrorMessage(error)}
+              </div>
+            )}
             {messages.map((m: any, i: number) => (
               <React.Fragment key={m.id || i}>
                 {m.role === 'user' ? (
