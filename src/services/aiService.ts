@@ -16,18 +16,32 @@ import { FileSystemService } from './FileSystemService';
 import { resolveProjectPath } from '../lib/projectPaths';
 import { API_KEYS, getModelDefinition } from '../config/models';
 
+export function getAIErrorMessage(error: unknown) {
+  if (error == null) return 'The AI request failed for an unknown reason.';
+  if (typeof error === 'string') return error;
+  if (error instanceof Error) return error.message;
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return 'The AI request failed and the error could not be serialized.';
+  }
+}
+
 export async function chatCompletion({
   messages,
   modelName,
   projectContext,
   projectPath,
   isThinkingEnabled,
+  abortSignal,
 }: {
   messages: any[];
   modelName: string;
   projectContext?: string;
   projectPath?: string;
   isThinkingEnabled?: boolean;
+  abortSignal?: AbortSignal;
 }) {
   const getApiKey = (key: string) => localStorage.getItem(key) || '';
 
@@ -150,7 +164,12 @@ export async function chatCompletion({
         system: fullSystemPrompt,
         messages: normalizedMessages,
         providerOptions,
+        abortSignal,
+        maxRetries: 2,
         stopWhen: stepCountIs(5),
+        onError({ error }) {
+          console.error(`AI stream failed for ${currentModelName}:`, getAIErrorMessage(error));
+        },
         tools: {
           create_artifact: tool({
             description: createArtifactTool.description,
