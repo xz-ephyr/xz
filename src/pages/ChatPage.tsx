@@ -7,6 +7,7 @@ import { UserBubble } from '../components/chat/UserBubble';
 import { AssistantBubble } from '../components/chat/AssistantBubble';
 import { ChatSessionManager } from '../services/ChatSessionManager';
 import { getModelForChatRequest } from '../config/models';
+import { resolveProjectPath } from '../lib/projectPaths';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { ArtifactPane } from '../components/artifacts/ArtifactPane';
 import { ArtifactPreviewCard } from '../components/artifacts/ArtifactPreviewCard';
@@ -15,27 +16,6 @@ import { Project } from '../types/chat';
 import { FileSystemService } from '../services/FileSystemService';
 import { ProjectIDE } from '../components/artifacts/ProjectIDE';
 import { IDEPromptModal } from '../components/chat/IDEPromptModal';
-import { isTauri } from '../lib/tauri';
-
-// Safe path helpers — work in both Tauri and web environments
-const safejoin = async (base: string, segment: string): Promise<string> => {
-  if (isTauri()) {
-    const { join } = await import('@tauri-apps/api/path');
-    return join(base, segment);
-  }
-  // Web fallback: simple string join
-  const sep = base.endsWith('/') ? '' : '/';
-  return base + sep + segment;
-};
-
-const safeNormalize = async (p: string): Promise<string> => {
-  if (isTauri()) {
-    const { normalize } = await import('@tauri-apps/api/path');
-    return normalize(p);
-  }
-  // Web fallback: collapse double slashes
-  return p.replace(/\/+/g, '/');
-};
 
 const mapUIMessageToLegacyMessage = (m: any): any => {
   if (!m) return m;
@@ -211,8 +191,12 @@ export const ChatPage = () => {
 
   // ✅ FIX #3: Keep refs in sync with state. The useChat transport is a stale closure —
   // it captures values at hook creation. Refs are always current regardless of closure age.
-  useEffect(() => { projectContextRef.current = projectContext; }, [projectContext]);
-  useEffect(() => { projectRef.current = project; }, [project]);
+  useEffect(() => {
+    projectContextRef.current = projectContext;
+  }, [projectContext]);
+  useEffect(() => {
+    projectRef.current = project;
+  }, [project]);
 
   const {
     messages: rawMessages,
@@ -262,18 +246,15 @@ export const ChatPage = () => {
               // Auto-save in project mode
               if (project && file_path) {
                 try {
-                  // Simple sanitization to prevent path traversal
-                  const sanitizedPath = file_path.replace(/^(\.\.[/\\])+/, '');
-                  const fullPath = await safejoin(project.path, sanitizedPath);
-                  const normalizedProject = await safeNormalize(project.path);
-                  const normalizedFull = await safeNormalize(fullPath);
+                  const fullPath = await resolveProjectPath(project.path, file_path);
 
-                  if (normalizedFull.startsWith(normalizedProject)) {
-                    await FileSystemService.saveFile(fullPath, content);
-                    loadProjectContext(project.path);
-                  } else {
+                  if (!fullPath) {
                     console.error('Blocked attempted path traversal:', file_path);
+                    continue;
                   }
+
+                  await FileSystemService.saveFile(fullPath, content);
+                  loadProjectContext(project.path);
                 } catch (e) {
                   console.error('Failed to auto-save file:', e);
                 }
@@ -393,7 +374,9 @@ export const ChatPage = () => {
                     <AssistantBubble
                       content={m.content}
                       model={currentModel}
-                      isStreaming={isLoading && messages.slice(i + 1).every((msg: any) => msg.role !== 'user')}
+                      isStreaming={
+                        isLoading && messages.slice(i + 1).every((msg: any) => msg.role !== 'user')
+                      }
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
                       onCopy={() => navigator.clipboard.writeText(m.content)}
