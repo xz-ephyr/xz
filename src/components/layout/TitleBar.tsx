@@ -8,14 +8,18 @@ async function startWindowDrag() {
   try {
     const { getCurrentWindow } = await import('@tauri-apps/api/window');
     await getCurrentWindow().startDragging();
-  } catch {}
+  } catch (e) {
+    console.error('Failed to start drag', e);
+  }
 }
 
 async function minimizeWindow() {
   try {
     const { getCurrentWindow } = await import('@tauri-apps/api/window');
     await getCurrentWindow().minimize();
-  } catch {}
+  } catch (e) {
+    console.error('Failed to minimize', e);
+  }
 }
 
 async function toggleMaximizeWindow() {
@@ -27,14 +31,18 @@ async function toggleMaximizeWindow() {
     } else {
       await w.maximize();
     }
-  } catch {}
+  } catch (e) {
+    console.error('Failed to maximize', e);
+  }
 }
 
 async function closeWindow() {
   try {
     const { getCurrentWindow } = await import('@tauri-apps/api/window');
     await getCurrentWindow().close();
-  } catch {}
+  } catch (e) {
+    console.error('Failed to close', e);
+  }
 }
 
 export default function TitleBar() {

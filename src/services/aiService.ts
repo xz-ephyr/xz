@@ -1,8 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
-import { createMistral } from '@ai-sdk/mistral';
-import { createOpenAI } from '@ai-sdk/openai';
-import { createGateway } from '@ai-sdk/gateway';
 import { convertToModelMessages, streamText, stepCountIs, tool } from 'ai';
 import {
   SYSTEM_PROMPT,
@@ -15,6 +12,22 @@ import {
 import { FileSystemService } from './FileSystemService';
 import { resolveProjectPath } from '../lib/projectPaths';
 import { API_KEYS, getModelDefinition } from '../config/models';
+
+let cachedProviders: { google: ReturnType<typeof createGoogleGenerativeAI>; groq: ReturnType<typeof createGroq> } | null = null;
+
+export function refreshProviders() {
+  cachedProviders = null;
+}
+
+function getProviders() {
+  if (!cachedProviders) {
+    cachedProviders = {
+      google: createGoogleGenerativeAI({ apiKey: localStorage.getItem(API_KEYS.google) || '' }),
+      groq: createGroq({ apiKey: localStorage.getItem(API_KEYS.groq) || '' }),
+    };
+  }
+  return cachedProviders;
+}
 
 export function getAIErrorMessage(error: unknown) {
   if (error == null) return 'The AI request failed for an unknown reason.';
@@ -43,93 +56,21 @@ export async function chatCompletion({
   isThinkingEnabled?: boolean;
   abortSignal?: AbortSignal;
 }) {
-  const getApiKey = (key: string) => localStorage.getItem(key) || '';
-
-  const providers = {
-    google: createGoogleGenerativeAI({ apiKey: getApiKey(API_KEYS.google) }),
-    groq: createGroq({ apiKey: getApiKey(API_KEYS.groq) }),
-    mistral: createMistral({ apiKey: getApiKey(API_KEYS.mistral) }),
-    openai: createOpenAI({ apiKey: getApiKey(API_KEYS.openai) }),
-    openrouter: createOpenAI({
-      baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: getApiKey(API_KEYS.openrouter),
-    }),
-    cerebras: createOpenAI({
-      baseURL: 'https://api.cerebras.ai/v1',
-      apiKey: getApiKey(API_KEYS.cerebras),
-    }),
-    opencodezen: createOpenAI({
-      baseURL: 'https://api.opencodezen.com/v1',
-      apiKey: getApiKey(API_KEYS.opencodezen),
-    }),
-    github: createOpenAI({
-      baseURL: 'https://models.inference.ai.azure.com',
-      apiKey: getApiKey(API_KEYS.github),
-    }),
-    cloudflare: createOpenAI({
-      baseURL: 'https://api.cloudflare.com/client/v4/accounts/default/ai/v1',
-      apiKey: getApiKey(API_KEYS.cloudflare),
-    }),
-    cohere: createOpenAI({
-      baseURL: 'https://api.cohere.ai/v1',
-      apiKey: getApiKey(API_KEYS.cohere),
-    }),
-    zai: createOpenAI({
-      baseURL: 'https://open.bigmodel.cn/api/paas/v4',
-      apiKey: getApiKey(API_KEYS.zai),
-    }),
-    nvidia: createOpenAI({
-      baseURL: 'https://integrate.api.nvidia.com/v1',
-      apiKey: getApiKey(API_KEYS.nvidia),
-    }),
-    huggingface: createOpenAI({
-      baseURL: 'https://api-inference.huggingface.co/v1',
-      apiKey: getApiKey(API_KEYS.huggingface),
-    }),
-    ollama: createOpenAI({
-      baseURL: 'https://api.ollama.cloud/v1',
-      apiKey: getApiKey(API_KEYS.ollama),
-    }),
-    kilo: createOpenAI({
-      baseURL: 'https://api.kilo.gateway.ai/v1',
-      apiKey: getApiKey(API_KEYS.kilo),
-    }),
-    pollinations: createOpenAI({
-      baseURL: 'https://openai.pollinations.ai',
-      apiKey: getApiKey(API_KEYS.pollinations),
-    }),
-    llm7: createOpenAI({ baseURL: 'https://api.llm7.ai/v1', apiKey: getApiKey(API_KEYS.llm7) }),
-    ovh: createOpenAI({
-      baseURL: 'https://api.ovh.com/v1/ai/endpoints',
-      apiKey: getApiKey(API_KEYS.ovh),
-    }),
-    reka: createOpenAI({ baseURL: 'https://api.reka.ai/v1', apiKey: getApiKey(API_KEYS.reka) }),
-  };
-
-  const gatewayUrl = getApiKey(API_KEYS.gateway);
-  const gateway = gatewayUrl ? createGateway({ baseURL: gatewayUrl }) : null;
+  const providers = getProviders();
 
   const getLanguageModel = (name: string) => {
     const def = getModelDefinition(name);
     if (!def) return providers.google('gemini-3.5-flash');
 
-    let model;
-    if (def.provider === 'google') {
-      model = providers.google(def.id);
-    } else {
-      const provider = providers[def.provider];
-      model = provider ? provider(def.id) : providers.google('gemini-3.5-flash');
-    }
-
-    return gateway ? gateway(name) : model;
+    if (def.provider === 'google') return providers.google(def.id);
+    if (def.provider === 'groq') return providers.groq(def.id);
+    return providers.google('gemini-3.5-flash');
   };
 
   const fallbackChain = [
     modelName,
     'gemini-3.5-flash',
     'llama-3.1-8b-instant',
-    'mistral-small-latest',
-    'google/gemma-4-26b-a4b-it:free',
   ];
 
   const uniqueChain = Array.from(new Set(fallbackChain));
@@ -153,8 +94,6 @@ export async function chatCompletion({
       providerOptions = {};
       if (def?.provider === 'google') {
         providerOptions.google = { thinkingConfig: { thinkingBudget: 1024 } };
-      } else if (def?.provider === 'openai' || def?.provider === 'github') {
-        providerOptions.openai = { reasoning: 'high' };
       }
     }
 

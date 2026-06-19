@@ -10,7 +10,6 @@ import { getModelForChatRequest } from '../config/models';
 import { resolveProjectPath } from '../lib/projectPaths';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { ArtifactPane } from '../components/artifacts/ArtifactPane';
-import { ArtifactPreviewCard } from '../components/artifacts/ArtifactPreviewCard';
 import { chatCompletion, getAIErrorMessage } from '../services/aiService';
 import { Project } from '../types/chat';
 import { FileSystemService } from '../services/FileSystemService';
@@ -371,7 +370,7 @@ export const ChatPage = () => {
           className={`flex-1 overflow-y-auto ${messages.length === 0 ? 'flex flex-col items-center justify-start pt-[15vh] p-4' : ''}`}
         >
           {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
-          <div className="w-full mx-auto px-4" style={{ maxWidth: 'min(720px, 100%)' }}>
+          <div className="w-full mx-auto px-4" style={{ maxWidth: 'min(780px, 100%)' }}>
             {error && (
               <div className="my-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {getAIErrorMessage(error)}
@@ -391,6 +390,23 @@ export const ChatPage = () => {
                       }
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
+                      artifactCards={m.toolInvocations?.filter(
+                        (ti: any) => ti.toolName === 'create_artifact' && ti.state === 'result'
+                      ).map((ti: any) => {
+                        const title = ti.args?.title || 'Untitled Artifact';
+                        const type = ti.args?.type || 'markdown';
+                        const artifactId = title.toLowerCase().replace(/\s+/g, '-');
+                        return { title, type, artifactId };
+                      })}
+                      onArtifactClick={(artifactId: string) => {
+                        setActiveArtifactId(artifactId);
+                        setViewingVersion(null);
+                        if (project) {
+                          setIsIDEOpen(true);
+                        } else {
+                          setIsArtifactOpen(true);
+                        }
+                      }}
                       onCopy={() => navigator.clipboard.writeText(m.content)}
                       onThumbsUp={() => console.log('Thumbs up')}
                       onThumbsDown={() => console.log('Thumbs down')}
@@ -401,59 +417,6 @@ export const ChatPage = () => {
                         }
                       }}
                     />
-                    {m.toolInvocations?.map((ti: any, idx: number) => {
-                      const isArtifactTool = ti.toolName === 'create_artifact';
-                      const isWriteFileTool = ti.toolName === 'write_file';
-                      const isEditFileTool = ti.toolName === 'edit_file';
-                      const isWritePlanTool = ti.toolName === 'write_to_plan';
-
-                      if (
-                        (isArtifactTool || isWriteFileTool || isEditFileTool || isWritePlanTool) &&
-                        ti.state === 'result'
-                      ) {
-                        let title = '';
-                        let type: any = 'markdown';
-
-                        if (isArtifactTool) {
-                          title = ti.args?.title || 'Untitled Artifact';
-                          type = ti.args?.type || 'markdown';
-                        } else if (isWriteFileTool || isEditFileTool) {
-                          if (!ti.args?.file_path) return null;
-                          title = ti.args.file_path;
-                          const ext = title.split('.').pop() || '';
-                          type = ['ts', 'tsx', 'js', 'jsx'].includes(ext)
-                            ? 'react'
-                            : ['html'].includes(ext)
-                              ? 'html'
-                              : 'markdown';
-                        } else if (isWritePlanTool) {
-                          if (!ti.args?.filename) return null;
-                          title = ti.args.filename;
-                          type = 'markdown';
-                        }
-
-                        if (!title) return null;
-                        const artifactId = title.toLowerCase().replace(/\s+/g, '-');
-
-                        return (
-                          <ArtifactPreviewCard
-                            key={idx}
-                            title={title}
-                            type={type}
-                            onClick={() => {
-                              setActiveArtifactId(artifactId);
-                              setViewingVersion(null);
-                              if (project) {
-                                setIsIDEOpen(true);
-                              } else {
-                                setIsArtifactOpen(true);
-                              }
-                            }}
-                          />
-                        );
-                      }
-                      return null;
-                    })}
                   </>
                 )}
               </React.Fragment>
@@ -478,7 +441,7 @@ export const ChatPage = () => {
         </div>
 
         {messages.length > 0 && (
-          <div className="shrink-0 pb-8 w-full mx-auto px-4 bg-white" style={{ maxWidth: 'min(720px, 100%)' }}>
+          <div className="shrink-0 pb-8 w-full mx-auto px-4 bg-white" style={{ maxWidth: 'min(780px, 100%)' }}>
             <ChatInput
               onSend={handleSend}
               isLoading={isLoading}

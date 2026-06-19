@@ -11,6 +11,7 @@ import {
   API_KEYS,
   MODELS,
 } from '../../config/models';
+import { refreshProviders } from '../../services/aiService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,23 +21,6 @@ interface SettingsModalProps {
 const PROVIDER_LABELS: Record<string, string> = {
   google: 'Google Gemini',
   groq: 'Groq',
-  mistral: 'Mistral AI',
-  openai: 'OpenAI',
-  openrouter: 'OpenRouter',
-  cerebras: 'Cerebras',
-  opencodezen: 'OpenCode Zen',
-  github: 'GitHub Models',
-  cloudflare: 'Cloudflare',
-  cohere: 'Cohere',
-  zai: 'Z.ai (Zhipu)',
-  nvidia: 'NVIDIA',
-  huggingface: 'HuggingFace',
-  ollama: 'Ollama Cloud',
-  kilo: 'Kilo Gateway',
-  pollinations: 'Pollinations',
-  llm7: 'LLM7',
-  ovh: 'OVH AI Endpoints',
-  reka: 'Reka',
 };
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
@@ -65,6 +49,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     Object.keys(API_KEYS).forEach((key) => {
       localStorage.setItem((API_KEYS as any)[key], keys[key]);
     });
+
+    refreshProviders();
 
     localStorage.setItem(SELECTED_MODEL_STORAGE_KEY, selectedModel);
     localStorage.setItem(MODEL_MODE_STORAGE_KEY, modelMode);
@@ -212,19 +198,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </p>
               </div>
 
-              {/* Vercel Gateway at top if used */}
-              <div className="pb-4 border-b border-neutral-100">
-                <label className="text-[13px] font-semibold text-neutral-700 ml-1">Vercel AI Gateway URL (Optional)</label>
-                <input
-                  type="text"
-                  className="h-9 mt-1.5 bg-neutral-50 rounded-[8px] px-3 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
-                  placeholder="https://gateway.ai.vercel.com/..."
-                  value={keys.gateway}
-                  onChange={(e) => setKeys({ ...keys, gateway: e.target.value })}
-                />
-              </div>
-
-              {/* API Keys Grid - Scalable for many providers */}
+              {/* API Keys Grid */}
               <div className="grid gap-x-6 gap-y-4 grid-cols-1 sm:grid-cols-2">
                 {Object.keys(PROVIDER_LABELS).map((providerId) => (
                   <div key={providerId} className="flex flex-col gap-1.5">

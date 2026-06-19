@@ -18,14 +18,18 @@ export function useZoom() {
           return parsed;
         }
       }
-    } catch {}
+    } catch (e) {
+      console.warn('Failed to load zoom from localStorage', e);
+    }
     return DEFAULT_ZOOM;
   });
 
   useEffect(() => {
     try {
       localStorage.setItem(ZOOM_STORAGE_KEY, String(zoom));
-    } catch {}
+    } catch (e) {
+      console.warn('Failed to save zoom to localStorage', e);
+    }
   }, [zoom]);
 
   const zoomIn = useCallback(() => {

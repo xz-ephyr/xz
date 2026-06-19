@@ -8,6 +8,7 @@ import {
   Copy01Icon,
   Tick01Icon,
 } from '@hugeicons/core-free-icons';
+import { ArtifactPreviewCard } from '../artifacts/ArtifactPreviewCard';
 
 const HugeiconRenderer = ({
   icon: Icon,
@@ -27,12 +28,20 @@ const HugeiconRenderer = ({
   />
 );
 
+interface ArtifactCardData {
+  title: string;
+  type: string;
+  artifactId: string;
+}
+
 interface AssistantBubbleProps {
   content: string;
   isStreaming: boolean;
   model?: string;
   toolInvocations?: any[];
   reasoning?: string;
+  artifactCards?: ArtifactCardData[];
+  onArtifactClick?: (artifactId: string) => void;
   onCopy: () => void;
   onThumbsUp: () => void;
   onThumbsDown: () => void;
@@ -59,7 +68,7 @@ const ThoughtLabel = ({
   }, [isActivelyThinking]);
 
   const displayTime = seconds > 0 ? `${seconds.toFixed(1)}s` : '';
-  const label = isActivelyThinking ? `Thinking... ${displayTime}` : `Thought for ${displayTime}`;
+  const label = isActivelyThinking ? `Thinking... ${displayTime}` : `Thought ${displayTime}`;
 
   return (
     <button
@@ -88,6 +97,8 @@ export const AssistantBubble = React.memo(
     model,
     toolInvocations,
     reasoning,
+    artifactCards,
+    onArtifactClick,
     onCopy,
     onThumbsUp,
     onThumbsDown,
@@ -103,17 +114,17 @@ export const AssistantBubble = React.memo(
     };
 
     const hasPendingTool = toolInvocations?.some((ti) => ti.state !== 'result');
-    const showThinking = isStreaming && !content.trim() && !hasPendingTool;
+    const showThinking = isStreaming;
 
     const artifactTool = toolInvocations?.find((ti) => ti.toolName === 'create_artifact');
     const isArtifactGenerating = artifactTool && artifactTool.state !== 'result';
     const intentMessage = artifactTool?.args?.intent_message;
 
-    const showThought = reasoning || showThinking;
+    const showThought = reasoning && !isStreaming ? reasoning : isStreaming;
 
     return (
       <div className="mb-6 w-full">
-        <div className="text-base py-4 break-words flex flex-col gap-2">
+        <div className="text-base px-4 py-4 break-words flex flex-col gap-2">
           {intentMessage && (
             <div className="font-medium text-neutral-800 mb-1">{intentMessage}</div>
           )}
@@ -146,9 +157,19 @@ export const AssistantBubble = React.memo(
           )}
         </div>
 
+        {artifactCards?.map((card) => (
+          <ArtifactPreviewCard
+            key={card.artifactId}
+            title={card.title}
+            type={card.type}
+            onClick={() => onArtifactClick?.(card.artifactId)}
+          />
+        ))}
+
         {!isStreaming && !hasPendingTool && (
-          <div className="flex items-center justify-between gap-3 text-gray-600 -ml-1">
-            <div className="flex gap-3 items-center">
+          <div className="flex items-center justify-between gap-3 text-gray-600 px-4">
+            {model && <span className="text-xs text-gray-400">{model}</span>}
+            <div className="flex gap-3 items-center ml-auto">
               <button
                 onClick={handleCopy}
                 className="hover:text-black transition-colors"
@@ -170,7 +191,6 @@ export const AssistantBubble = React.memo(
                 <HugeiconRenderer icon={ArrowTurnBackwardIcon} size={18} />
               </button>
             </div>
-            {model && <span className="text-xs text-gray-400">{model}</span>}
           </div>
         )}
       </div>

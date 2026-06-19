@@ -16,7 +16,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="my-4 border border-neutral-200 rounded-xl p-4 bg-white hover:border-neutral-300 transition-all cursor-pointer group shadow-sm hover:shadow-md"
+      className="ml-auto my-4 border border-neutral-200 rounded-xl p-4 bg-white hover:border-neutral-300 transition-all cursor-pointer group shadow-sm hover:shadow-md max-w-[85%]"
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 group-hover:bg-neutral-900 group-hover:text-white transition-colors">

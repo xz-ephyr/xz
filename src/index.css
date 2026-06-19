@@ -28,8 +28,13 @@ body {
   font-style: normal;
 }
 
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e5e5 transparent;
+}
 .thin-scrollbar::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
 }
 .thin-scrollbar::-webkit-scrollbar-track {
   background: transparent;
@@ -40,6 +45,14 @@ body {
 }
 .thin-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #d4d4d4;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes thinkingTextShimmer {
@@ -59,6 +72,17 @@ body {
   background-clip: text;
   animation: thinkingTextShimmer 2s linear infinite;
   display: inline-block;
+}
+
+.cm-editor {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.cm-editor .cm-scroller {
+  padding: 10px 0;
+}
+.cm-editor.cm-focused {
+  outline: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
