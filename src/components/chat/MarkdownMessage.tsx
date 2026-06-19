@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from './Table';
 
 interface MarkdownMessageProps {
   content: string;
@@ -64,31 +65,22 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
             );
           },
           table({ children }) {
-            return (
-              <div className="overflow-x-auto mb-4 w-full">
-                <table className="min-w-full divide-y divide-neutral-200 border border-neutral-200 rounded-lg">
-                  {children}
-                </table>
-              </div>
-            );
+            return <Table>{children}</Table>;
           },
           thead({ children }) {
-            return <thead className="bg-neutral-50/80">{children}</thead>;
-          },
-          th({ children }) {
-            return (
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider border-b border-neutral-200">
-                {children}
-              </th>
-            );
+            return <TableHead>{children}</TableHead>;
           },
           tbody({ children }) {
-            return <tbody className="bg-white divide-y divide-neutral-100">{children}</tbody>;
+            return <TableBody>{children}</TableBody>;
+          },
+          tr({ children }) {
+            return <TableRow>{children}</TableRow>;
+          },
+          th({ children }) {
+            return <TableHeaderCell>{children}</TableHeaderCell>;
           },
           td({ children }) {
-            return (
-              <td className="px-4 py-2.5 whitespace-nowrap text-sm text-neutral-700">{children}</td>
-            );
+            return <TableCell>{children}</TableCell>;
           },
           blockquote({ children }) {
             return (

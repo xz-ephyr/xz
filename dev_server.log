@@ -1,0 +1,13 @@
+
+> xz@0.15.0 dev
+> vite
+
+error when starting dev server:
+Error: Port 4028 is already in use
+    at Server.onError (file:///app/node_mo10:21:00 PM [vite] (client) hmr update /src/pages/ChatPage.tsx, /src/index.css
+10:22:19 PM [vite] (client) hmr update /src/index.css, /src/pages/ChatPage.tsx, /src/components/settings/SettingsModal.tsx
+10:23:56 PM [vite] (client) hmr update /src/index.css, /src/pages/ChatPage.tsx, /src/components/settings/SettingsModal.tsx
+10:24:28 PM [vite] (client) hmr update /src/index.css, /src/pages/ChatPage.tsx, /src/components/settings/SettingsModal.tsx
+10:24:31 PM [vite] (client) hmr update /src/index.css, /src/pages/ChatPage.tsx, /src/components/settings/SettingsModal.tsx
+10:25:08 PM [vite] (client) hmr update /src/pages/ChatPage.tsx, /src/index.css
+10:26:19 PM [vite] (client) hmr update /src/index.css, /src/pages/ChatPage.tsx, /src/components/settings/SettingsModal.tsx

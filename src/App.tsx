@@ -1,8 +1,14 @@
+import { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import { OnboardingPage, ChatPage, ChatsPage, SchedulePage, PluginsPage, WikiPage } from './pages';
+import { ChatSessionManager } from './services/ChatSessionManager';
 
 export default function App() {
+  useEffect(() => {
+    ChatSessionManager.migrateFromLocalStorage();
+  }, []);
+
   return (
     <Router>
       <Layout>
