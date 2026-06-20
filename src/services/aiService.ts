@@ -81,10 +81,6 @@ export async function chatCompletion({
 
   const fullSystemPrompt = getSmartSystemPrompt(SYSTEM_PROMPT, projectContext);
 
-  const normalizedMessages = await convertToModelMessages(
-    processedMessages.filter((m: any) => m.role !== 'system')
-  );
-
   const getStreamResult = async (modelIdx: number): Promise<any> => {
     const currentModelName = uniqueChain[modelIdx];
     const currentModel = getLanguageModel(currentModelName);
@@ -104,6 +100,10 @@ export async function chatCompletion({
       const incomingModel = getLanguageModel(currentModelName);
       processedMessages = await contractContext(messages, incomingModel);
     }
+
+    const normalizedMessages = await convertToModelMessages(
+      processedMessages.filter((m: any) => m.role !== 'system')
+    );
 
     try {
       return streamText({
