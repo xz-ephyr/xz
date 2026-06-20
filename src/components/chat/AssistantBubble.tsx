@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MarkdownMessage } from './MarkdownMessage';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useThinkingTimer } from '../../hooks/useThinkingTimer';
 import {
   ThumbsUpIcon,
   ThumbsDownIcon,
@@ -86,18 +87,7 @@ const ThoughtLabel = ({
   isOpen: boolean;
   onClick: () => void;
 }) => {
-  const [seconds, setSeconds] = useState(0);
-
-  useEffect(() => {
-    if (!isActivelyThinking) return;
-    const interval = setInterval(() => {
-      setSeconds((s) => s + 0.1);
-    }, 100);
-    return () => clearInterval(interval);
-  }, [isActivelyThinking]);
-
-  const displayTime = seconds > 0 ? `${seconds.toFixed(1)}s` : '';
-  const label = isActivelyThinking ? `Thinking... ${displayTime}` : `Thought ${displayTime}`;
+  const { label } = useThinkingTimer(isActivelyThinking);
 
   return (
     <button
@@ -133,8 +123,14 @@ export const AssistantBubble = React.memo(
     onThumbsDown,
     onRegenerate,
   }: AssistantBubbleProps) => {
-    const [isReasoningOpen, setIsReasoningOpen] = useState(false);
+    const [isReasoningOpen, setIsReasoningOpen] = useState(isStreaming);
     const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+      if (!isStreaming) {
+        setIsReasoningOpen(false);
+      }
+    }, [isStreaming]);
 
     const handleCopy = () => {
       onCopy();

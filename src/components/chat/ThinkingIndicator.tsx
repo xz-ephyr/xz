@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Idea01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { useThinkingTimer } from '../../hooks/useThinkingTimer';
 
 interface ThinkingIndicatorProps {
   model?: string;
@@ -8,7 +9,15 @@ interface ThinkingIndicatorProps {
 }
 
 export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const isActivelyThinking = !reasoning;
+  const { label } = useThinkingTimer(isActivelyThinking);
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  useEffect(() => {
+    if (reasoning) {
+      setIsExpanded(false);
+    }
+  }, [reasoning]);
 
   return (
     <div className="py-2 text-sm text-neutral-700" role="status" aria-live="polite">
@@ -23,7 +32,7 @@ export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) 
            <HugeiconsIcon icon={Idea01Icon} size={14} className="text-blue-600 animate-pulse" />
         </div>
         <span className="text-[15px] font-medium text-neutral-600">
-           {reasoning ? 'Reasoning...' : 'Starting reasoning process...'}
+           {label}
         </span>
         <HugeiconsIcon
           icon={ArrowDown01Icon}
