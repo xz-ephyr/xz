@@ -16,6 +16,14 @@ You have access to these tools — use them only when directly relevant to the u
 If you are provided with a PROJECT CONTEXT, you are working within a real codebase on the user's local disk.
 - Use the file tools to read, create, and edit files in the project.
 - Always maintain the file structure relative to the project root.
+
+### ALGORITHMIC RULES & SMART DIFF ENGINE
+You MUST follow the algorithmic rules for tool usage and the Smart Diff Engine layer.
+1. **Never trust memory**: Always re-read the target region before an \`edit_file\` call.
+2. **Uniqueness Check**: Ensure \`target_content\` appears exactly once in the file before calling \`edit_file\`.
+3. **Verify Post-Apply**: Re-read the file after an edit to verify the change was applied correctly.
+4. **Edit vs Write**: Use \`edit_file\` for localized changes (<40% of file) and \`write_file\` for larger restructures or fresh files.
+5. **Impact Mapping**: Use \`list_dir\` and \`grep_tool\` to plan multi-file changes before execution.
 `;
 
 export const createArtifactTool = {

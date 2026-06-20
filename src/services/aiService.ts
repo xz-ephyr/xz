@@ -174,8 +174,20 @@ export async function chatCompletion({
                 const fullPath = await resolveProjectPath(projectPath, file_path);
                 if (!fullPath) return { error: `Path escapes project: ${file_path}.` };
                 const currentContent = await FileSystemService.getFileContent(fullPath);
-                if (!currentContent.includes(target_content))
-                  return { error: `Target content not found in ${file_path}.` };
+
+                // Count occurrences
+                const occurrences = currentContent.split(target_content).length - 1;
+                if (occurrences === 0) {
+                  return {
+                    error: `Target content not found in ${file_path}. Your memory might be stale. Please re-read the file and try again.`
+                  };
+                }
+                if (occurrences > 1) {
+                  return {
+                    error: `Target content found ${occurrences} times in ${file_path}. To avoid clobbering the wrong code, please provide a more unique 'target_content' by including surrounding lines.`
+                  };
+                }
+
                 const updatedContent = currentContent.replace(target_content, replacement_content);
                 await FileSystemService.saveFile(fullPath, updatedContent);
                 return { success: true, file_path, content: updatedContent };
