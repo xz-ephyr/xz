@@ -1,16 +1,18 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
-import { convertToModelMessages, streamText, stepCountIs } from 'ai';
-import { SYSTEM_PROMPT } from './ai/config';
-import { getSmartSystemPrompt } from './ai/contextController';
-import { contractContext } from './ai/contextContractor';
-import { createArtifactTool } from './ai/tools/create_artifact';
-import { readFileTool } from './ai/tools/read_file';
-import { writeFileTool } from './ai/tools/write_file';
-import { editFileTool } from './ai/tools/edit_file';
-import { listDirTool } from './ai/tools/list_dir';
-import { grepTool } from './ai/tools/grep_tool';
-import { writeToPlanTool } from './ai/tools/write_to_plan';
+import { convertToModelMessages, streamText, stepCountIs, tool } from 'ai';
+import {
+  SYSTEM_PROMPT,
+  createArtifactTool,
+  readFileTool,
+  writeFileTool,
+  editFileTool,
+  writeToPlanTool,
+  listDirTool,
+  grepTool,
+} from './ai/config';
+import { FileSystemService } from './FileSystemService';
+import { resolveProjectPath } from '../lib/projectPaths';
 import { API_KEYS, getModelDefinition } from '../config/models';
 
 let cachedProviders: { google: ReturnType<typeof createGoogleGenerativeAI>; groq: ReturnType<typeof createGroq> } | null = null;
@@ -118,13 +120,172 @@ export async function chatCompletion({
           console.error(`AI stream failed for ${currentModelName}:`, getAIErrorMessage(error));
         },
         tools: {
-          create_artifact: createArtifactTool(),
-          read_file: readFileTool(projectPath),
-          write_file: writeFileTool(projectPath),
-          edit_file: editFileTool(projectPath),
-          list_dir: listDirTool(projectPath),
-          grep_tool: grepTool(projectPath),
-          write_to_plan: writeToPlanTool(projectPath),
+          create_artifact: tool({
+            description: createArtifactTool.description,
+            parameters: createArtifactTool.parameters,
+            // @ts-expect-error - dynamic types
+            execute: async (args: any) => ({
+              success: true,
+              type: args.type || 'markdown',
+              title: args.title || 'Untitled Artifact',
+              content: args.content || '',
+            }),
+          }),
+          read_file: tool({
+            description: readFileTool.description,
+            parameters: readFileTool.parameters,
+            // @ts-expect-error - dynamic types
+            execute: async ({ file_path }: { file_path: string }) => {
+              if (!projectPath) return { error: 'Not in project mode.' };
+              try {
+                const fullPath = await resolveProjectPath(projectPath, file_path);
+                if (!fullPath) return { error: `Path escapes project: ${file_path}.` };
+                const content = await FileSystemService.getFileContent(fullPath);
+                return { content, file_path };
+              } catch (e: any) {
+                return { error: `Failed to read: ${e.message || e}` };
+              }
+            },
+          }),
+          write_file: tool({
+            description: writeFileTool.description,
+            parameters: writeFileTool.parameters,
+            // @ts-expect-error - dynamic types
+            execute: async ({ file_path, content }: { file_path: string; content: string }) => {
+              if (!projectPath)
+                return { success: true, is_artifact: true, title: file_path, content };
+              try {
+                const fullPath = await resolveProjectPath(projectPath, file_path);
+                if (!fullPath) return { error: `Path escapes project: ${file_path}.` };
+                await FileSystemService.saveFile(fullPath, content);
+                return { success: true, file_path, content };
+              } catch (e: any) {
+                return { error: `Failed to write: ${e.message || e}` };
+              }
+            },
+          }),
+          edit_file: tool({
+            description: editFileTool.description,
+            parameters: editFileTool.parameters,
+            // @ts-expect-error - dynamic types
+            execute: async ({
+              file_path,
+              target_content,
+              replacement_content,
+            }: {
+              file_path: string;
+              target_content: string;
+              replacement_content: string;
+            }) => {
+              if (!projectPath) return { error: 'Not in project mode.' };
+              try {
+                const fullPath = await resolveProjectPath(projectPath, file_path);
+                if (!fullPath) return { error: `Path escapes project: ${file_path}.` };
+                const currentContent = await FileSystemService.getFileContent(fullPath);
+
+                // Count occurrences
+                const occurrences = currentContent.split(target_content).length - 1;
+                if (occurrences === 0) {
+                  return {
+                    error: `Target content not found in ${file_path}. Your memory might be stale. Please re-read the file and try again.`
+                  };
+                }
+                if (occurrences > 1) {
+                  return {
+                    error: `Target content found ${occurrences} times in ${file_path}. To avoid clobbering the wrong code, please provide a more unique 'target_content' by including surrounding lines.`
+                  };
+                }
+
+                const updatedContent = currentContent.replace(target_content, replacement_content);
+                await FileSystemService.saveFile(fullPath, updatedContent);
+                return { success: true, file_path, content: updatedContent };
+              } catch (e: any) {
+                return { error: `Failed to edit: ${e.message || e}` };
+              }
+            },
+          }),
+          write_to_plan: tool({
+            description: writeToPlanTool.description,
+            parameters: writeToPlanTool.parameters,
+            // @ts-expect-error - dynamic types
+            execute: async ({ filename, content }: { filename: string; content: string }) => {
+              if (projectPath) {
+                try {
+                  const fullPath = await resolveProjectPath(projectPath, filename);
+                  if (!fullPath) return { error: `Path escapes project: ${filename}.` };
+                  await FileSystemService.saveFile(fullPath, content);
+                  return { success: true, filename, content };
+                } catch (e: any) {
+                  return { error: `Failed to write plan: ${e.message || e}` };
+                }
+              }
+              return { success: true, is_artifact: true, title: filename, content };
+            },
+          }),
+          list_dir: tool({
+            description: listDirTool.description,
+            parameters: listDirTool.parameters,
+            // @ts-expect-error - dynamic types
+            execute: async ({ path }: { path: string }) => {
+              if (!projectPath) return { error: 'Not in project mode.' };
+              try {
+                const fullPath = await resolveProjectPath(projectPath, path);
+                if (!fullPath) return { error: `Path escapes project: ${path}.` };
+                const tree = await FileSystemService.getTree(fullPath);
+                return {
+                  path,
+                  entries: tree.map((e) => ({
+                    name: e.name,
+                    isDirectory: e.isDirectory,
+                  })),
+                };
+              } catch (e: any) {
+                return { error: `Failed to list: ${e.message || e}` };
+              }
+            },
+          }),
+          grep_tool: tool({
+            description: grepTool.description,
+            parameters: grepTool.parameters,
+            // @ts-expect-error - dynamic types
+            execute: async ({ pattern, path }: { pattern: string; path: string }) => {
+              if (!projectPath) return { error: 'Not in project mode.' };
+              try {
+                const fullPath = await resolveProjectPath(projectPath, path);
+                if (!fullPath) return { error: `Path escapes project: ${path}.` };
+
+                // For simplicity in web mode, we just iterate through virtual FS
+                // In Tauri mode, we could use native grep but for consistency:
+                const results: { file: string; line: number; content: string }[] = [];
+                const tree = await FileSystemService.getTree(fullPath);
+
+                const search = async (entries: any[]) => {
+                  for (const entry of entries) {
+                    if (entry.isDirectory) {
+                      await search(entry.children || []);
+                    } else {
+                      const content = await FileSystemService.getFileContent(entry.path);
+                      const lines = content.split('\n');
+                      lines.forEach((line, i) => {
+                        if (new RegExp(pattern, 'i').test(line)) {
+                          results.push({
+                            file: entry.path.replace(projectPath, '').replace(/^\//, ''),
+                            line: i + 1,
+                            content: line.trim(),
+                          });
+                        }
+                      });
+                    }
+                  }
+                };
+
+                await search(tree);
+                return { results: results.slice(0, 50) }; // Limit results
+              } catch (e: any) {
+                return { error: `Grep failed: ${e.message || e}` };
+              }
+            },
+          }),
         },
       });
     } catch (error) {

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Idea01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { useThinkingTimer } from '../../hooks/useThinkingTimer';
 
 interface ThinkingIndicatorProps {
   model?: string;
@@ -8,7 +9,15 @@ interface ThinkingIndicatorProps {
 }
 
 export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const isActivelyThinking = !reasoning;
+  const { label } = useThinkingTimer(isActivelyThinking);
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  useEffect(() => {
+    if (reasoning) {
+      setIsExpanded(false);
+    }
+  }, [reasoning]);
 
   return (
     <div className="py-2 text-sm text-neutral-700" role="status" aria-live="polite">
@@ -23,7 +32,7 @@ export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) 
            <HugeiconsIcon icon={Idea01Icon} size={14} className="text-blue-600 animate-pulse" />
         </div>
         <span className="text-[15px] font-medium text-neutral-600">
-           {reasoning ? 'Reasoning...' : 'Starting reasoning process...'}
+           {label}
         </span>
         <HugeiconsIcon
           icon={ArrowDown01Icon}
@@ -40,15 +49,17 @@ export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) 
         }`}
       >
         <div className="overflow-hidden">
-          <div className="max-w-[720px] rounded-lg border border-neutral-200/60 bg-[#fafafa] px-5 py-4 text-[13px] leading-relaxed text-neutral-600 shadow-sm relative">
+          <div className="max-w-[720px] rounded-lg border border-neutral-200/60 bg-[#fafafa] px-5 py-4 text-[15px] leading-relaxed text-neutral-600 shadow-sm relative">
             <div className="absolute left-0 top-3 bottom-3 w-0.5 bg-blue-500 rounded-r-full" />
-            {reasoning ? (
-              <div className="max-h-[300px] overflow-y-auto whitespace-pre-wrap font-mono thin-scrollbar">
-                {reasoning}
-              </div>
-            ) : (
-              <p className="animate-pulse">Waiting for the first response token from the model...</p>
-            )}
+            <div className="h-[45px] overflow-y-auto no-scrollbar thinking-pad-mask relative flex flex-col gap-2 pt-1">
+              {reasoning ? (
+                <div className="whitespace-pre-wrap animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {reasoning}
+                </div>
+              ) : (
+                <p className="animate-pulse">Waiting for the first response token from the model...</p>
+              )}
+            </div>
             {model && (
               <p className="mt-3 pt-3 border-t border-neutral-200/60 text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
                 Model: {model}
