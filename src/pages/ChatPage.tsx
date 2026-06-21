@@ -171,6 +171,7 @@ const isResizingRef = useRef(false);
           isThinkingEnabled: isThinkingEnabledRef.current,
           abortSignal: options?.signal,
           previousModelName: previousModelRef.current || undefined,
+          sessionId: uuid,
         });
 
         // Update previous model ref after request starts

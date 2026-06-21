@@ -113,24 +113,62 @@ export function getStoredModelMode(): ModelMode {
   return isModelMode(storedMode) ? storedMode : MODEL_MODES.fixed;
 }
 
-export function getModelRotationStorageKey(sessionId: string | undefined): string {
-  return `model-rotation-index-${sessionId || 'new'}`;
+export function getUsedModelsStorageKey(sessionId: string | undefined): string {
+  return `used-models-${sessionId || 'new'}`;
 }
 
-export function getNextRotatingModel(sessionId: string | undefined): AIModel {
-  const storageKey = getModelRotationStorageKey(sessionId);
-  const storedIndex = parseInt(localStorage.getItem(storageKey) || '0', 10);
-  const currentIndex = isNaN(storedIndex) ? 0 : storedIndex % AI_MODELS.length;
-  const nextIndex = (currentIndex + 1) % AI_MODELS.length;
+export function getUsedModels(sessionId: string | undefined): AIModel[] {
+  const key = getUsedModelsStorageKey(sessionId);
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
 
-  localStorage.setItem(storageKey, nextIndex.toString());
+export function markModelUsed(sessionId: string | undefined, model: AIModel) {
+  const key = getUsedModelsStorageKey(sessionId);
+  const used = getUsedModels(sessionId);
+  if (!used.includes(model)) {
+    used.push(model);
+    localStorage.setItem(key, JSON.stringify(used));
+  }
+}
 
-  return AI_MODELS[currentIndex];
+export function getUnusedModels(sessionId: string | undefined): AIModel[] {
+  const used = getUsedModels(sessionId);
+  return AI_MODELS.filter(m => !used.includes(m));
+}
+
+export function resetUsedModels(sessionId: string | undefined) {
+  localStorage.removeItem(getUsedModelsStorageKey(sessionId));
+}
+
+export function getNextExploringModel(sessionId: string | undefined): AIModel {
+  const unused = getUnusedModels(sessionId);
+  if (unused.length > 0) {
+    const used = getUsedModels(sessionId);
+    if (used.length > 0) {
+      const lastProvider = getModelDefinition(used[used.length - 1])?.provider;
+      const diffProvider = unused.find(m => getModelDefinition(m)?.provider !== lastProvider);
+      if (diffProvider) {
+        markModelUsed(sessionId, diffProvider);
+        return diffProvider;
+      }
+    }
+    const selected = unused[0];
+    markModelUsed(sessionId, selected);
+    return selected;
+  }
+  resetUsedModels(sessionId);
+  markModelUsed(sessionId, DEFAULT_MODEL);
+  return DEFAULT_MODEL;
 }
 
 export function getModelForChatRequest(sessionId: string | undefined): AIModel {
   return getStoredModelMode() === MODEL_MODES.rotate
-    ? getNextRotatingModel(sessionId)
+    ? getNextExploringModel(sessionId)
     : getStoredSelectedModel();
 }
 

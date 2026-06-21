@@ -17,7 +17,7 @@ import {
 } from './ai/config';
 import { FileSystemService } from './FileSystemService';
 import { resolveProjectPath } from '../lib/projectPaths';
-import { API_KEYS, getModelDefinition } from '../config/models';
+import { API_KEYS, getModelDefinition, getUsedModels, markModelUsed, AI_MODELS } from '../config/models';
 import { getSmartSystemPrompt } from './ai/contextController';
 import { contractContext } from './ai/contextContractor';
 
@@ -100,6 +100,7 @@ export async function chatCompletion({
   isThinkingEnabled,
   abortSignal,
   previousModelName,
+  sessionId,
 }: {
   messages: any[];
   modelName: string;
@@ -108,6 +109,7 @@ export async function chatCompletion({
   isThinkingEnabled?: boolean;
   abortSignal?: AbortSignal;
   previousModelName?: string;
+  sessionId?: string;
 }) {
   const providers = getProviders();
 
@@ -126,11 +128,10 @@ export async function chatCompletion({
     return providers.google('gemini-3.5-flash');
   };
 
+  const used = sessionId ? getUsedModels(sessionId) : [];
   const fallbackChain = [
     modelName,
-    'mistral-small-latest',
-    'gemini-3.5-flash',
-    'llama-3.1-8b-instant',
+    ...AI_MODELS.filter(m => m !== modelName && !used.includes(m)),
   ];
 
   const uniqueChain = Array.from(new Set(fallbackChain));
@@ -349,6 +350,9 @@ export async function chatCompletion({
         },
       });
     } catch (error) {
+      if (sessionId) {
+        markModelUsed(sessionId, currentModelName);
+      }
       errors.push(`${uniqueChain[modelIdx]}: ${getAIErrorMessage(error)}`);
       if (modelIdx < uniqueChain.length - 1) {
         console.warn(`Model ${uniqueChain[modelIdx]} failed, trying fallback...`);
