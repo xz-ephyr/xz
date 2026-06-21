@@ -155,9 +155,22 @@ export async function chatCompletion({
     }
 
     try {
+      const hasUIMessages = processedMessages.some((m: any) => Array.isArray(m.parts));
+      if (hasUIMessages) {
+        const withParts = processedMessages.map((m: any) => {
+          if (Array.isArray(m.parts)) return { ...m, id: m.id || crypto.randomUUID() };
+          return { id: crypto.randomUUID(), role: m.role, parts: [{ type: 'text' as const, text: m.content || '' }] };
+        });
+        processedMessages = await convertToModelMessages(withParts, { ignoreIncompleteToolCalls: true });
+      } else {
+        processedMessages = processedMessages
+          .filter((m: any) => m.role !== 'system')
+          .map((m: any) => ({ role: m.role, content: m.content || '' }));
+      }
+
       if (previousModelName && previousModelName !== currentModelName) {
         const incomingModel = getLanguageModel(currentModelName);
-        processedMessages = await contractContext(messages, incomingModel);
+        processedMessages = await contractContext(processedMessages, incomingModel);
       }
 
       const filteredMessages = processedMessages.filter((m: any) => m.role !== 'system');

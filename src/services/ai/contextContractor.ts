@@ -4,7 +4,14 @@ export async function contractContext(messages: any[], model: LanguageModel) {
   // If no messages or only one, no need to contract
   if (messages.length <= 1) return messages;
 
-  const history = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+  const history = messages.map(m => {
+    const text = typeof m.content === 'string'
+      ? m.content
+      : Array.isArray(m.content)
+        ? m.content.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('')
+        : '';
+    return `${m.role}: ${text}`;
+  }).join('\n\n');
 
   try {
     const { text: summary } = await generateText({
