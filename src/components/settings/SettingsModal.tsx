@@ -121,7 +121,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[4px] z-50">
-      <div className="bg-white rounded-[16px] w-[min(1000px,95vw)] h-[600px] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden">
+      <div className="bg-white rounded-[16px] w-[min(1100px,95vw)] h-[600px] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between shrink-0">
           <h2 className="text-[18px] font-bold text-neutral-800 flex items-center gap-2">
@@ -139,7 +139,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* Two-pane body */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left nav */}
-          <nav className="w-48 border-r border-neutral-100 p-3 space-y-1 shrink-0 overflow-y-auto">
+          <nav className="w-64 border-r border-neutral-100 p-3 space-y-1 shrink-0 overflow-y-auto">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTab;
               return (

@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -n frontend,server -c cyan,yellow \"vite\" \"npm run dev --prefix server\"",
     "build": "vite build",
     "desktop:prebuild": "npm run build",
     "preview": "vite preview",
