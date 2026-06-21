@@ -16,13 +16,13 @@ fn db_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 // --- Projects ---
 
 #[tauri::command]
-fn get_projects(db: tauri::State<'_, Database>) -> Result<Vec<Project>, String> {
+fn get_projects(db: tauri::State<Database>) -> Result<Vec<Project>, String> {
     db.get_projects()
 }
 
 #[tauri::command]
 fn create_project(
-    db: tauri::State<'_, Database>,
+    db: tauri::State<Database>,
     name: String,
     path: String,
     existing_id: Option<String>,
@@ -33,7 +33,7 @@ fn create_project(
 }
 
 #[tauri::command]
-fn delete_project(db: tauri::State<'_, Database>, id: String) -> Result<(), String> {
+fn delete_project(db: tauri::State<Database>, id: String) -> Result<(), String> {
     db.delete_project(&id)
 }
 
@@ -41,7 +41,7 @@ fn delete_project(db: tauri::State<'_, Database>, id: String) -> Result<(), Stri
 
 #[tauri::command]
 fn get_sessions(
-    db: tauri::State<'_, Database>,
+    db: tauri::State<Database>,
     project_id: Option<String>,
 ) -> Result<Vec<ChatSession>, String> {
     match project_id {
@@ -51,18 +51,18 @@ fn get_sessions(
 }
 
 #[tauri::command]
-fn get_all_sessions(db: tauri::State<'_, Database>) -> Result<Vec<ChatSession>, String> {
+fn get_all_sessions(db: tauri::State<Database>) -> Result<Vec<ChatSession>, String> {
     db.get_all_sessions()
 }
 
 #[tauri::command]
-fn get_session(db: tauri::State<'_, Database>, id: String) -> Result<Option<ChatSession>, String> {
+fn get_session(db: tauri::State<Database>, id: String) -> Result<Option<ChatSession>, String> {
     db.get_session(&id)
 }
 
 #[tauri::command]
 fn create_session(
-    db: tauri::State<'_, Database>,
+    db: tauri::State<Database>,
     title: String,
     last_message: Option<String>,
     project_id: Option<String>,
@@ -81,7 +81,7 @@ fn create_session(
 
 #[tauri::command]
 fn update_session(
-    db: tauri::State<'_, Database>,
+    db: tauri::State<Database>,
     id: String,
     title: Option<String>,
     last_message: Option<String>,
@@ -91,7 +91,7 @@ fn update_session(
 }
 
 #[tauri::command]
-fn delete_session(db: tauri::State<'_, Database>, id: String) -> Result<(), String> {
+fn delete_session(db: tauri::State<Database>, id: String) -> Result<(), String> {
     db.delete_session(&id)
 }
 
@@ -99,7 +99,7 @@ fn delete_session(db: tauri::State<'_, Database>, id: String) -> Result<(), Stri
 
 #[tauri::command]
 fn get_messages(
-    db: tauri::State<'_, Database>,
+    db: tauri::State<Database>,
     session_id: String,
 ) -> Result<Vec<Message>, String> {
     db.get_messages(&session_id)
@@ -107,7 +107,7 @@ fn get_messages(
 
 #[tauri::command]
 fn save_messages(
-    db: tauri::State<'_, Database>,
+    db: tauri::State<Database>,
     session_id: String,
     messages: Vec<Message>,
 ) -> Result<(), String> {
@@ -118,20 +118,20 @@ fn save_messages(
 
 #[tauri::command]
 fn get_app_config(
-    db: tauri::State<'_, Database>,
+    db: tauri::State<Database>,
     key: String,
 ) -> Result<Option<String>, String> {
     db.get_config(&key)
 }
 
 #[tauri::command]
-fn get_all_app_config(db: tauri::State<'_, Database>) -> Result<Vec<AppConfig>, String> {
+fn get_all_app_config(db: tauri::State<Database>) -> Result<Vec<AppConfig>, String> {
     db.get_all_config()
 }
 
 #[tauri::command]
 fn set_app_config(
-    db: tauri::State<'_, Database>,
+    db: tauri::State<Database>,
     key: String,
     value: String,
 ) -> Result<(), String> {
