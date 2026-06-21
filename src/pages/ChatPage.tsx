@@ -42,9 +42,9 @@ const mapUIMessageToLegacyMessage = (m: any): any => {
   let toolInvocations = m.toolInvocations;
   if (!toolInvocations && Array.isArray(m.parts)) {
     toolInvocations = m.parts
-      .filter((part: any) => part.type === 'dynamic-tool' || part.type.startsWith('tool-'))
+      .filter((part: any) => part.type === 'dynamic-tool' || (part.type && part.type.startsWith('tool-')))
       .map((part: any) => {
-        const toolName = part.toolName || part.type.replace(/^tool-/, '');
+        const toolName = part.toolName || (part.type ? part.type.replace(/^tool-/, '') : 'unknown');
         return {
           state:
             part.state === 'output-available'
@@ -94,39 +94,36 @@ export const ChatPage = () => {
   const projectContextRef = useRef('');
   const projectRef = useRef<Project | null>(null);
 
+const isResizingRef = useRef(false);
+
   const startResizing = useCallback(() => {
+    isResizingRef.current = true;
     setIsResizing(true);
   }, []);
 
   const stopResizing = useCallback(() => {
+    isResizingRef.current = false;
     setIsResizing(false);
   }, []);
 
-  const resize = useCallback(
-    (e: MouseEvent) => {
-      if (isResizing) {
-        const newWidth = 100 - (e.clientX / window.innerWidth) * 100;
-        if (newWidth > 20 && newWidth < 80) {
-          setPaneWidth(newWidth);
-        }
-      }
-    },
-    [isResizing]
-  );
+  const resize = useCallback((e: MouseEvent) => {
+    if (!isResizingRef.current) return;
+    const newWidth = 100 - (e.clientX / window.innerWidth) * 100;
+    if (newWidth > 20 && newWidth < 80) {
+      setPaneWidth(newWidth);
+    }
+  }, []);
 
   useEffect(() => {
-    if (isResizing) {
+    if (isResizingRef.current) {
       window.addEventListener('mousemove', resize);
       window.addEventListener('mouseup', stopResizing);
-    } else {
-      window.removeEventListener('mousemove', resize);
-      window.removeEventListener('mouseup', stopResizing);
     }
     return () => {
       window.removeEventListener('mousemove', resize);
       window.removeEventListener('mouseup', stopResizing);
     };
-  }, [isResizing, resize, stopResizing]);
+  }, [resize, stopResizing]);
 
   const {
     activeArtifactId,
@@ -156,6 +153,7 @@ export const ChatPage = () => {
     setMessages,
     error,
   } = useChat({
+    // eslint-disable-next-line react-hooks/refs
     transport: new DefaultChatTransport({
       fetch: async (_url: any, options: any) => {
         if (!options?.body) {
@@ -319,17 +317,6 @@ export const ChatPage = () => {
     return () => window.removeEventListener('reset-chat', handleResetChat);
   }, [setMessages]);
 
-  useEffect(() => {
-    if (uuid && uuid !== 'new') {
-      const pendingMessage = sessionStorage.getItem('pending-first-message');
-      if (pendingMessage) {
-        sessionStorage.removeItem('pending-first-message');
-        handleSend(pendingMessage);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uuid]);
-
   const handleSend = useCallback(
     async (content: string) => {
       // On first send from /chat/new or /thread/new: create a real session and redirect to it.
@@ -369,13 +356,24 @@ export const ChatPage = () => {
     [uuid, append, navigate, project]
   );
 
+  useEffect(() => {
+    if (uuid && uuid !== 'new') {
+      const pendingMessage = sessionStorage.getItem('pending-first-message');
+      if (pendingMessage) {
+        sessionStorage.removeItem('pending-first-message');
+        handleSend(pendingMessage);
+      }
+    }
+  }, [uuid, handleSend]);
+
   const activeArtifact = getActiveArtifact();
   const activeArtifactVersions = activeArtifactId ? getArtifactVersions(activeArtifactId) : [];
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.toolInvocations) {
-      const artifactTool = lastMessage.toolInvocations.find(
+    const toolInvocations = lastMessage?.toolInvocations;
+    if (Array.isArray(toolInvocations)) {
+      const artifactTool = toolInvocations.find(
         (ti: any) => ti.toolName === 'create_artifact'
       );
       if (artifactTool?.state === 'result' && artifactTool?.args?.title) {
@@ -489,7 +487,7 @@ export const ChatPage = () => {
         >
           <div
             onMouseDown={startResizing}
-            className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-500/30 transition-colors z-50 -ml-0.75"
+            className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-500/30 transition-colors z-50 -ml-0.5"
           />
 
           {isArtifactOpen && !isIDEOpen && (

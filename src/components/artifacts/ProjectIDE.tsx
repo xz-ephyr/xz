@@ -95,14 +95,16 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
   const [openBreadcrumb, setOpenBreadcrumb] = useState<string | null>(null);
   const [breadcrumbRect, setBreadcrumbRect] = useState<{ top: number; left: number } | null>(null);
 
-  useEffect(() => {
-    loadTree();
-  }, [project.path]);
-
   const loadTree = async () => {
     const newTree = await FileSystemService.getTree(project.path);
     setTree(newTree);
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadTree();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.path]);
 
   const handleFileClick = async (file: FileEntry) => {
     if (file.isDirectory) return;

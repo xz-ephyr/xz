@@ -68,6 +68,7 @@ export function useOnboarding() {
       }
     };
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const goToStep = useCallback((stepId: StepId) => {

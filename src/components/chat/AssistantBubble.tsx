@@ -130,6 +130,7 @@ export const AssistantBubble = React.memo(
 
     useEffect(() => {
       if (!isStreaming) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsReasoningOpen(false);
       }
     }, [isStreaming]);

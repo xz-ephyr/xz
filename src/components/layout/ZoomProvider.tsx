@@ -23,7 +23,9 @@ export function ZoomProvider({ children }: { children: ReactNode }) {
   const zoomRef = useRef(zoom);
   const throttleRef = useRef(0);
 
-  zoomRef.current = zoom;
+  useEffect(() => {
+    zoomRef.current = zoom;
+  });
 
   useEffect(() => {
     if (isTauri()) {

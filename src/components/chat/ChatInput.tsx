@@ -12,6 +12,93 @@ interface ChatInputProps {
   onToggleThinking: () => void;
 }
 
+function PlusDropdown({
+  isOpen,
+  onToggle,
+  onToggleThinking,
+  isThinkingEnabled,
+  dropUp,
+}: {
+  isOpen: boolean;
+  onToggle: () => void;
+  onToggleThinking: () => void;
+  isThinkingEnabled: boolean;
+  dropUp?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <button
+        onClick={onToggle}
+        className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-neutral-200/60 transition-colors text-black"
+      >
+        <HugeiconsIcon icon={PlusSignIcon} size={18} />
+      </button>
+
+      {isOpen && (
+        <div
+          className={`absolute ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-50`}
+        >
+          <button
+            onClick={() => { onToggleThinking(); onToggle(); }}
+            className="w-full text-left px-4 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center justify-between"
+          >
+            <span className="flex items-center gap-2"><HugeiconsIcon icon={Idea01Icon} size={14} /> Thinking Mode</span>
+            {isThinkingEnabled && <div className="w-2 h-2 rounded-full bg-blue-500"></div>}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ThinkingPill({
+  onToggleThinking,
+  size = 'normal',
+}: {
+  onToggleThinking: () => void;
+  size?: 'normal' | 'small';
+}) {
+  return (
+    <div
+      onClick={onToggleThinking}
+      className={`group flex items-center gap-2 bg-blue-100 text-blue-900 ${size === 'normal' ? 'px-4 py-1.5 text-sm' : 'px-3 py-1 text-xs'} rounded-full font-medium cursor-pointer transition-all active:scale-95`}
+    >
+      <div className={`relative flex items-center justify-center ${size === 'normal' ? 'w-4 h-4' : 'w-3.5 h-3.5'}`}>
+        <HugeiconsIcon icon={Idea01Icon} size={size === 'normal' ? 16 : 14} className="group-hover:hidden" />
+        <HugeiconsIcon icon={Cancel01Icon} size={size === 'normal' ? 16 : 14} className="hidden group-hover:block" />
+      </div>
+      Think
+    </div>
+  );
+}
+
+function SendButton({
+  isLoading,
+  onStop,
+  onSend,
+  hasValue,
+}: {
+  isLoading?: boolean;
+  onStop?: () => void;
+  onSend: () => void;
+  hasValue: boolean;
+}) {
+  return (
+    <button
+      onClick={isLoading ? onStop : onSend}
+      disabled={!hasValue && !isLoading}
+      className="p-1.5 text-white rounded-full bg-black disabled:opacity-50 transition-opacity hover:opacity-90 active:scale-95"
+    >
+      <HugeiconsIcon
+        icon={isLoading ? StopIcon : ArrowUp02Icon}
+        size={18}
+        color="currentColor"
+        strokeWidth={1.5}
+      />
+    </button>
+  );
+}
+
 export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkingEnabled, onToggleThinking }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -35,59 +122,6 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
       setValue('');
     }
   };
-
-  const PlusDropdown = ({ dropUp = false }: { dropUp?: boolean }) => (
-    <div className="relative">
-      <button
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-neutral-200/60 transition-colors text-black"
-      >
-        <HugeiconsIcon icon={PlusSignIcon} size={18} />
-      </button>
-
-      {isDropdownOpen && (
-        <div
-          className={`absolute ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-50`}
-        >
-          <button
-            onClick={() => { onToggleThinking(); setIsDropdownOpen(false); }}
-            className="w-full text-left px-4 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center justify-between"
-          >
-            <span className="flex items-center gap-2"><HugeiconsIcon icon={Idea01Icon} size={14} /> Thinking Mode</span>
-            {isThinkingEnabled && <div className="w-2 h-2 rounded-full bg-blue-500"></div>}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-
-  const ThinkingPill = ({ size = 'normal' }: { size?: 'normal' | 'small' }) => (
-    <div
-      onClick={onToggleThinking}
-      className={`group flex items-center gap-2 bg-blue-100 text-blue-900 ${size === 'normal' ? 'px-4 py-1.5 text-sm' : 'px-3 py-1 text-xs'} rounded-full font-medium cursor-pointer transition-all active:scale-95`}
-    >
-      <div className={`relative flex items-center justify-center ${size === 'normal' ? 'w-4 h-4' : 'w-3.5 h-3.5'}`}>
-        <HugeiconsIcon icon={Idea01Icon} size={size === 'normal' ? 16 : 14} className="group-hover:hidden" />
-        <HugeiconsIcon icon={Cancel01Icon} size={size === 'normal' ? 16 : 14} className="hidden group-hover:block" />
-      </div>
-      Think
-    </div>
-  );
-
-  const SendButton = () => (
-    <button
-      onClick={isLoading ? onStop : handleSend}
-      disabled={!value.trim() && !isLoading}
-      className="p-1.5 text-white rounded-full bg-black disabled:opacity-50 transition-opacity hover:opacity-90 active:scale-95"
-    >
-      <HugeiconsIcon
-        icon={isLoading ? StopIcon : ArrowUp02Icon}
-        size={18}
-        color="currentColor"
-        strokeWidth={1.5}
-      />
-    </button>
-  );
 
   return (
     <div className="relative w-full mx-auto transition-all duration-300" style={{ maxWidth: 'min(780px, 100%)' }}>
@@ -125,10 +159,10 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
             
             <div className="flex items-center justify-between px-3 py-2 bg-transparent">
               <div className="flex items-center gap-2">
-                <PlusDropdown dropUp={false} />
-                {isThinkingEnabled && <ThinkingPill />}
+                <PlusDropdown isOpen={isDropdownOpen} onToggle={() => setIsDropdownOpen(!isDropdownOpen)} onToggleThinking={onToggleThinking} isThinkingEnabled={isThinkingEnabled} dropUp={false} />
+                {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} />}
               </div>
-              <SendButton />
+              <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
             </div>
           </div>
         </div>
@@ -155,10 +189,10 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
           
           <div className="flex items-center justify-between px-3 py-2 bg-transparent">
              <div className="flex items-center gap-2">
-                <PlusDropdown dropUp={true} />
-                {isThinkingEnabled && <ThinkingPill size="small" />}
+                <PlusDropdown isOpen={isDropdownOpen} onToggle={() => setIsDropdownOpen(!isDropdownOpen)} onToggleThinking={onToggleThinking} isThinkingEnabled={isThinkingEnabled} dropUp={true} />
+                {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
              </div>
-             <SendButton />
+             <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
           </div>
         </div>
       )}

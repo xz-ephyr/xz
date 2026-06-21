@@ -15,6 +15,7 @@ export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) 
 
   useEffect(() => {
     if (reasoning) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsExpanded(false);
     }
   }, [reasoning]);

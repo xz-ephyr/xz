@@ -189,7 +189,9 @@ export const ChatsPage = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshChats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionType]);
 
   useEffect(() => {
