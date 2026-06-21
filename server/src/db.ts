@@ -20,15 +20,13 @@ export async function query<T = Record<string, unknown>>(
 ): Promise<{ rows: T[] }> {
   const sql = text.replace(/\$(\d+)/g, '?');
   const trimmed = text.trimStart().toUpperCase();
-  const start = trimmed.startsWith('SELECT')
+  const returnsRows = trimmed.startsWith('SELECT')
     || trimmed.startsWith('WITH')
-    || trimmed.startsWith('INSERT')
-    || trimmed.startsWith('UPDATE')
-    || trimmed.startsWith('DELETE');
+    || trimmed.includes('RETURNING');
 
   const stmt = db.prepare(sql);
 
-  if (start) {
+  if (returnsRows) {
     const rows = (params ? stmt.all(...params) : stmt.all()) as T[];
     return { rows };
   }
