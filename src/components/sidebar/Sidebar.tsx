@@ -19,6 +19,7 @@ import { ChatSessionManager } from '../../services/ChatSessionManager';
 import { FileSystemService } from '../../services/FileSystemService';
 import { Project } from '../../types/chat';
 import { isTauri } from '../../lib/tauri';
+import { useToast } from '../ui/Toast';
 
 
 // Helper component to render Hugeicons in SidebarTabs
@@ -35,6 +36,7 @@ export default function Sidebar() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -53,7 +55,7 @@ export default function Sidebar() {
 
   const handleDownloadApp = async () => {
     if (isTauri()) {
-      alert('You are already running the desktop version of the application!');
+      addToast('You are already running the desktop version of the application!', 'info');
       return;
     }
 
@@ -73,8 +75,9 @@ export default function Sidebar() {
       a.download = 'xz-desktop-app-instructions.txt';
       a.click();
       URL.revokeObjectURL(url);
-      alert(
-        "Tauri desktop app installation instructions downloaded! In web browser mode, you can also install this app as a PWA directly from your browser's address bar."
+      addToast(
+        "Tauri desktop app installation instructions downloaded! In web browser mode, you can also install this app as a PWA directly from your browser's address bar.",
+        'info'
       );
     }
   };

@@ -16,6 +16,7 @@ import { DatabaseService } from '../services/DatabaseService';
 import { FileSystemService } from '../services/FileSystemService';
 import { ProjectIDE } from '../components/artifacts/ProjectIDE';
 import { IDEPromptModal } from '../components/chat/IDEPromptModal';
+import { useToast } from '../components/ui/Toast';
 
 const mapUIMessageToLegacyMessage = (m: any): any => {
   if (!m) return m;
@@ -86,6 +87,7 @@ export const ChatPage = () => {
   const previousModelRef = useRef<string | null>(null);
   const isThinkingEnabledRef = useRef(false);
   const currentModelRef = useRef<string | null>(null);
+  const { addToast } = useToast();
 
   const toggleThinking = () => setIsThinkingEnabled((prev) => !prev);
 
@@ -143,7 +145,15 @@ const isResizingRef = useRef(false);
     setProjectContext(summary);
   };
 
-  const currentModel = useMemo(() => getModelForChatRequest(uuid), [uuid]);
+  const [modelRevision, setModelRevision] = useState(0);
+
+  useEffect(() => {
+    const handler = () => setModelRevision((v) => v + 1);
+    window.addEventListener('model-changed', handler);
+    return () => window.removeEventListener('model-changed', handler);
+  }, []);
+
+  const currentModel = useMemo(() => getModelForChatRequest(uuid), [uuid, modelRevision]);
 
   const chat = useChat({
     // eslint-disable-next-line react-hooks/refs
@@ -178,7 +188,9 @@ const isResizingRef = useRef(false);
     }),
     messages: [],
     onError: (chatError: Error) => {
-      console.error('Chat stream failed:', getAIErrorMessage(chatError));
+      const msg = getAIErrorMessage(chatError);
+      console.error('Chat stream failed:', msg);
+      addToast(msg, 'error');
     },
     onFinish: async (event: any) => {
       if (uuid && uuid !== 'new') {
@@ -244,7 +256,6 @@ const isResizingRef = useRef(false);
     status: string;
     stop: () => void;
     setMessages: (msgs: any[] | ((msgs: any[]) => any[])) => void;
-    error: Error | undefined;
   };
 
   const {
@@ -253,7 +264,6 @@ const isResizingRef = useRef(false);
     status,
     stop,
     setMessages,
-    error,
   } = chat;
 
   const isLoading = status === 'submitted' || status === 'streaming';
@@ -412,11 +422,6 @@ const isResizingRef = useRef(false);
         >
           {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
           <div className="w-full mx-auto px-4" style={{ maxWidth: 'min(780px, 100%)' }}>
-            {error && (
-              <div className="my-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {getAIErrorMessage(error)}
-              </div>
-            )}
             {messages.map((m: any, i: number) => (
               <React.Fragment key={m.id || i}>
                 {m.role === 'user' ? (

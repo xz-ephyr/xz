@@ -165,7 +165,7 @@ app.post('/save_messages', async (req, res) => {
 
   for (const m of messages) {
     placeholders.push(`($${idx}, $${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6})`);
-    params.push(m.id, sessionId, m.role, m.content, m.reasoning, m.toolInvocations || null, m.createdAt);
+    params.push(m.id, sessionId, m.role, m.content || '', m.reasoning, m.toolInvocations || null, m.createdAt);
     idx += 7;
   }
 

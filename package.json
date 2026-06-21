@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n frontend,server -c cyan,yellow \"vite\" \"npm run dev --prefix server\"",
+    "dev": "vite",
+    "server": "npm run dev --prefix server",
     "build": "vite build",
     "desktop:prebuild": "npm run build",
     "preview": "vite preview",
@@ -16,6 +17,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/cerebras": "^2.0.57",
     "@ai-sdk/gateway": "^3.0.133",
     "@ai-sdk/google": "^3.0.80",
     "@ai-sdk/groq": "^3.0.42",
@@ -78,7 +80,6 @@
     "@typescript-eslint/parser": "^8.24.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
-    "concurrently": "^10.0.3",
     "eslint": "^9.20.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fallow": "^2.89.0",

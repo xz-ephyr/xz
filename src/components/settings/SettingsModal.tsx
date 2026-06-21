@@ -10,10 +10,12 @@ import {
   SELECTED_MODEL_STORAGE_KEY,
   getStoredModelMode,
   getStoredSelectedModel,
+  getModelDefinition,
   API_KEYS,
   MODELS,
 } from '../../config/models';
 import { refreshProviders } from '../../services/aiService';
+import { useToast } from '../ui/Toast';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -23,6 +25,10 @@ interface SettingsModalProps {
 const PROVIDER_LABELS: Record<string, string> = {
   google: 'Google Gemini',
   groq: 'Groq',
+  opencodezen: 'OpenCode Zen',
+  mistral: 'Mistral',
+  openrouter: 'OpenRouter',
+  cerebras: 'Cerebras',
 };
 
 const SIDEBAR_STORAGE_KEY = 'sidebar_collapsed';
@@ -51,6 +57,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [modelMode, setModelMode] = useState(getStoredModelMode);
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [isSaving, setIsSaving] = useState(false);
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const { confirmAsync } = useToast();
 
   const toggleShowKey = (provider: string) => {
     setShowKeys(prev => ({ ...prev, [provider]: !prev[provider] }));
@@ -65,6 +73,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     localStorage.setItem(SELECTED_MODEL_STORAGE_KEY, selectedModel);
     localStorage.setItem(MODEL_MODE_STORAGE_KEY, modelMode);
     refreshProviders();
+    window.dispatchEvent(new CustomEvent('model-changed'));
     setIsSaving(false);
   };
 
@@ -72,7 +81,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[4px] z-50">
-      <div className="bg-white rounded-[16px] w-[min(1100px,95vw)] h-[600px] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden">
+      <div className="bg-white rounded-[16px] w-[min(1100px,95vw)] h-[85vh] min-h-[500px] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between shrink-0">
           <h2 className="text-[18px] font-bold text-neutral-800 flex items-center gap-2">
@@ -221,17 +230,42 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <HugeiconsIcon icon={GlobeIcon} size={16} />
                       Default Model
                     </label>
-                    <select
-                      className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
-                      value={selectedModel}
-                      onChange={(e) => setSelectedModel(e.target.value as typeof selectedModel)}
-                    >
-                      {MODELS.map((model) => (
-                        <option key={model.id} value={model.id}>
-                          {model.label} ({PROVIDER_LABELS[model.provider] || model.provider})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <div
+                        className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 flex items-center cursor-pointer"
+                        onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                      >
+                        <span className="flex-1 truncate">
+                          {getModelDefinition(selectedModel)
+                            ? `${getModelDefinition(selectedModel)!.label} (${PROVIDER_LABELS[getModelDefinition(selectedModel)!.provider] || getModelDefinition(selectedModel)!.provider})`
+                            : selectedModel}
+                        </span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400 shrink-0">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </div>
+                      {isModelDropdownOpen && (
+                        <div className="absolute z-10 mt-1 w-full bg-white border border-neutral-200 rounded-[10px] shadow-lg overflow-hidden">
+                          <div className="overflow-y-auto" style={{ maxHeight: 255 }}>
+                            {MODELS.map((model) => (
+                              <button
+                                key={model.id}
+                                className={`w-full px-3 py-2 text-sm text-left hover:bg-neutral-50 transition-colors flex items-center gap-2 ${
+                                  selectedModel === model.id ? 'bg-neutral-100 font-medium' : ''
+                                }`}
+                                onClick={() => {
+                                  setSelectedModel(model.id as typeof selectedModel);
+                                  setIsModelDropdownOpen(false);
+                                }}
+                              >
+                                <span className="flex-1 truncate">{model.label}</span>
+                                <span className="text-[11px] text-neutral-400 shrink-0">{PROVIDER_LABELS[model.provider] || model.provider}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -343,10 +377,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </button>
 
                   <button
-                    onClick={() => {
-                      if (window.confirm('Clear all chat history? This cannot be undone.')) {
-                        if (window.confirm('Are you sure? All messages and sessions will be permanently deleted.')) {
-                          // Clear only chat-related localStorage keys
+                    onClick={async () => {
+                      if (await confirmAsync('Clear all chat history? This cannot be undone.')) {
+                        if (await confirmAsync('Are you sure? All messages and sessions will be permanently deleted.')) {
                           const keysToRemove = ['chat_sessions', 'project_chat_sessions', 'projects'];
                           keysToRemove.forEach(k => localStorage.removeItem(k));
                         }
@@ -358,8 +391,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </button>
 
                   <button
-                    onClick={() => {
-                      if (window.confirm('Reset onboarding tour? You will see the welcome screens again on next launch.')) {
+                    onClick={async () => {
+                      if (await confirmAsync('Reset onboarding tour? You will see the welcome screens again on next launch.')) {
                         localStorage.removeItem('onboarding_completed');
                       }
                     }}

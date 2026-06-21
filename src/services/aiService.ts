@@ -1,6 +1,10 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
+import { createMistral } from '@ai-sdk/mistral';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createCerebras } from '@ai-sdk/cerebras';
 import { convertToModelMessages, streamText, stepCountIs, tool } from 'ai';
+import type { OpenAIProvider } from '@ai-sdk/openai';
 import {
   SYSTEM_PROMPT,
   createArtifactTool,
@@ -17,9 +21,20 @@ import { API_KEYS, getModelDefinition } from '../config/models';
 import { getSmartSystemPrompt } from './ai/contextController';
 import { contractContext } from './ai/contextContractor';
 
-let cachedProviders: { google: ReturnType<typeof createGoogleGenerativeAI>; groq: ReturnType<typeof createGroq> } | null = null;
+let cachedProviders: {
+  google: ReturnType<typeof createGoogleGenerativeAI>;
+  groq: ReturnType<typeof createGroq>;
+  mistral: ReturnType<typeof createMistral>;
+  openrouter: OpenAIProvider;
+  opencodezen: OpenAIProvider;
+  cerebras: ReturnType<typeof createCerebras>;
+} | null = null;
 let cachedGoogleKey = '';
 let cachedGroqKey = '';
+let cachedMistralKey = '';
+let cachedOpenrouterKey = '';
+let cachedOpencodezenKey = '';
+let cachedCerebrasKey = '';
 
 export function refreshProviders() {
   cachedProviders = null;
@@ -28,12 +43,38 @@ export function refreshProviders() {
 function getProviders() {
   const currentGoogleKey = localStorage.getItem(API_KEYS.google) || '';
   const currentGroqKey = localStorage.getItem(API_KEYS.groq) || '';
-  if (!cachedProviders || currentGoogleKey !== cachedGoogleKey || currentGroqKey !== cachedGroqKey) {
+  const currentMistralKey = localStorage.getItem(API_KEYS.mistral) || '';
+  const currentOpenrouterKey = localStorage.getItem(API_KEYS.openrouter) || '';
+  const currentOpencodezenKey = localStorage.getItem(API_KEYS.opencodezen) || '';
+  const currentCerebrasKey = localStorage.getItem(API_KEYS.cerebras) || '';
+  if (
+    !cachedProviders ||
+    currentGoogleKey !== cachedGoogleKey ||
+    currentGroqKey !== cachedGroqKey ||
+    currentMistralKey !== cachedMistralKey ||
+    currentOpenrouterKey !== cachedOpenrouterKey ||
+    currentOpencodezenKey !== cachedOpencodezenKey ||
+    currentCerebrasKey !== cachedCerebrasKey
+  ) {
     cachedGoogleKey = currentGoogleKey;
     cachedGroqKey = currentGroqKey;
+    cachedMistralKey = currentMistralKey;
+    cachedOpenrouterKey = currentOpenrouterKey;
+    cachedOpencodezenKey = currentOpencodezenKey;
+    cachedCerebrasKey = currentCerebrasKey;
     cachedProviders = {
       google: createGoogleGenerativeAI({ apiKey: currentGoogleKey }),
       groq: createGroq({ apiKey: currentGroqKey }),
+      mistral: createMistral({ apiKey: currentMistralKey }),
+      openrouter: createOpenAI({
+        apiKey: currentOpenrouterKey,
+        baseURL: 'https://openrouter.ai/api/v1',
+      }),
+      opencodezen: createOpenAI({
+        apiKey: currentOpencodezenKey,
+        baseURL: localStorage.getItem('opencodezen-base-url') || 'https://api.opencodezen.ai/v1',
+      }),
+      cerebras: createCerebras({ apiKey: currentCerebrasKey }),
     };
   }
   return cachedProviders;
@@ -78,11 +119,16 @@ export async function chatCompletion({
 
     if (def.provider === 'google') return providers.google(def.id);
     if (def.provider === 'groq') return providers.groq(def.id);
+    if (def.provider === 'mistral') return providers.mistral(def.id);
+    if (def.provider === 'openrouter') return providers.openrouter(def.id);
+    if (def.provider === 'opencodezen') return providers.opencodezen(def.id);
+    if (def.provider === 'cerebras') return providers.cerebras(def.id);
     return providers.google('gemini-3.5-flash');
   };
 
   const fallbackChain = [
     modelName,
+    'mistral-small-latest',
     'gemini-3.5-flash',
     'llama-3.1-8b-instant',
   ];
@@ -90,6 +136,8 @@ export async function chatCompletion({
   const uniqueChain = Array.from(new Set(fallbackChain));
 
   const fullSystemPrompt = getSmartSystemPrompt(SYSTEM_PROMPT, projectContext);
+
+  const errors: string[] = [];
 
   const getStreamResult = async (modelIdx: number): Promise<any> => {
     const currentModelName = uniqueChain[modelIdx];
@@ -107,7 +155,6 @@ export async function chatCompletion({
 
     try {
       if (previousModelName && previousModelName !== currentModelName) {
-        // Re-evaluate model and messages if routed
         const incomingModel = getLanguageModel(currentModelName);
         processedMessages = await contractContext(messages, incomingModel);
       }
@@ -191,7 +238,6 @@ export async function chatCompletion({
                 if (!fullPath) return { error: `Path escapes project: ${file_path}.` };
                 const currentContent = await FileSystemService.getFileContent(fullPath);
 
-                // Count occurrences
                 let occurrences = 0;
                 let searchIdx = 0;
                 while ((searchIdx = currentContent.indexOf(target_content, searchIdx)) !== -1) {
@@ -267,8 +313,6 @@ export async function chatCompletion({
                 const fullPath = await resolveProjectPath(projectPath, path);
                 if (!fullPath) return { error: `Path escapes project: ${path}.` };
 
-                // For simplicity in web mode, we just iterate through virtual FS
-                // In Tauri mode, we could use native grep but for consistency:
                 const results: { file: string; line: number; content: string }[] = [];
                 const tree = await FileSystemService.getTree(fullPath);
 
@@ -305,11 +349,14 @@ export async function chatCompletion({
         },
       });
     } catch (error) {
+      errors.push(`${uniqueChain[modelIdx]}: ${getAIErrorMessage(error)}`);
       if (modelIdx < uniqueChain.length - 1) {
-        console.warn(`Model ${uniqueChain[modelIdx]} failed to initialize, trying fallback...`);
+        console.warn(`Model ${uniqueChain[modelIdx]} failed, trying fallback...`);
         return getStreamResult(modelIdx + 1);
       }
-      throw error;
+      throw new Error(
+        `All AI models failed. Tried: ${uniqueChain.join(', ')}.\nErrors:\n${errors.join('\n')}\n\nCheck your API keys in Settings.`
+      );
     }
   };
 

@@ -19,6 +19,10 @@ interface ModelSetupStepProps {
 const PROVIDER_LABELS: Record<string, string> = {
   google: 'Google Gemini',
   groq: 'Groq',
+  opencodezen: 'OpenCode Zen',
+  mistral: 'Mistral',
+  openrouter: 'OpenRouter',
+  cerebras: 'Cerebras',
 };
 
 export function ModelSetupStep({ onComplete, onSkip }: ModelSetupStepProps) {
@@ -44,6 +48,7 @@ export function ModelSetupStep({ onComplete, onSkip }: ModelSetupStepProps) {
     });
     localStorage.setItem(SELECTED_MODEL_STORAGE_KEY, selectedModel);
     localStorage.setItem(MODEL_MODE_STORAGE_KEY, modelMode);
+    window.dispatchEvent(new CustomEvent('model-changed'));
     onComplete();
   };
 

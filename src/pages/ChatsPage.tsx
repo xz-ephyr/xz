@@ -14,6 +14,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { ChatSession } from '../types/chat';
 import { ChatSessionManager } from '../services/ChatSessionManager';
 import { cn } from '../lib/utils';
+import { useToast } from '../components/ui/Toast';
 
 const HugeiconRenderer = ({
   icon: Icon,
@@ -48,6 +49,7 @@ const ChatListItem = ({
   const [editTitle, setEditTitle] = useState(chat.title);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { confirmAsync } = useToast();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -81,10 +83,10 @@ const ChatListItem = ({
     setIsMenuOpen(false);
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this chat?')) {
+    if (await confirmAsync('Are you sure you want to delete this chat?')) {
       onDelete(chat.id);
     }
     setIsMenuOpen(false);
