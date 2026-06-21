@@ -238,8 +238,8 @@ const isResizingRef = useRef(false);
     },
   }) as unknown as {
     messages: any[];
-    append: (msg: any) => void;
-    isLoading: boolean;
+    sendMessage: (msg: any) => void;
+    status: string;
     stop: () => void;
     setMessages: (msgs: any[] | ((msgs: any[]) => any[])) => void;
     error: Error | undefined;
@@ -247,12 +247,14 @@ const isResizingRef = useRef(false);
 
   const {
     messages: rawMessages,
-    append,
-    isLoading,
+    sendMessage,
+    status,
     stop,
     setMessages,
     error,
   } = chat;
+
+  const isLoading = status === 'submitted' || status === 'streaming';
 
   useEffect(() => {
     if (uuid) {
@@ -351,7 +353,7 @@ const isResizingRef = useRef(false);
 
       const userMsg = {
         id: crypto.randomUUID(),
-        role: 'user',
+        role: 'user' as const,
         content,
         createdAt: Date.now(),
       };
@@ -360,9 +362,9 @@ const isResizingRef = useRef(false);
         await DatabaseService.saveMessages(uuid, [userMsg]);
       }
 
-      append(userMsg as any);
+      sendMessage({ text: content });
     },
-    [uuid, append, navigate, project]
+    [uuid, sendMessage, navigate, project]
   );
 
   useEffect(() => {

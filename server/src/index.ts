@@ -46,7 +46,7 @@ app.post('/delete_project', async (req, res) => {
 
 app.post('/get_sessions', async (req, res) => {
   const { projectId } = req.body;
-  let sql, params;
+  let sql: string, params: any[];
   if (projectId === null || projectId === undefined) {
     sql = 'SELECT id, title, last_message, project_id, archived, created_at FROM chat_sessions WHERE project_id IS NULL ORDER BY created_at DESC';
     params = [];
@@ -164,7 +164,7 @@ app.post('/save_messages', async (req, res) => {
   let idx = 1;
 
   for (const m of messages) {
-    placeholders.push(`($${idx}, $${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}::jsonb, $${idx + 6})`);
+    placeholders.push(`($${idx}, $${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6})`);
     params.push(m.id, sessionId, m.role, m.content, m.reasoning, m.toolInvocations || null, m.createdAt);
     idx += 7;
   }

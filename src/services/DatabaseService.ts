@@ -1,12 +1,6 @@
-import { invoke } from '@tauri-apps/api/core';
-import { isTauri } from '../lib/tauri';
-
 const API_BASE = () => import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 async function request<T>(command: string, payload: any): Promise<T> {
-  if (isTauri()) {
-    return await invoke<T>(command, payload);
-  }
   const res = await fetch(`${API_BASE()}/${command}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

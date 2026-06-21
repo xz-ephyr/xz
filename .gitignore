@@ -42,6 +42,9 @@ turbo/
 
 .gemini/
 gha-creds-*.json
+
+# Server SQLite database
+server/data/
 dist
 .next
 src-tauri/target

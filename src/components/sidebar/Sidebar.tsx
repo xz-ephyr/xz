@@ -49,7 +49,7 @@ export default function Sidebar() {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
+  }, [location.pathname]);
 
   const handleDownloadApp = async () => {
     if (isTauri()) {

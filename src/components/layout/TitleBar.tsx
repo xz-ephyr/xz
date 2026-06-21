@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { isTauri } from '../../lib/tauri';
 import { useZoomContext } from './ZoomProvider';
 
-const ZOOM_PRESETS = [0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 2];
+const ZOOM_PRESETS = [0.5, 0.65, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 2];
 
 async function startWindowDrag() {
   try {
@@ -134,6 +134,7 @@ function WindowButton({
         e.stopPropagation();
         onClick();
       }}
+      onMouseDown={(e) => e.stopPropagation()}
       className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
         isClose
           ? 'hover:bg-red-100 hover:text-red-600 text-neutral-400'
