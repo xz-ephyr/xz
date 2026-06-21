@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import ts from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
@@ -64,9 +65,11 @@ export default [
     },
     plugins: {
       '@typescript-eslint': ts,
+      'react-hooks': reactHooks,
     },
     rules: {
       ...ts.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off', // Turn off to prevent any-related lint failures
       'no-undef': 'off',
     },

@@ -57,7 +57,6 @@ export const DatabaseService = {
 
   async createProject(name: string, path: string, existingId?: string) {
     const id = existingId || crypto.randomUUID();
-    const createdAt = Date.now();
     const row = await request<ProjectRow>('create_project', { name, path, existingId: id });
     return { ...row, createdAt: Number(row.createdAt) };
   },
@@ -90,7 +89,6 @@ export const DatabaseService = {
     existingId?: string
   ) {
     const id = existingId || crypto.randomUUID();
-    const createdAt = Date.now();
     const row = await request<SessionRow>('create_session', {
       title,
       lastMessage: lastMessage || null,

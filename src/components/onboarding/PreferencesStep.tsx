@@ -50,7 +50,7 @@ function loadPreferences(): Preferences {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return JSON.parse(stored);
-  } catch {}
+  } catch { /* ignore JSON parse errors */ }
   return DEFAULT_PREFERENCES;
 }
 

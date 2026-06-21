@@ -4,7 +4,6 @@ import {
   ViewIcon, ViewOffSlashIcon, Settings02Icon, Key01Icon, ZapIcon, Cancel01Icon,
   FolderLibraryIcon, GlobeIcon,
 } from '@hugeicons/core-free-icons';
-import { useZoomContext } from '../layout/ZoomProvider';
 import {
   MODEL_MODE_STORAGE_KEY,
   MODEL_MODES,
@@ -37,54 +36,6 @@ const tabs = [
 ] as const;
 
 type TabId = (typeof tabs)[number]['id'];
-
-function ZoomSlider() {
-  const { zoom, zoomIn, zoomOut, resetZoom, setZoomLevel } = useZoomContext();
-  const presets = [0.5, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 2];
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-semibold text-neutral-700">Zoom</label>
-        <button
-          onClick={resetZoom}
-          className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors underline underline-offset-2"
-        >
-          Reset to 100%
-        </button>
-      </div>
-      <div className="flex items-center gap-3">
-        <button
-          onClick={zoomOut}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors text-neutral-700 text-lg font-medium"
-        >
-          −
-        </button>
-        <div className="flex-1 flex items-center gap-1">
-          {presets.map((level) => (
-            <button
-              key={level}
-              onClick={() => setZoomLevel(level)}
-              className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
-                zoom === level
-                  ? 'bg-black text-white shadow-sm'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-              }`}
-            >
-              {Math.round(level * 100)}%
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={zoomIn}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors text-neutral-700 text-lg font-medium"
-        >
-          +
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [keys, setKeys] = useState(() => {

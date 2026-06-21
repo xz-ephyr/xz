@@ -84,13 +84,13 @@ export const ChatPage = () => {
   const [isResizing, setIsResizing] = useState(false);
   const lastProjectIdRef = useRef<string | null>(null);
   const previousModelRef = useRef<string | null>(null);
+  const isThinkingEnabledRef = useRef(false);
+  const currentModelRef = useRef<string | null>(null);
 
   const toggleThinking = () => setIsThinkingEnabled((prev) => !prev);
 
-  // ✅ FIX #3: Refs hold the latest projectContext and project so the useChat transport
-  // closure (created once at hook init) always reads the current values. Without this,
-  // the transport captures empty-string projectContext from the very first render and
-  // never sees updates — project file context was never actually sent to the AI.
+  // Refs hold the latest values so the useChat transport closure (created once at hook init)
+  // always reads current values. Without this, the transport captures stale initial values.
   const projectContextRef = useRef('');
   const projectRef = useRef<Project | null>(null);
 
@@ -164,16 +164,18 @@ export const ChatPage = () => {
         const body = JSON.parse(options.body as string);
         const result = await chatCompletion({
           messages: body.messages,
-          modelName: body.model,
+          modelName: currentModelRef.current || body.model,
           projectContext: projectContextRef.current,
           projectPath: projectRef.current?.path,
-          isThinkingEnabled: isThinkingEnabled,
+          isThinkingEnabled: isThinkingEnabledRef.current,
           abortSignal: options?.signal,
           previousModelName: previousModelRef.current || undefined,
         });
 
         // Update previous model ref after request starts
-        previousModelRef.current = body.model;
+        if (body.model) {
+          previousModelRef.current = body.model;
+        }
 
         return (result as any).toUIMessageStreamResponse({
           getErrorMessage: getAIErrorMessage,
@@ -298,6 +300,14 @@ export const ChatPage = () => {
   useEffect(() => {
     projectRef.current = project;
   }, [project]);
+
+  useEffect(() => {
+    isThinkingEnabledRef.current = isThinkingEnabled;
+  }, [isThinkingEnabled]);
+
+  useEffect(() => {
+    currentModelRef.current = currentModel;
+  }, [currentModel]);
 
   const messages = rawMessages.map(mapUIMessageToLegacyMessage);
 
