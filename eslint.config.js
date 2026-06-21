@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
-    ignores: ['dist/**', '.vite/**', 'node_modules/**']
+    ignores: ['dist/**', '.vite/**', 'node_modules/**', 'server/dist/**']
   },
   js.configs.recommended,
   {

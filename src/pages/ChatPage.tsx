@@ -145,14 +145,7 @@ const isResizingRef = useRef(false);
 
   const currentModel = useMemo(() => getModelForChatRequest(uuid), [uuid]);
 
-  const {
-    messages: rawMessages,
-    append,
-    isLoading,
-    stop,
-    setMessages,
-    error,
-  } = useChat({
+  const chat = useChat({
     // eslint-disable-next-line react-hooks/refs
     transport: new DefaultChatTransport({
       fetch: async (_url: any, options: any) => {
@@ -243,7 +236,23 @@ const isResizingRef = useRef(false);
         }
       }
     },
-  });
+  }) as unknown as {
+    messages: any[];
+    append: (msg: any) => void;
+    isLoading: boolean;
+    stop: () => void;
+    setMessages: (msgs: any[] | ((msgs: any[]) => any[])) => void;
+    error: Error | undefined;
+  };
+
+  const {
+    messages: rawMessages,
+    append,
+    isLoading,
+    stop,
+    setMessages,
+    error,
+  } = chat;
 
   useEffect(() => {
     if (uuid) {

@@ -70,8 +70,10 @@ export const DatabaseService = {
     const rows = await request<SessionRow[]>('get_sessions', {
       projectId: projectId ?? null,
     });
-    return rows.map(({ createdAt, ...rest }) => ({
+    return rows.map(({ createdAt, lastMessage, projectId: pid, ...rest }) => ({
       ...rest,
+      lastMessage: lastMessage ?? undefined,
+      projectId: pid ?? undefined,
       createdAt: Number(createdAt),
     }));
   },
@@ -79,7 +81,8 @@ export const DatabaseService = {
   async getSession(id: string) {
     const row = await request<SessionRow | null>('get_session', { id });
     if (!row) return null;
-    return { ...row, createdAt: Number(row.createdAt) };
+    const { lastMessage, projectId: pid, createdAt, ...rest } = row;
+    return { ...rest, lastMessage: lastMessage ?? undefined, projectId: pid ?? undefined, createdAt: Number(createdAt) };
   },
 
   async createSession(

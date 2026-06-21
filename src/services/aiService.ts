@@ -14,6 +14,8 @@ import {
 import { FileSystemService } from './FileSystemService';
 import { resolveProjectPath } from '../lib/projectPaths';
 import { API_KEYS, getModelDefinition } from '../config/models';
+import { getSmartSystemPrompt } from './ai/contextController';
+import { contractContext } from './ai/contextContractor';
 
 let cachedProviders: { google: ReturnType<typeof createGoogleGenerativeAI>; groq: ReturnType<typeof createGroq> } | null = null;
 
