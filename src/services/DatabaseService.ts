@@ -1,6 +1,24 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isTauri } from '../lib/tauri';
 
+const API_BASE = () => import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+async function request<T>(command: string, payload: any): Promise<T> {
+  if (isTauri()) {
+    return await invoke<T>(command, payload);
+  }
+  const res = await fetch(`${API_BASE()}/${command}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || `API error: ${res.status}`);
+  }
+  return await res.json();
+}
+
 interface ProjectRow {
   id: string;
   name: string;
@@ -30,7 +48,7 @@ interface MessageRow {
 export const DatabaseService = {
   // Projects
   async getProjects() {
-    const rows = await invoke<ProjectRow[]>('get_projects');
+    const rows = await request<ProjectRow[]>('get_projects', {});
     return rows.map(({ createdAt, ...rest }) => ({
       ...rest,
       createdAt: Number(createdAt),
@@ -40,21 +58,17 @@ export const DatabaseService = {
   async createProject(name: string, path: string, existingId?: string) {
     const id = existingId || crypto.randomUUID();
     const createdAt = Date.now();
-    const row = await invoke<ProjectRow>('create_project', {
-      name,
-      path,
-      existingId: id,
-    });
+    const row = await request<ProjectRow>('create_project', { name, path, existingId: id });
     return { ...row, createdAt: Number(row.createdAt) };
   },
 
   async deleteProject(id: string) {
-    await invoke('delete_project', { id });
+    await request('delete_project', { id });
   },
 
   // Sessions
   async getSessions(projectId?: string | null) {
-    const rows = await invoke<SessionRow[]>('get_sessions', {
+    const rows = await request<SessionRow[]>('get_sessions', {
       projectId: projectId ?? null,
     });
     return rows.map(({ createdAt, ...rest }) => ({
@@ -64,7 +78,7 @@ export const DatabaseService = {
   },
 
   async getSession(id: string) {
-    const row = await invoke<SessionRow | null>('get_session', { id });
+    const row = await request<SessionRow | null>('get_session', { id });
     if (!row) return null;
     return { ...row, createdAt: Number(row.createdAt) };
   },
@@ -77,7 +91,7 @@ export const DatabaseService = {
   ) {
     const id = existingId || crypto.randomUUID();
     const createdAt = Date.now();
-    const row = await invoke<SessionRow>('create_session', {
+    const row = await request<SessionRow>('create_session', {
       title,
       lastMessage: lastMessage || null,
       projectId: projectId || null,
@@ -90,7 +104,7 @@ export const DatabaseService = {
     id: string,
     updates: { title?: string; lastMessage?: string; archived?: boolean }
   ) {
-    await invoke('update_session', {
+    await request('update_session', {
       id,
       title: updates.title ?? null,
       lastMessage: updates.lastMessage ?? null,
@@ -99,12 +113,12 @@ export const DatabaseService = {
   },
 
   async deleteSession(id: string) {
-    await invoke('delete_session', { id });
+    await request('delete_session', { id });
   },
 
   // Messages
   async getMessages(sessionId: string) {
-    const rows = await invoke<MessageRow[]>('get_messages', { sessionId });
+    const rows = await request<MessageRow[]>('get_messages', { sessionId });
     return rows.map(({ sessionId: sid, toolInvocations, createdAt, ...rest }) => ({
       ...rest,
       sessionId: sid,
@@ -123,26 +137,23 @@ export const DatabaseService = {
       toolInvocations: m.toolInvocations ? JSON.stringify(m.toolInvocations) : null,
       createdAt: m.createdAt || Date.now(),
     }));
-    await invoke('save_messages', { sessionId, messages: messagesToSave });
+    await request('save_messages', { sessionId, messages: messagesToSave });
   },
 
   // App Config
   async getConfig(key: string): Promise<string | null> {
     try {
-      if (isTauri()) {
-        return await invoke<string | null>('get_app_config', { key });
-      }
-    } catch {}
-    return localStorage.getItem(`xz_config_${key}`);
+      return await request<string | null>('get_app_config', { key });
+    } catch {
+      return localStorage.getItem(`xz_config_${key}`);
+    }
   },
 
   async setConfig(key: string, value: string): Promise<void> {
     try {
-      if (isTauri()) {
-        await invoke('set_app_config', { key, value });
-        return;
-      }
-    } catch {}
-    localStorage.setItem(`xz_config_${key}`, value);
+      await request('set_app_config', { key, value });
+    } catch {
+      localStorage.setItem(`xz_config_${key}`, value);
+    }
   },
 };

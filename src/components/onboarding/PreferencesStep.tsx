@@ -138,7 +138,7 @@ export function PreferencesStep({ onComplete, onSkip }: PreferencesStepProps) {
               <button
                 key={item}
                 onClick={() => toggleFocus(item)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                className={`px-3 py-1.5 rounded-[8px] text-xs font-medium border transition-all ${
                   prefs.focus.includes(item)
                     ? 'border-black bg-black text-white'
                     : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'

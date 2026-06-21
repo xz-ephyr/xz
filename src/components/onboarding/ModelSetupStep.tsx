@@ -60,7 +60,7 @@ export function ModelSetupStep({ onComplete, onSkip }: ModelSetupStepProps) {
         </p>
       </div>
 
-      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+      <div className="bg-blue-50 p-3 rounded-[8px] border border-blue-100">
         <p className="text-xs text-blue-700 leading-relaxed">
           Enter your API keys for the providers you wish to use. Keys are stored locally and never sent anywhere
           except to the provider directly.

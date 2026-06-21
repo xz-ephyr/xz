@@ -376,6 +376,26 @@ impl Database {
         }
     }
 
+    pub fn get_all_config(&self) -> Result<Vec<AppConfig>, String> {
+        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare("SELECT key, value FROM app_config")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(AppConfig {
+                    key: row.get(0)?,
+                    value: row.get(1)?,
+                })
+            })
+            .map_err(|e| e.to_string())?;
+        let mut configs = Vec::new();
+        for row in rows {
+            configs.push(row.map_err(|e| e.to_string())?);
+        }
+        Ok(configs)
+    }
+
     pub fn set_config(&self, key: &str, value: &str) -> Result<(), String> {
         let conn = self.conn.lock().map_err(|e| e.to_string())?;
         conn.execute(

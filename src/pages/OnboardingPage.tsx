@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useOnboarding, StepId } from '../hooks/useOnboarding';
 import { ProgressBar } from '../components/onboarding/ProgressBar';
 import { WelcomeStep } from '../components/onboarding/WelcomeStep';
@@ -11,7 +11,6 @@ import { ChatSessionManager } from '../services/ChatSessionManager';
 import { Project } from '../types/chat';
 
 export const OnboardingPage = () => {
-  const navigate = useNavigate();
   const {
     loading,
     completed,

@@ -111,15 +111,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     Object.keys(API_KEYS).forEach((key) => {
       localStorage.setItem((API_KEYS as any)[key], keys[key]);
     });
-    refreshProviders();
-    setIsSaving(false);
-  };
-
-  const handleSaveGeneral = async () => {
-    setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 300));
     localStorage.setItem(SELECTED_MODEL_STORAGE_KEY, selectedModel);
     localStorage.setItem(MODEL_MODE_STORAGE_KEY, modelMode);
+    refreshProviders();
     setIsSaving(false);
   };
 
@@ -127,7 +121,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[4px] z-50">
-      <div className="bg-white rounded-[16px] w-[min(820px,90vw)] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden max-h-[85vh]">
+      <div className="bg-white rounded-[16px] w-[min(820px,90vw)] shadow-2xl border border-neutral-100 flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between shrink-0">
           <h2 className="text-[18px] font-bold text-neutral-800 flex items-center gap-2">
@@ -170,56 +164,49 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
-                    <HugeiconsIcon icon={ZapIcon} size={16} />
-                    Model Mode
-                  </label>
+                  <label className="text-sm font-semibold text-neutral-700">Default Page</label>
                   <select
                     className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
-                    value={modelMode}
-                    onChange={(e) => setModelMode(e.target.value as typeof modelMode)}
+                    defaultValue={localStorage.getItem('default_page') || 'chats'}
+                    onChange={(e) => localStorage.setItem('default_page', e.target.value)}
                   >
-                    <option value={MODEL_MODES.fixed}>Fixed selected model</option>
-                    <option value={MODEL_MODES.rotate}>Auto rotate models</option>
+                    <option value="chats">Chats list</option>
+                    <option value="thread">New thread</option>
+                    <option value="last">Last open session</option>
                   </select>
-                  <p className="text-xs text-neutral-500">
-                    Auto rotate cycles through every available model in the active chat session.
-                  </p>
+                  <p className="text-xs text-neutral-500">Which page to show on launch.</p>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
-                    <HugeiconsIcon icon={GlobeIcon} size={16} />
-                    Default Model
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-semibold text-neutral-700">Message Timestamps</label>
+                    <p className="text-xs text-neutral-500 mt-0.5">Show time stamps below chat messages.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      defaultChecked={localStorage.getItem('show_timestamps') !== 'false'}
+                      onChange={(e) => localStorage.setItem('show_timestamps', String(e.target.checked))}
+                    />
+                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
                   </label>
-                  <select
-                    className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value as typeof selectedModel)}
-                  >
-                    {MODELS.map((model) => (
-                      <option key={model.id} value={model.id}>
-                        {model.label} ({PROVIDER_LABELS[model.provider] || model.provider})
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
-                <div className="border-t border-neutral-100 pt-6">
-                  <ZoomSlider />
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <button
-                    onClick={handleSaveGeneral}
-                    disabled={isSaving}
-                    className="px-6 py-2 text-sm font-bold text-white bg-black hover:bg-neutral-800 rounded-[10px] transition-all flex items-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {isSaving ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : null}
-                    Save Changes
-                  </button>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-semibold text-neutral-700">Auto-save Drafts</label>
+                    <p className="text-xs text-neutral-500 mt-0.5">Automatically save unsent messages as drafts.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      defaultChecked={localStorage.getItem('auto_drafts') !== 'false'}
+                      onChange={(e) => localStorage.setItem('auto_drafts', String(e.target.checked))}
+                    />
+                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
+                  </label>
                 </div>
               </div>
             )}
@@ -257,6 +244,44 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                <div className="border-t border-neutral-100 pt-5 space-y-5">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+                      <HugeiconsIcon icon={ZapIcon} size={16} />
+                      Model Mode
+                    </label>
+                    <select
+                      className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+                      value={modelMode}
+                      onChange={(e) => setModelMode(e.target.value as typeof modelMode)}
+                    >
+                      <option value={MODEL_MODES.fixed}>Fixed selected model</option>
+                      <option value={MODEL_MODES.rotate}>Auto rotate models</option>
+                    </select>
+                    <p className="text-xs text-neutral-500">
+                      Auto rotate cycles through every available model in the active chat session.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+                      <HugeiconsIcon icon={GlobeIcon} size={16} />
+                      Default Model
+                    </label>
+                    <select
+                      className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+                      value={selectedModel}
+                      onChange={(e) => setSelectedModel(e.target.value as typeof selectedModel)}
+                    >
+                      {MODELS.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.label} ({PROVIDER_LABELS[model.provider] || model.provider})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-2">

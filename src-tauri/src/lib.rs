@@ -125,6 +125,11 @@ fn get_app_config(
 }
 
 #[tauri::command]
+fn get_all_app_config(db: tauri::State<'_, Database>) -> Result<Vec<AppConfig>, String> {
+    db.get_all_config()
+}
+
+#[tauri::command]
 fn set_app_config(
     db: tauri::State<'_, Database>,
     key: String,
@@ -193,6 +198,7 @@ pub fn run() {
             get_messages,
             save_messages,
             get_app_config,
+            get_all_app_config,
             set_app_config,
         ])
         .run(tauri::generate_context!())
