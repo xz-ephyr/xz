@@ -20,7 +20,7 @@ export const STEPS: StepInfo[] = [
   { id: 'ready', label: 'Ready', description: 'You\'re all set', optional: false },
 ];
 
-type StepStatus = 'pending' | 'done' | 'skipped';
+export type StepStatus = 'pending' | 'done' | 'skipped';
 
 function configKey(stepId: StepId): string {
   return `onboarding_step_${stepId}`;

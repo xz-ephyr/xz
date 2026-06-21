@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { PencilEdit02Icon, Settings02Icon, FolderLibraryIcon, Download01Icon } from '@hugeicons/core-free-icons';
+import { PencilEdit02Icon, Settings02Icon, FolderLibraryIcon } from '@hugeicons/core-free-icons';
 
 interface PreferencesStepProps {
   onComplete: () => void;
@@ -153,7 +153,7 @@ export function PreferencesStep({ onComplete, onSkip }: PreferencesStepProps) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
-              <HugeiconsIcon icon={File01Icon} size={16} />
+              <HugeiconsIcon icon={PencilEdit02Icon} size={16} />
               Custom Instructions
             </label>
             <button

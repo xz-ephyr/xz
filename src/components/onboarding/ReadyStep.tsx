@@ -1,7 +1,6 @@
 import { HugeiconsIcon } from '@hugeicons/react';
 import { CheckmarkCircle01Icon, Key01Icon, FolderLibraryIcon } from '@hugeicons/core-free-icons';
 import { StepStatus } from '../../hooks/useOnboarding';
-import { ChatSessionManager } from '../../services/ChatSessionManager';
 import { Project } from '../../types/chat';
 
 interface ReadyStepProps {
@@ -14,12 +13,12 @@ interface ReadyStepProps {
 export function ReadyStep({ stepStatuses, projects, onFinish, isFinishing }: ReadyStepProps) {
   const hasProject = stepStatuses['project'] === 'done' || projects.length > 0;
   const hasModel = stepStatuses['model'] === 'done';
-  const didTour = stepStatuses['tour'] === 'done';
+  const hasPreferences = stepStatuses['preferences'] === 'done';
 
   const items = [
     { label: 'Project connected', done: hasProject, icon: FolderLibraryIcon },
     { label: 'AI provider configured', done: hasModel, icon: Key01Icon },
-    { label: 'Interface tour completed', done: didTour, icon: CheckmarkCircle01Icon },
+    { label: 'AI preferences set', done: hasPreferences, icon: CheckmarkCircle01Icon },
   ];
 
   return (
