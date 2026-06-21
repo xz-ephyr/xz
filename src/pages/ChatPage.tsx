@@ -182,7 +182,9 @@ const isResizingRef = useRef(false);
     },
     onFinish: async (event: any) => {
       if (uuid && uuid !== 'new') {
-        await DatabaseService.saveMessages(uuid, [event.message]);
+        DatabaseService.saveMessages(uuid, [event.message]).catch((e) =>
+          console.error('Failed to save assistant message to DB:', e)
+        );
       }
       const message = mapUIMessageToLegacyMessage(event.message);
       if (message.toolInvocations) {
@@ -359,7 +361,9 @@ const isResizingRef = useRef(false);
       };
 
       if (uuid) {
-        await DatabaseService.saveMessages(uuid, [userMsg]);
+        DatabaseService.saveMessages(uuid, [userMsg]).catch((e) =>
+          console.error('Failed to save user message to DB:', e)
+        );
       }
 
       sendMessage({ text: content });
