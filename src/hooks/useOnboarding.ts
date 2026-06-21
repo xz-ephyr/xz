@@ -104,10 +104,16 @@ export function useOnboarding() {
     .every(s => stepStatuses[s.id] === 'done');
 
   const finishOnboarding = useCallback(async () => {
-    const session = await ChatSessionManager.create('My first conversation');
-    await DatabaseService.setConfig(ONBOARDING_COMPLETED_KEY, 'true');
-    setCompleted(true);
-    navigate(`/thread/${session.id}`, { replace: true });
+    try {
+      const session = await ChatSessionManager.create('My first conversation');
+      await DatabaseService.setConfig(ONBOARDING_COMPLETED_KEY, 'true');
+      setCompleted(true);
+      navigate(`/thread/${session.id}`, { replace: true });
+    } catch {
+      localStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
+      setCompleted(true);
+      navigate('/thread/new', { replace: true });
+    }
   }, [navigate]);
 
   return {

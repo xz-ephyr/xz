@@ -1,4 +1,4 @@
-import { Checkmark01Icon } from '@hugeicons/core-free-icons';
+import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { StepId, StepInfo, StepStatus } from '../../hooks/useOnboarding';
 
@@ -20,7 +20,7 @@ export function ProgressBar({ steps, activeStep, stepStatuses }: ProgressBarProp
         let inner = null;
         if (isDone) {
           circleClass = 'bg-green-500 border-green-500';
-          inner = <HugeiconsIcon icon={Checkmark01Icon} size={10} color="white" strokeWidth={3} />;
+          inner = <HugeiconsIcon icon={CheckmarkCircle02Icon} size={10} color="white" strokeWidth={3} />;
         } else if (isActive) {
           circleClass = 'bg-black border-black';
         }

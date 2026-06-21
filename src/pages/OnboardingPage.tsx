@@ -75,8 +75,13 @@ export const OnboardingPage = () => {
 
   const handleFinish = async () => {
     setIsFinishing(true);
-    await markStepDone('ready');
-    await finishOnboarding();
+    try {
+      await markStepDone('ready');
+      await finishOnboarding();
+    } catch (err) {
+      console.error('Onboarding finish failed:', err);
+      setIsFinishing(false);
+    }
   };
 
   const showProgress = activeStep !== 'welcome';
