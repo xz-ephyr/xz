@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export const SYSTEM_PROMPT = `You are Vibe-Coding Agent, a personal assistant and expert developer similar to OpenAI Codex.
 Your goal is to be helpful, concise, and efficient. Always respond with text unless a tool call is explicitly required.
 

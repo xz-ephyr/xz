@@ -52,8 +52,9 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
 
   const handleNewChat = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newSession = ChatSessionManager.create(`${project.name} — Chat`, undefined, project.id);
-    setSessions(ChatSessionManager.getAll(project.id));
+    const newSession = await ChatSessionManager.create(`${project.name} — Chat`, undefined, project.id);
+    const allSessions = await ChatSessionManager.getAll(project.id);
+    setSessions(allSessions);
     const slug = project.name.toLowerCase().replace(/\s+/g, '-');
     navigate(`/project/${slug}/${newSession.id}`);
   };

@@ -328,12 +328,12 @@ export const ChatPage = () => {
 
         let session;
         if (isProjectSession && project) {
-          session = ChatSessionManager.create(title, undefined, project.id);
+          session = await ChatSessionManager.create(title, undefined, project.id);
           sessionStorage.setItem('pending-first-message', content);
           const slug = project.name.toLowerCase().replace(/\s+/g, '-');
           navigate(`/project/${slug}/${session.id}`);
         } else {
-          session = ChatSessionManager.create(title);
+          session = await ChatSessionManager.create(title);
           sessionStorage.setItem('pending-first-message', content);
           navigate(`/thread/${session.id}`);
         }

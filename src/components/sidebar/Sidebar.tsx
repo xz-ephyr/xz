@@ -97,8 +97,9 @@ export default function Sidebar() {
         });
         if (selected && typeof selected === 'string') {
           const folderName = selected.split(/[/\\]/).pop() || 'New Project';
-          const newProject = ChatSessionManager.createProject(folderName, selected);
-          setProjects(ChatSessionManager.getProjects());
+          const newProject = await ChatSessionManager.createProject(folderName, selected);
+          const allProjects = await ChatSessionManager.getProjects();
+          setProjects(allProjects);
           const slug = folderName.toLowerCase().replace(/\s+/g, '-');
           navigate(`/project/${slug}-${newProject.id}`);
         }
@@ -108,16 +109,18 @@ export default function Sidebar() {
           const dirHandle = await (window as any).showDirectoryPicker();
           const folderName = dirHandle.name || 'New Project';
           const projectPath = await FileSystemService.importDirectory(dirHandle);
-          const newProject = ChatSessionManager.createProject(folderName, projectPath);
-          setProjects(ChatSessionManager.getProjects());
+          const newProject = await ChatSessionManager.createProject(folderName, projectPath);
+          const allProjects = await ChatSessionManager.getProjects();
+          setProjects(allProjects);
           const slug = folderName.toLowerCase().replace(/\s+/g, '-');
           navigate(`/project/${slug}-${newProject.id}`);
         } else {
           const folderName = prompt('Enter a name for your project:');
           if (folderName) {
             const fakePath = `/web-projects/${folderName}`;
-            const newProject = ChatSessionManager.createProject(folderName, fakePath);
-            setProjects(ChatSessionManager.getProjects());
+            const newProject = await ChatSessionManager.createProject(folderName, fakePath);
+            const allProjects = await ChatSessionManager.getProjects();
+            setProjects(allProjects);
             const slug = folderName.toLowerCase().replace(/\s+/g, '-');
             navigate(`/project/${slug}-${newProject.id}`);
           }

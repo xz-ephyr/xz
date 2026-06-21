@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { useZoom } from '../../hooks/useZoom';
+import { isTauri } from '../../lib/tauri';
 
 interface ZoomContextValue {
   zoom: number;
@@ -25,7 +26,19 @@ export function ZoomProvider({ children }: { children: ReactNode }) {
   zoomRef.current = zoom;
 
   useEffect(() => {
-    (document.documentElement as HTMLElement).style.zoom = String(zoom);
+    if (isTauri()) {
+      (async () => {
+        try {
+          const { getCurrentWebview } = await import('@tauri-apps/api/webview');
+          await getCurrentWebview().setZoom(zoom);
+        } catch {
+          // Tauri API not available — fallback to CSS zoom below
+          document.documentElement.style.zoom = String(zoom);
+        }
+      })();
+    } else {
+      document.documentElement.style.zoom = String(zoom);
+    }
   }, [zoom]);
 
   const handleWheel = useCallback((e: WheelEvent) => {

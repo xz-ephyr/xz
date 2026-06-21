@@ -181,9 +181,9 @@ export const ChatsPage = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  const refreshChats = () => {
-    // Fetch based on sessionType tab
-    setChats(ChatSessionManager.getAll(sessionType === 'normal' ? null : undefined).filter(s =>
+  const refreshChats = async () => {
+    const allChats = await ChatSessionManager.getAll(sessionType === 'normal' ? null : undefined);
+    setChats(allChats.filter(s =>
       sessionType === 'normal' ? !s.projectId : !!s.projectId
     ));
   };
