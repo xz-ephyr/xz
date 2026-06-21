@@ -5,7 +5,7 @@ import { ProgressBar } from '../components/onboarding/ProgressBar';
 import { WelcomeStep } from '../components/onboarding/WelcomeStep';
 import { ProjectSetupStep } from '../components/onboarding/ProjectSetupStep';
 import { ModelSetupStep } from '../components/onboarding/ModelSetupStep';
-import { TourStep } from '../components/onboarding/TourStep';
+import { PreferencesStep } from '../components/onboarding/PreferencesStep';
 import { ReadyStep } from '../components/onboarding/ReadyStep';
 import { ChatSessionManager } from '../services/ChatSessionManager';
 import { Project } from '../types/chat';
@@ -79,10 +79,7 @@ export const OnboardingPage = () => {
     await finishOnboarding();
   };
 
-  const handleStepClick = (stepId: StepId) => {
-    if (stepId === 'welcome' || stepId === 'ready') return;
-    goToStep(stepId);
-  };
+  const showProgress = activeStep !== 'welcome';
 
   const renderStep = () => {
     switch (activeStep) {
@@ -102,11 +99,11 @@ export const OnboardingPage = () => {
             onSkip={() => handleStepSkip('model')}
           />
         );
-      case 'tour':
+      case 'preferences':
         return (
-          <TourStep
-            onComplete={() => handleStepComplete('tour')}
-            onSkip={() => handleStepSkip('tour')}
+          <PreferencesStep
+            onComplete={() => handleStepComplete('preferences')}
+            onSkip={() => handleStepSkip('preferences')}
           />
         );
       case 'ready':
@@ -125,19 +122,17 @@ export const OnboardingPage = () => {
 
   return (
     <div className="h-screen w-full flex flex-col bg-white overflow-y-auto">
-      <div className="shrink-0 px-6 py-4 border-b border-neutral-100">
-        <div className="max-w-2xl mx-auto">
-          <ProgressBar
-            steps={STEPS}
-            activeStep={activeStep}
-            stepStatuses={stepStatuses}
-            onStepClick={handleStepClick}
-          />
-        </div>
-      </div>
-
       <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-2xl">{renderStep()}</div>
+        <div className="w-full max-w-2xl flex flex-col items-center gap-8">
+          {showProgress && (
+            <ProgressBar
+              steps={STEPS}
+              activeStep={activeStep}
+              stepStatuses={stepStatuses}
+            />
+          )}
+          {renderStep()}
+        </div>
       </div>
     </div>
   );
