@@ -10,7 +10,7 @@ export function getSmartSystemPrompt(basePrompt: string, projectContext?: string
   let prompt = `${basePrompt}\n\n${COT_INSTRUCTIONS}`;
 
   if (projectContext) {
-    prompt += `\n\n### PROJECT CONTEXT\nBelow is the current file tree of the project:\n${projectContext}\n\nMaintain this structure when creating or updating files.`;
+    prompt += `\n\n### PROJECT CONTEXT\n${projectContext}\n\nYou are working inside this project. Use the file tools to read, create, and edit files relative to the project root.`;
   }
 
   return prompt;

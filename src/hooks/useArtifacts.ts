@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export type ArtifactType = 'react' | 'html' | 'markdown' | 'chart' | 'sheet' | 'slides';
+export type ArtifactType = 'react' | 'html' | 'markdown' | 'chart' | 'sheet' | 'slides' | 'svg';
 
 export interface Artifact {
   id: string;
@@ -65,6 +65,15 @@ export function useArtifacts() {
     return versions[versions.length - 1];
   }, [activeArtifactId, artifacts, viewingVersion]);
 
+  const updateArtifactContent = useCallback((id: string, content: string) => {
+    setArtifacts((prev) => {
+      const versions = prev[id];
+      if (!versions || versions.length === 0) return prev;
+      const latest = { ...versions[versions.length - 1], content };
+      return { ...prev, [id]: [...versions.slice(0, -1), latest] };
+    });
+  }, []);
+
   const closeArtifact = useCallback(() => {
     setIsOpen(false);
   }, []);
@@ -78,6 +87,7 @@ export function useArtifacts() {
     isOpen,
     setIsOpen,
     addOrUpdateArtifact,
+    updateArtifactContent,
     getArtifactVersions,
     getActiveArtifact,
     closeArtifact,

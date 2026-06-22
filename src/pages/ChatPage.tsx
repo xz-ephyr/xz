@@ -96,15 +96,18 @@ const SCROLL_THRESHOLD = 150;
     isOpen: isArtifactOpen,
     setIsOpen: setIsArtifactOpen,
     addOrUpdateArtifact,
+    updateArtifactContent,
     getArtifactVersions,
     getActiveArtifact,
     closeArtifact,
   } = useArtifacts();
 
-  const loadProjectContext = useCallback(async (path: string) => {
-    const tree = await FileSystemService.getTree(path);
+  const loadProjectContext = useCallback(async (project: Project) => {
+    const tree = await FileSystemService.getTree(project.path);
     const summary = FileSystemService.getCompressedTree(tree);
-    setProjectContext(summary);
+    setProjectContext(
+      `Project: ${project.name}\nPath: ${project.path}\n\nFile Tree:\n${summary}`
+    );
   }, []);
 
   const handleChatFinish = useCallback(
@@ -139,7 +142,7 @@ const SCROLL_THRESHOLD = 150;
                   const fullPath = await resolveProjectPath(project.path, path);
                   if (!fullPath) continue;
                   await FileSystemService.saveFile(fullPath, content);
-                  loadProjectContext(project.path);
+                  loadProjectContext(project);
                 } catch (e) {
                   console.error('Failed to auto-save file:', e);
                 }
@@ -156,11 +159,11 @@ const SCROLL_THRESHOLD = 150;
                     : 'markdown';
                 addOrUpdateArtifact(type, path, content);
               }
-              if (project) loadProjectContext(project.path);
+              if (project) loadProjectContext(project);
             } else if (toolName === 'write_to_plan') {
               const { filename, content } = toolInvocation.args;
               addOrUpdateArtifact('markdown', filename, content);
-              if (project) loadProjectContext(project.path);
+              if (project) loadProjectContext(project);
             }
           }
         }
@@ -187,9 +190,10 @@ const SCROLL_THRESHOLD = 150;
           throw new Error('Request body is missing');
         }
         const body = JSON.parse(options.body as string);
+        const effectiveModel = currentModelRef.current || body.model;
         const result = await chatCompletion({
           messages: body.messages,
-          modelName: currentModelRef.current || body.model,
+          modelName: effectiveModel,
           projectContext: projectContextRef.current,
           projectPath: projectRef.current?.path,
           isThinkingEnabled: isThinkingEnabledRef.current,
@@ -198,10 +202,7 @@ const SCROLL_THRESHOLD = 150;
           sessionId: uuid,
         });
 
-        // Update previous model ref after request starts
-        if (body.model) {
-          previousModelRef.current = body.model;
-        }
+        previousModelRef.current = effectiveModel;
 
         return (result as any).toUIMessageStreamResponse({
           getErrorMessage: getAIErrorMessage,
@@ -258,7 +259,7 @@ const SCROLL_THRESHOLD = 150;
               setShowIDEPrompt(true);
               lastProjectIdRef.current = p.id;
             }
-            loadProjectContext(p.path);
+            loadProjectContext(p);
           }
         } else if (projectRouteId) {
           const allProjects = await ChatSessionManager.getProjects();
@@ -269,7 +270,7 @@ const SCROLL_THRESHOLD = 150;
               setShowIDEPrompt(true);
               lastProjectIdRef.current = p.id;
             }
-            loadProjectContext(p.path);
+            loadProjectContext(p);
           }
         } else {
           setProject(null);
@@ -303,7 +304,9 @@ const SCROLL_THRESHOLD = 150;
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (el && isNearBottomRef.current) {
-      el.scrollTop = el.scrollHeight;
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
     }
   }, [messages]);
 
@@ -389,6 +392,49 @@ const SCROLL_THRESHOLD = 150;
     }
   }, [messages, setActiveArtifactId, setIsArtifactOpen, project, isIDEOpen]);
 
+  useEffect(() => {
+    const lastAssistant = [...rawMessages].reverse().find((m: any) => m.role === 'assistant');
+    if (!lastAssistant?.parts) return;
+
+    for (const part of lastAssistant.parts) {
+      if (typeof part.type === 'string' && part.type.startsWith('tool-') && part.toolName === 'create_artifact') {
+        if (!part.input) continue;
+
+        let parsed: any;
+        if (typeof part.input === 'string') {
+          try { parsed = JSON.parse(part.input); } catch { continue; }
+        } else if (typeof part.input === 'object' && part.input !== null) {
+          parsed = part.input;
+        } else {
+          continue;
+        }
+
+        const title = parsed.title;
+        if (!title) continue;
+
+        const id = title.toLowerCase().replace(/\s+/g, '-');
+        const type = parsed.type || 'markdown';
+        const content = parsed.content || '';
+
+        setActiveArtifactId(id);
+
+        if (project && !isIDEOpen) {
+          setIsArtifactOpen(true);
+        } else if (!project) {
+          setIsArtifactOpen(true);
+        }
+
+        const st = part.state;
+        if (st === 'input-streaming') {
+          updateArtifactContent(id, content);
+        } else if (st === 'input-available' || st === 'output-available') {
+          addOrUpdateArtifact(type, title, content);
+        }
+        break;
+      }
+    }
+  }, [rawMessages, project, isIDEOpen, setActiveArtifactId, setIsArtifactOpen, updateArtifactContent, addOrUpdateArtifact]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <div className={`flex flex-col flex-1 min-w-0 bg-white transition-all duration-300 relative`}>
@@ -411,7 +457,6 @@ const SCROLL_THRESHOLD = 150;
                       isStreaming={
                         isLoading && messages.slice(i + 1).every((msg: any) => msg.role !== 'user')
                       }
-                      estimatedTokens={Math.round(((m.content?.length || 0) + (m.reasoning?.length || 0)) / 4)}
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
                       artifactCards={m.toolInvocations?.filter(
@@ -504,7 +549,7 @@ const SCROLL_THRESHOLD = 150;
               key={`${project.id}-${projectContext.length}`}
               project={project}
               onClose={() => setIsIDEOpen(false)}
-              onSave={() => loadProjectContext(project.path)}
+              onSave={() => loadProjectContext(project)}
             />
           )}
         </div>

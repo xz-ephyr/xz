@@ -17,7 +17,7 @@ import {
 } from './ai/config';
 import { FileSystemService } from './FileSystemService';
 import { resolveProjectPath } from '../lib/projectPaths';
-import { API_KEYS, getModelDefinition, getUsedModels, markModelUsed, AI_MODELS } from '../config/models';
+import { API_KEYS, getModelDefinition, getUsedModels, markModelUsed, AI_MODELS, type Provider } from '../config/models';
 import { getSmartSystemPrompt } from './ai/contextController';
 import { contractContext } from './ai/contextContractor';
 
@@ -92,6 +92,34 @@ export function getAIErrorMessage(error: unknown) {
   }
 }
 
+const MAX_STEPS = 25;
+
+function getConfiguredProviders(): Set<Provider> {
+  const configured = new Set<Provider>();
+  for (const [provider, key] of Object.entries(API_KEYS)) {
+    const val = localStorage.getItem(key);
+    if (val && val.trim()) {
+      configured.add(provider as Provider);
+    }
+  }
+  return configured;
+}
+
+function buildFallbackChain(primaryModelName: string, sessionId?: string): string[] {
+  const used = sessionId ? getUsedModels(sessionId) : [];
+  const configuredProviders = getConfiguredProviders();
+  return [
+    primaryModelName,
+    ...AI_MODELS.filter(m => {
+      if (m === primaryModelName) return false;
+      if (used.includes(m)) return false;
+      const def = getModelDefinition(m);
+      if (!def) return false;
+      return configuredProviders.has(def.provider);
+    }),
+  ];
+}
+
 export async function chatCompletion({
   messages,
   modelName,
@@ -113,8 +141,6 @@ export async function chatCompletion({
 }) {
   const providers = getProviders();
 
-  let processedMessages = messages;
-
   const getLanguageModel = (name: string) => {
     const def = getModelDefinition(name);
     if (!def) return providers.google('gemini-3.5-flash');
@@ -128,19 +154,13 @@ export async function chatCompletion({
     return providers.google('gemini-3.5-flash');
   };
 
-  const used = sessionId ? getUsedModels(sessionId) : [];
-  const fallbackChain = [
-    modelName,
-    ...AI_MODELS.filter(m => m !== modelName && !used.includes(m)),
-  ];
-
-  const uniqueChain = Array.from(new Set(fallbackChain));
-
   const fullSystemPrompt = getSmartSystemPrompt(SYSTEM_PROMPT, projectContext);
 
   const errors: string[] = [];
+  const chain = buildFallbackChain(modelName, sessionId);
+  const uniqueChain = Array.from(new Set(chain));
 
-  const getStreamResult = async (modelIdx: number): Promise<any> => {
+  for (let modelIdx = 0; modelIdx < uniqueChain.length; modelIdx++) {
     const currentModelName = uniqueChain[modelIdx];
     const currentModel = getLanguageModel(currentModelName);
     const def = getModelDefinition(currentModelName);
@@ -154,32 +174,32 @@ export async function chatCompletion({
       }
     }
 
+    let msgs = messages;
+
     try {
-      if (!processedMessages || processedMessages.length === 0) {
+      if (!msgs || msgs.length === 0) {
         throw new Error('Messages array is empty');
       }
 
-      const hasUIMessages = processedMessages.some((m: any) => Array.isArray(m.parts));
+      const hasUIMessages = msgs.some((m: any) => Array.isArray(m.parts));
       if (hasUIMessages) {
-        const withParts = processedMessages.map((m: any) => {
+        const withParts = msgs.map((m: any) => {
           if (Array.isArray(m.parts)) return { ...m, id: m.id || crypto.randomUUID() };
           return { id: crypto.randomUUID(), role: m.role, parts: [{ type: 'text' as const, text: m.content || '' }] };
         });
-        processedMessages = await convertToModelMessages(withParts, { ignoreIncompleteToolCalls: true });
+        msgs = await convertToModelMessages(withParts, { ignoreIncompleteToolCalls: true });
       } else {
-        processedMessages = processedMessages
+        msgs = msgs
           .filter((m: any) => m.role !== 'system')
           .map((m: any) => ({ role: m.role, content: m.content || '' }));
       }
 
       if (previousModelName && previousModelName !== currentModelName) {
         const incomingModel = getLanguageModel(currentModelName);
-        processedMessages = await contractContext(processedMessages, incomingModel);
+        msgs = await contractContext(msgs, incomingModel);
       }
 
-      const filteredMessages = processedMessages.filter((m: any) => m.role !== 'system');
-
-      console.log('[tools] write_file has path?', 'path' in (writeFileTool.parameters as any)?.properties);
+      const filteredMessages = msgs.filter((m: any) => m.role !== 'system');
 
       console.log('[streamText]', {
         model: currentModelName,
@@ -194,7 +214,7 @@ export async function chatCompletion({
         providerOptions,
         abortSignal,
         maxRetries: 2,
-        stopWhen: stepCountIs(25),
+        stopWhen: stepCountIs(MAX_STEPS),
         onError({ error }) {
           console.error(`AI stream failed for ${currentModelName}:`, getAIErrorMessage(error));
         },
@@ -376,16 +396,12 @@ export async function chatCompletion({
       if (sessionId) {
         markModelUsed(sessionId, currentModelName);
       }
-      errors.push(`${uniqueChain[modelIdx]}: ${getAIErrorMessage(error)}`);
-      if (modelIdx < uniqueChain.length - 1) {
-        console.warn(`Model ${uniqueChain[modelIdx]} failed, trying fallback...`);
-        return getStreamResult(modelIdx + 1);
-      }
-      throw new Error(
-        `All AI models failed. Tried: ${uniqueChain.join(', ')}.\nErrors:\n${errors.join('\n')}\n\nCheck your API keys in Settings.`
-      );
+      errors.push(`${currentModelName}: ${getAIErrorMessage(error)}`);
+      console.warn(`Model ${currentModelName} failed, trying fallback...`);
     }
-  };
+  }
 
-  return await getStreamResult(0);
+  throw new Error(
+    `All AI models failed. Tried: ${uniqueChain.join(', ')}.\nErrors:\n${errors.join('\n')}\n\nCheck your API keys in Settings.`
+  );
 }

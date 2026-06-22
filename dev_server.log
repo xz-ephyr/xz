@@ -1,7 +1,0 @@
-
-> xz@0.15.0 dev /app
-> vite --port 4028
-
-sh: 1: vite: not found
- ELIFECYCLE  Command failed.
- WARN   Local package.json exists, but node_modules missing, did you mean to install?

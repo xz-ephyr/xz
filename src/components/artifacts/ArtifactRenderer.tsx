@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Sandpack } from '@codesandbox/sandpack-react';
 import { ArtifactType } from '../../hooks/useArtifacts';
 import CodeMirror from '@uiw/react-codemirror';
@@ -9,6 +9,21 @@ import { python } from '@codemirror/lang-python';
 import { css } from '@codemirror/lang-css';
 import { json } from '@codemirror/lang-json';
 import { rust } from '@codemirror/lang-rust';
+
+function sanitizeSvg(svgContent: string): string {
+  return svgContent.replace(/<script[\s\S]*?<\/script>/gi, '');
+}
+
+function injectHtmlSandbox(htmlContent: string): string {
+  const csp = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data:;">';
+  if (/<head/i.test(htmlContent)) {
+    return htmlContent.replace(/<head/i, `<head>${csp}`);
+  }
+  if (/<html/i.test(htmlContent)) {
+    return htmlContent.replace(/<html/i, `<html><head>${csp}</head>`);
+  }
+  return `<!DOCTYPE html><html><head>${csp}</head><body>${htmlContent}</body></html>`;
+}
 
 interface ArtifactRendererProps {
   type: ArtifactType;
@@ -62,13 +77,19 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     );
   }
 
+  const safeContent = useMemo(() => {
+    if (type === 'svg') return sanitizeSvg(content);
+    if (type === 'html') return injectHtmlSandbox(content);
+    return content;
+  }, [type, content]);
+
   switch (type) {
     case 'react':
       return (
         <Sandpack
           template="react"
           files={{
-            '/App.js': content,
+            '/App.js': safeContent,
           }}
           options={{
             showNavigator: false,
@@ -81,7 +102,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     case 'html':
       return (
         <iframe
-          srcDoc={content}
+          srcDoc={safeContent}
+          sandbox="allow-scripts"
           className="w-full h-full border-none bg-white"
           title="Artifact Preview"
         />
@@ -130,6 +152,13 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
             </div>
           </div>
         </div>
+      );
+    case 'svg':
+      return (
+        <div
+          className="w-full h-full flex items-center justify-center bg-white p-4 overflow-auto"
+          dangerouslySetInnerHTML={{ __html: safeContent }}
+        />
       );
     default:
       return (

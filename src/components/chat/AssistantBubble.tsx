@@ -11,6 +11,7 @@ import { ArtifactPreviewCard } from '../artifacts/ArtifactPreviewCard';
 import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 import { ToolCallPill } from './ToolCallPill';
 import { ThoughtLabel } from './ThoughtLabel';
+import { useRafDebounce } from '../../hooks/useRafDebounce';
 
 interface ArtifactCardData {
   title: string;
@@ -30,7 +31,6 @@ interface AssistantBubbleProps {
   onThumbsUp: () => void;
   onThumbsDown: () => void;
   onRegenerate: () => void;
-  estimatedTokens?: number;
 }
 
 export const AssistantBubble = React.memo(
@@ -46,7 +46,6 @@ export const AssistantBubble = React.memo(
     onThumbsUp,
     onThumbsDown,
     onRegenerate,
-    estimatedTokens,
   }: AssistantBubbleProps) => {
     const [isReasoningOpen, setIsReasoningOpen] = useState(isStreaming);
     const [copied, setCopied] = useState(false);
@@ -67,8 +66,8 @@ export const AssistantBubble = React.memo(
     const hasPendingTool = toolInvocations?.some((ti) => ti.state !== 'result');
     const showThinking = isStreaming && !content;
 
+    const pendingTools = toolInvocations?.filter((ti) => ti.state !== 'result') || [];
     const artifactTool = toolInvocations?.find((ti) => ti.toolName === 'create_artifact');
-    const isArtifactGenerating = artifactTool && artifactTool.state !== 'result';
     const intentMessage = artifactTool?.args?.intent_message;
 
     const showThought = reasoning || isStreaming;
@@ -76,7 +75,11 @@ export const AssistantBubble = React.memo(
 
     useEffect(() => {
       if (isStreaming && scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        requestAnimationFrame(() => {
+          if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+          }
+        });
       }
     }, [reasoning, toolInvocations, isStreaming]);
 
@@ -86,8 +89,10 @@ export const AssistantBubble = React.memo(
       return reasoning
         .split(/(?<=[.!?])\s+/)
         .filter((s) => s.trim().length > 0)
-        .slice(0, 50); // Limit to avoid performance issues
+        .slice(0, 50);
     }, [reasoning]);
+
+    const debouncedContent = useRafDebounce(content, !isStreaming);
 
     return (
       <div className="mb-6 w-full group/bubble">
@@ -98,9 +103,22 @@ export const AssistantBubble = React.memo(
             </div>
           )}
 
-          {isArtifactGenerating && (
-            <div className="flex items-center gap-2 text-neutral-500 italic">
-              <span className="thinking-shimmer-text">⏳ Generating application...</span>
+          {hasPendingTool && (
+            <div className="flex items-center gap-2 text-neutral-500">
+              {pendingTools.map((ti) => {
+                const fileName = ti.args?.file_path || ti.args?.path || ti.args?.title || ti.args?.filename || '';
+                return (
+                  <div key={ti.toolCallId} className="flex items-center gap-1.5 px-2 py-1 bg-neutral-50 rounded-[6px] text-xs font-medium text-neutral-500 border border-neutral-200 animate-pulse">
+                    <span className="thinking-shimmer-text capitalize">
+                      {ti.toolName === 'grep_tool' ? 'searching' :
+                       ti.toolName === 'list_dir' ? 'browsing' :
+                       ti.toolName === 'create_artifact' ? 'creating' :
+                       ti.state === 'result' ? 'done' : 'running'}
+                    </span>
+                    {fileName && <span className="text-neutral-400 font-mono truncate max-w-[160px]">{fileName}</span>}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -143,7 +161,7 @@ export const AssistantBubble = React.memo(
                         ))}
                       </div>
                     )}
-                    {!reasoning && isStreaming && (
+                    {!reasoning && isStreaming && !hasPendingTool && (
                       <p className="text-[15px] text-neutral-400 animate-pulse">Thinking...</p>
                     )}
                   </div>
@@ -152,13 +170,9 @@ export const AssistantBubble = React.memo(
             </div>
           )}
 
-          {content && (
-            /*
-             * Changed from font-medium to font-normal for better long-form readability.
-             * This avoids a "heavy" look for long AI responses.
-             */
-            <div className="font-normal text-neutral-900 animate-in fade-in duration-500">
-              <MarkdownMessage content={content} />
+          {(isStreaming ? debouncedContent : content) && (
+            <div className={`font-normal text-neutral-900 ${!isStreaming ? 'animate-in fade-in duration-500' : ''}`}>
+              <MarkdownMessage content={isStreaming ? debouncedContent : content} />
             </div>
           )}
         </div>
@@ -173,58 +187,50 @@ export const AssistantBubble = React.memo(
         ))}
 
         {!isStreaming && !hasPendingTool && (
-          <div className="flex items-center justify-between gap-3 text-gray-600 px-4">
+          <div className="flex items-center gap-3 text-gray-600 px-4">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="hover:text-black transition-colors"
+              title={copied ? 'Copied!' : 'Copy response'}
+              aria-label={copied ? 'Copied!' : 'Copy response'}
+            >
+              <HugeiconRenderer
+                icon={copied ? Tick01Icon : Copy01Icon}
+                size={18}
+                className={copied ? 'text-green-600' : ''}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={onThumbsUp}
+              className="hover:text-black transition-colors"
+              title="Good response"
+              aria-label="Good response"
+            >
+              <HugeiconRenderer icon={ThumbsUpIcon} size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={onThumbsDown}
+              className="hover:text-black transition-colors"
+              title="Bad response"
+              aria-label="Bad response"
+            >
+              <HugeiconRenderer icon={ThumbsDownIcon} size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={onRegenerate}
+              className="hover:text-black transition-colors"
+              title="Regenerate response"
+              aria-label="Regenerate response"
+            >
+              <HugeiconRenderer icon={ArrowTurnBackwardIcon} size={18} />
+            </button>
             {model && (
-              /* Added truncate to model name to prevent overflow on mobile */
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-xs text-gray-400 truncate">{model}</span>
-                {estimatedTokens !== undefined && (
-                  <span className="text-[10px] text-gray-400 shrink-0">(~{estimatedTokens} tokens)</span>
-                )}
-              </div>
+              <span className="text-xs text-gray-400 ml-1">{model}</span>
             )}
-            <div className="flex gap-3 items-center ml-auto shrink-0">
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="hover:text-black transition-colors"
-                title={copied ? 'Copied!' : 'Copy response'}
-                aria-label={copied ? 'Copied!' : 'Copy response'}
-              >
-                <HugeiconRenderer
-                  icon={copied ? Tick01Icon : Copy01Icon}
-                  size={18}
-                  className={copied ? 'text-green-600' : ''}
-                />
-              </button>
-              <button
-                type="button"
-                onClick={onThumbsUp}
-                className="hover:text-black transition-colors"
-                title="Good response"
-                aria-label="Good response"
-              >
-                <HugeiconRenderer icon={ThumbsUpIcon} size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={onThumbsDown}
-                className="hover:text-black transition-colors"
-                title="Bad response"
-                aria-label="Bad response"
-              >
-                <HugeiconRenderer icon={ThumbsDownIcon} size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={onRegenerate}
-                className="hover:text-black transition-colors"
-                title="Regenerate response"
-                aria-label="Regenerate response"
-              >
-                <HugeiconRenderer icon={ArrowTurnBackwardIcon} size={18} />
-              </button>
-            </div>
           </div>
         )}
       </div>
