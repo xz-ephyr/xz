@@ -11,7 +11,6 @@ import { ArtifactPreviewCard } from '../artifacts/ArtifactPreviewCard';
 import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 import { ToolCallPill } from './ToolCallPill';
 import { ThoughtLabel } from './ThoughtLabel';
-import { useRafDebounce } from '../../hooks/useRafDebounce';
 
 interface ArtifactCardData {
   title: string;
@@ -51,11 +50,10 @@ export const AssistantBubble = React.memo(
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-      if (!isStreaming) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsReasoningOpen(false);
+      if (!isStreaming && reasoning) {
+        setIsReasoningOpen(true);
       }
-    }, [isStreaming]);
+    }, [isStreaming, reasoning]);
 
     const handleCopy = () => {
       onCopy();
@@ -70,7 +68,7 @@ export const AssistantBubble = React.memo(
     const artifactTool = toolInvocations?.find((ti) => ti.toolName === 'create_artifact');
     const intentMessage = artifactTool?.args?.intent_message;
 
-    const showThought = reasoning || isStreaming;
+    const showThought = !!reasoning;
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -92,13 +90,11 @@ export const AssistantBubble = React.memo(
         .slice(0, 50);
     }, [reasoning]);
 
-    const debouncedContent = useRafDebounce(content, !isStreaming);
-
     return (
       <div className="mb-6 w-full group/bubble">
         <div className="text-base px-4 py-4 break-words flex flex-col gap-2">
           {intentMessage && (
-            <div className="font-medium text-neutral-800 mb-1 animate-in fade-in slide-in-from-bottom-1 duration-300">
+            <div className="font-medium text-neutral-800 mb-1">
               {intentMessage}
             </div>
           )}
@@ -108,7 +104,7 @@ export const AssistantBubble = React.memo(
               {pendingTools.map((ti) => {
                 const fileName = ti.args?.file_path || ti.args?.path || ti.args?.title || ti.args?.filename || '';
                 return (
-                  <div key={ti.toolCallId} className="flex items-center gap-1.5 px-2 py-1 bg-neutral-50 rounded-[6px] text-xs font-medium text-neutral-500 border border-neutral-200 animate-pulse">
+                  <div key={ti.toolCallId} className="flex items-center gap-1.5 px-2 py-1 bg-neutral-50 rounded-[6px] text-xs font-medium text-neutral-500 border border-neutral-200">
                     <span className="thinking-shimmer-text capitalize">
                       {ti.toolName === 'grep_tool' ? 'searching' :
                        ti.toolName === 'list_dir' ? 'browsing' :
@@ -122,6 +118,12 @@ export const AssistantBubble = React.memo(
             </div>
           )}
 
+          {isStreaming && !reasoning && !hasPendingTool && !content && (
+            <div className="flex items-center gap-2 text-neutral-400">
+              <span className="text-sm">Thinking...</span>
+            </div>
+          )}
+
           {showThought && (
             <div className="flex flex-col gap-2">
               <ThoughtLabel
@@ -131,20 +133,17 @@ export const AssistantBubble = React.memo(
               />
 
               <div
-                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-                  isReasoningOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                }`}
+                className={`grid ${isReasoningOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
               >
                 <div className="overflow-hidden">
                   <div
                     ref={scrollRef}
-                    className="h-[45px] overflow-y-auto no-scrollbar thinking-pad-mask relative flex flex-col gap-2 pt-1"
+                    className="h-[90px] overflow-y-auto no-scrollbar thinking-pad-mask relative flex flex-col gap-2 pt-1"
                   >
                     {sentences.map((s, idx) => (
                       <div
                         key={idx}
-                        className="text-[15px] leading-relaxed text-neutral-500 animate-in fade-in slide-in-from-bottom-2 duration-300"
-                        style={{ animationDelay: `${idx * 50}ms` }}
+                        className="text-[15px] leading-relaxed text-neutral-500"
                       >
                         {s}
                       </div>
@@ -161,18 +160,15 @@ export const AssistantBubble = React.memo(
                         ))}
                       </div>
                     )}
-                    {!reasoning && isStreaming && !hasPendingTool && (
-                      <p className="text-[15px] text-neutral-400 animate-pulse">Thinking...</p>
-                    )}
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {(isStreaming ? debouncedContent : content) && (
-            <div className={`font-normal text-neutral-900 ${!isStreaming ? 'animate-in fade-in duration-500' : ''}`}>
-              <MarkdownMessage content={isStreaming ? debouncedContent : content} />
+          {content && (
+            <div className="font-normal text-neutral-900">
+              <MarkdownMessage content={content} />
             </div>
           )}
         </div>
