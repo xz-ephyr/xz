@@ -38,8 +38,12 @@ export const TableHeaderCell: React.FC<{ children: React.ReactNode }> = ({ child
   </th>
 );
 
+/**
+ * TableCell component with whitespace-normal to prevent layout breakage on narrow viewports
+ * when cells contain long content.
+ */
 export const TableCell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <td className="px-4 py-3 whitespace-nowrap text-neutral-600">
+  <td className="px-4 py-3 whitespace-normal text-neutral-600">
     {children}
   </td>
 );
