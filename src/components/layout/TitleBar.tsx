@@ -1,49 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { isTauri } from '../../lib/tauri';
 import { useZoomContext } from './ZoomProvider';
 
 const ZOOM_PRESETS = [0.5, 0.65, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 2];
-
-async function startWindowDrag() {
-  try {
-    const { getCurrentWindow } = await import('@tauri-apps/api/window');
-    await getCurrentWindow().startDragging();
-  } catch (e) {
-    console.error('Failed to start drag', e);
-  }
-}
-
-async function minimizeWindow() {
-  try {
-    const { getCurrentWindow } = await import('@tauri-apps/api/window');
-    await getCurrentWindow().minimize();
-  } catch (e) {
-    console.error('Failed to minimize', e);
-  }
-}
-
-async function toggleMaximizeWindow() {
-  try {
-    const { getCurrentWindow } = await import('@tauri-apps/api/window');
-    const w = getCurrentWindow();
-    if (await w.isMaximized()) {
-      await w.unmaximize();
-    } else {
-      await w.maximize();
-    }
-  } catch (e) {
-    console.error('Failed to maximize', e);
-  }
-}
-
-async function closeWindow() {
-  try {
-    const { getCurrentWindow } = await import('@tauri-apps/api/window');
-    await getCurrentWindow().close();
-  } catch (e) {
-    console.error('Failed to close', e);
-  }
-}
 
 export default function TitleBar() {
   const { zoom, setZoomLevel, resetZoom } = useZoomContext();
@@ -62,89 +21,21 @@ export default function TitleBar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isZoomOpen]);
 
-  const handleMouseDown = useCallback(() => {
-    if (isTauri()) {
-      startWindowDrag();
-    }
-  }, []);
-
   if (!isTauri()) {
     return null;
   }
 
   return (
-    <div
-      className="flex items-center justify-between h-10 px-3 bg-white border-b border-neutral-200 shrink-0 select-none"
-      onMouseDown={handleMouseDown}
-    >
-      <div className="flex items-center gap-2 text-xs text-neutral-400 font-medium">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-neutral-400">
-          <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M5 8H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-        xz
-      </div>
-
-      <div className="flex items-center gap-1">
-        <ZoomTrigger
-          zoom={zoom}
-          isOpen={isZoomOpen}
-          onToggle={() => setIsZoomOpen(!isZoomOpen)}
-          dropdownRef={dropdownRef}
-          setZoomLevel={setZoomLevel}
-          resetZoom={resetZoom}
-        />
-
-        <div className="w-px h-4 bg-neutral-200 mx-1" />
-
-        <WindowButton onClick={minimizeWindow} title="Minimize">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 6H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-        </WindowButton>
-        <WindowButton onClick={toggleMaximizeWindow} title="Maximize">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <rect x="1.5" y="1.5" width="9" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" />
-          </svg>
-        </WindowButton>
-        <WindowButton onClick={closeWindow} title="Close" isClose>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-        </WindowButton>
-      </div>
+    <div className="flex items-center justify-end h-9 px-3 bg-white border-b border-neutral-200 shrink-0 select-none">
+      <ZoomTrigger
+        zoom={zoom}
+        isOpen={isZoomOpen}
+        onToggle={() => setIsZoomOpen(!isZoomOpen)}
+        dropdownRef={dropdownRef}
+        setZoomLevel={setZoomLevel}
+        resetZoom={resetZoom}
+      />
     </div>
-  );
-}
-
-function WindowButton({
-  onClick,
-  title,
-  children,
-  isClose,
-}: {
-  onClick: () => void;
-  title: string;
-  children: React.ReactNode;
-  isClose?: boolean;
-}) {
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      onMouseDown={(e) => e.stopPropagation()}
-      className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
-        isClose
-          ? 'hover:bg-red-100 hover:text-red-600 text-neutral-400'
-          : 'hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700'
-      }`}
-      title={title}
-      aria-label={title}
-    >
-      {children}
-    </button>
   );
 }
 
