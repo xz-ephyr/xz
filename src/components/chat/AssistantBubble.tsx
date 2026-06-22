@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MarkdownMessage } from './MarkdownMessage';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { useThinkingTimer } from '../../hooks/useThinkingTimer';
 import {
   ThumbsUpIcon,
   ThumbsDownIcon,
@@ -10,53 +8,9 @@ import {
   Tick01Icon,
 } from '@hugeicons/core-free-icons';
 import { ArtifactPreviewCard } from '../artifacts/ArtifactPreviewCard';
-
-const HugeiconRenderer = ({
-  icon: Icon,
-  size = 14,
-  className,
-}: {
-  icon: any;
-  size?: number;
-  className?: string;
-}) => (
-  <HugeiconsIcon
-    icon={Icon}
-    size={size}
-    color="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  />
-);
-
-const ToolCallPill = ({ toolName, state, args }: { toolName: string; state: string; args: any }) => {
-  const getVerb = () => {
-    switch (toolName) {
-      case 'read_file':
-        return state === 'result' ? 'read' : 'reading';
-      case 'write_file':
-      case 'create_artifact':
-        return state === 'result' ? 'wrote' : 'writing';
-      case 'edit_file':
-        return state === 'result' ? 'edited' : 'editing';
-      case 'grep_tool':
-        return 'grep';
-      case 'list_dir':
-        return state === 'result' ? 'listed' : 'listing';
-      default:
-        return state === 'result' ? 'used' : 'using';
-    }
-  };
-
-  const fileName = args?.file_path || args?.path || args?.title || args?.filename || '';
-
-  return (
-    <div className="flex items-center gap-1.5 px-2 py-1 bg-neutral-100 rounded-[6px] text-xs font-medium text-neutral-600 border border-neutral-200 w-fit shrink-0">
-      <span className="capitalize">{getVerb()}</span>
-      {fileName && <span className="text-neutral-400 font-mono truncate max-w-[200px]">{fileName}</span>}
-    </div>
-  );
-};
+import { HugeiconRenderer } from '../ui/HugeiconRenderer';
+import { ToolCallPill } from './ToolCallPill';
+import { ThoughtLabel } from './ThoughtLabel';
 
 interface ArtifactCardData {
   title: string;
@@ -78,37 +32,6 @@ interface AssistantBubbleProps {
   onRegenerate: () => void;
   estimatedTokens?: number;
 }
-
-const ThoughtLabel = ({
-  isActivelyThinking,
-  isOpen,
-  onClick,
-}: {
-  isActivelyThinking: boolean;
-  isOpen: boolean;
-  onClick: () => void;
-}) => {
-  const { label } = useThinkingTimer(isActivelyThinking);
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex items-center bg-transparent p-0 text-left outline-none w-fit transition-all"
-      aria-expanded={isOpen}
-    >
-      <span
-        className={
-          isActivelyThinking
-            ? 'thinking-shimmer-text text-base font-medium cursor-pointer'
-            : 'text-base font-medium text-neutral-400 cursor-pointer'
-        }
-      >
-        {label}
-      </span>
-    </button>
-  );
-};
 
 export const AssistantBubble = React.memo(
   ({

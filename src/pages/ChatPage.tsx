@@ -17,58 +17,7 @@ import { FileSystemService } from '../services/FileSystemService';
 import { ProjectIDE } from '../components/artifacts/ProjectIDE';
 import { IDEPromptModal } from '../components/chat/IDEPromptModal';
 import { useToast } from '../components/ui/Toast';
-
-const mapUIMessageToLegacyMessage = (m: any): any => {
-  if (!m) return m;
-
-  // Extract content from parts if missing
-  let content = m.content || '';
-  if (!content && Array.isArray(m.parts)) {
-    content = m.parts
-      .filter((part: any) => part.type === 'text')
-      .map((part: any) => part.text)
-      .join('');
-  }
-
-  // Extract reasoning from parts if missing
-  let reasoning = m.reasoning || '';
-  if (!reasoning && Array.isArray(m.parts)) {
-    reasoning = m.parts
-      .filter((part: any) => part.type === 'reasoning')
-      .map((part: any) => part.reasoning || (part as any).text || '')
-      .join('');
-  }
-
-  // Extract toolInvocations from parts
-  let toolInvocations = m.toolInvocations;
-  if (!toolInvocations && Array.isArray(m.parts)) {
-    toolInvocations = m.parts
-      .filter((part: any) => part.type === 'dynamic-tool' || (part.type && part.type.startsWith('tool-')))
-      .map((part: any) => {
-        const toolName = part.toolName || (part.type ? part.type.replace(/^tool-/, '') : 'unknown');
-        return {
-          state:
-            part.state === 'output-available'
-              ? 'result'
-              : part.state === 'input-available'
-                ? 'call'
-                : part.state,
-          toolCallId: part.toolCallId,
-          toolName: toolName,
-          args: part.input,
-          result: part.output,
-          error: part.errorText,
-        };
-      });
-  }
-
-  return {
-    ...m,
-    content,
-    reasoning,
-    toolInvocations,
-  };
-};
+import { mapUIMessageToLegacyMessage } from '../lib/chatUtils';
 
 export const ChatPage = () => {
   const { uuid } = useParams();
@@ -152,61 +101,14 @@ const SCROLL_THRESHOLD = 150;
     closeArtifact,
   } = useArtifacts();
 
-  const loadProjectContext = async (path: string) => {
+  const loadProjectContext = useCallback(async (path: string) => {
     const tree = await FileSystemService.getTree(path);
     const summary = FileSystemService.getCompressedTree(tree);
     setProjectContext(summary);
-  };
-
-  const [modelRevision, setModelRevision] = useState(0);
-
-  useEffect(() => {
-    const handler = () => setModelRevision((v) => v + 1);
-    window.addEventListener('model-changed', handler);
-    return () => window.removeEventListener('model-changed', handler);
   }, []);
 
-  const currentModel = useMemo(() => getModelForChatRequest(uuid), [uuid, modelRevision]);
-
-  const chat = useChat({
-    // eslint-disable-next-line react-hooks/refs
-    transport: new DefaultChatTransport({
-      fetch: async (_url: any, options: any) => {
-        if (!options?.body) {
-          throw new Error('Request body is missing');
-        }
-        const body = JSON.parse(options.body as string);
-        const result = await chatCompletion({
-          messages: body.messages,
-          modelName: currentModelRef.current || body.model,
-          projectContext: projectContextRef.current,
-          projectPath: projectRef.current?.path,
-          isThinkingEnabled: isThinkingEnabledRef.current,
-          abortSignal: options?.signal,
-          previousModelName: previousModelRef.current || undefined,
-          sessionId: uuid,
-        });
-
-        // Update previous model ref after request starts
-        if (body.model) {
-          previousModelRef.current = body.model;
-        }
-
-        return (result as any).toUIMessageStreamResponse({
-          getErrorMessage: getAIErrorMessage,
-        });
-      },
-      body: {
-        model: currentModel,
-      },
-    }),
-    messages: [],
-    onError: (chatError: Error) => {
-      const msg = getAIErrorMessage(chatError);
-      console.error('Chat stream failed:', msg);
-      addToast(msg, 'error');
-    },
-    onFinish: async (event: any) => {
+  const handleChatFinish = useCallback(
+    async (event: any) => {
       const message = mapUIMessageToLegacyMessage(event.message);
       if (uuid && uuid !== 'new') {
         DatabaseService.saveMessages(uuid, [message]).catch((e) =>
@@ -264,6 +166,58 @@ const SCROLL_THRESHOLD = 150;
         }
       }
     },
+    [uuid, project, addOrUpdateArtifact, loadProjectContext]
+  );
+
+  const [modelRevision, setModelRevision] = useState(0);
+
+  useEffect(() => {
+    const handler = () => setModelRevision((v) => v + 1);
+    window.addEventListener('model-changed', handler);
+    return () => window.removeEventListener('model-changed', handler);
+  }, []);
+
+  const currentModel = useMemo(() => getModelForChatRequest(uuid), [uuid, modelRevision]);
+
+  const chat = useChat({
+    // eslint-disable-next-line react-hooks/refs
+    transport: new DefaultChatTransport({
+      fetch: async (_url: any, options: any) => {
+        if (!options?.body) {
+          throw new Error('Request body is missing');
+        }
+        const body = JSON.parse(options.body as string);
+        const result = await chatCompletion({
+          messages: body.messages,
+          modelName: currentModelRef.current || body.model,
+          projectContext: projectContextRef.current,
+          projectPath: projectRef.current?.path,
+          isThinkingEnabled: isThinkingEnabledRef.current,
+          abortSignal: options?.signal,
+          previousModelName: previousModelRef.current || undefined,
+          sessionId: uuid,
+        });
+
+        // Update previous model ref after request starts
+        if (body.model) {
+          previousModelRef.current = body.model;
+        }
+
+        return (result as any).toUIMessageStreamResponse({
+          getErrorMessage: getAIErrorMessage,
+        });
+      },
+      body: {
+        model: currentModel,
+      },
+    }),
+    messages: [],
+    onError: (chatError: Error) => {
+      const msg = getAIErrorMessage(chatError);
+      console.error('Chat stream failed:', msg);
+      addToast(msg, 'error');
+    },
+    onFinish: handleChatFinish,
   }) as unknown as {
     messages: any[];
     sendMessage: (msg: any) => void;

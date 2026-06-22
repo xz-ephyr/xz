@@ -10,29 +10,11 @@ import {
   FilterIcon,
   CheckmarkCircle02Icon,
 } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { ChatSession } from '../types/chat';
 import { ChatSessionManager } from '../services/ChatSessionManager';
 import { cn } from '../lib/utils';
 import { useToast } from '../components/ui/Toast';
-
-const HugeiconRenderer = ({
-  icon: Icon,
-  size = 18,
-  className = '',
-}: {
-  icon: any;
-  size?: number;
-  className?: string;
-}) => (
-  <HugeiconsIcon
-    icon={Icon}
-    size={size}
-    color="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  />
-);
+import { HugeiconRenderer } from '../components/ui/HugeiconRenderer';
 
 const ChatListItem = ({
   chat,

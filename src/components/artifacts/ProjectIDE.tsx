@@ -1,19 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
-import { javascript } from '@codemirror/lang-javascript';
-import { html } from '@codemirror/lang-html';
-import { markdown } from '@codemirror/lang-markdown';
-import { python } from '@codemirror/lang-python';
-import { css } from '@codemirror/lang-css';
-import { json } from '@codemirror/lang-json';
-import { rust } from '@codemirror/lang-rust';
-import { cpp } from '@codemirror/lang-cpp';
-import { java } from '@codemirror/lang-java';
-import { php } from '@codemirror/lang-php';
-import { sql } from '@codemirror/lang-sql';
-import { xml } from '@codemirror/lang-xml';
-import { yaml } from '@codemirror/lang-yaml';
-import { sass } from '@codemirror/lang-sass';
 
 import {
   Folder02Icon,
@@ -25,66 +11,17 @@ import {
   Tick01Icon,
   CloudSavingDone01Icon,
 } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { FileEntry, FileSystemService } from '../../services/FileSystemService';
 import { Project } from '../../types/chat';
+import { HugeiconRenderer } from '../ui/HugeiconRenderer';
+import { FileNode } from './FileNode';
+import { getLanguage, getLanguageName } from '../../lib/languageUtils';
 
 interface ProjectIDEProps {
   project: Project;
   onClose: () => void;
   onSave?: (path: string, content: string) => void;
 }
-
-const HugeiconRenderer = ({
-  icon: Icon,
-  size = 16,
-  className,
-}: {
-  icon: any;
-  size?: number;
-  className?: string;
-}) => (
-  <HugeiconsIcon
-    icon={Icon}
-    size={size}
-    color="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  />
-);
-
-const FileNode = ({
-  node,
-  depth = 0,
-  activePath,
-  onClick,
-}: {
-  node: FileEntry;
-  depth?: number;
-  activePath?: string;
-  onClick: (node: FileEntry) => void;
-}) => (
-  <div>
-    <div
-      className={`flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-100 cursor-pointer text-sm ${activePath === node.path ? 'bg-neutral-100 text-blue-600 font-medium' : 'text-neutral-600'}`}
-      style={{ paddingLeft: `${depth * 16 + 12}px` }}
-      onClick={() => onClick(node)}
-    >
-      <HugeiconRenderer icon={node.isDirectory ? Folder02Icon : File02Icon} size={14} />
-      <span className="truncate">{node.name}</span>
-    </div>
-    {node.isDirectory &&
-      node.children?.map((child) => (
-        <FileNode
-          key={child.path}
-          node={child}
-          depth={depth + 1}
-          activePath={activePath}
-          onClick={onClick}
-        />
-      ))}
-  </div>
-);
 
 export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave }) => {
   const [tree, setTree] = useState<FileEntry[]>([]);
@@ -124,81 +61,6 @@ export const ProjectIDE: React.FC<ProjectIDEProps> = ({ project, onClose, onSave
       console.error('Save failed', e);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const getLanguageName = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'js':
-        return 'JavaScript';
-      case 'jsx':
-        return 'JavaScript React';
-      case 'ts':
-        return 'TypeScript';
-      case 'tsx':
-        return 'TypeScript React';
-      case 'py':
-        return 'Python';
-      case 'html':
-        return 'HTML';
-      case 'css':
-        return 'CSS';
-      case 'scss':
-        return 'SCSS';
-      case 'json':
-        return 'JSON';
-      case 'rs':
-        return 'Rust';
-      case 'md':
-        return 'Markdown';
-      default:
-        return ext?.toUpperCase() || 'Plain Text';
-    }
-  };
-
-  const getLanguage = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'js':
-      case 'jsx':
-      case 'ts':
-      case 'tsx':
-        return [javascript({ jsx: true, typescript: true })];
-      case 'py':
-        return [python()];
-      case 'html':
-        return [html()];
-      case 'css':
-        return [css()];
-      case 'scss':
-      case 'sass':
-        return [sass()];
-      case 'json':
-        return [json()];
-      case 'rs':
-        return [rust()];
-      case 'cpp':
-      case 'h':
-      case 'hpp':
-      case 'cc':
-        return [cpp()];
-      case 'java':
-        return [java()];
-      case 'php':
-        return [php()];
-      case 'sql':
-        return [sql()];
-      case 'xml':
-      case 'svg':
-        return [xml()];
-      case 'yaml':
-      case 'yml':
-        return [yaml()];
-      case 'md':
-        return [markdown()];
-      default:
-        return [];
     }
   };
 
