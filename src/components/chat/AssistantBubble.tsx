@@ -230,7 +230,11 @@ export const AssistantBubble = React.memo(
           )}
 
           {content && (
-            <div className="font-medium text-neutral-900 animate-in fade-in duration-500">
+            /*
+             * Changed from font-medium to font-normal for better long-form readability.
+             * This avoids a "heavy" look for long AI responses.
+             */
+            <div className="font-normal text-neutral-900 animate-in fade-in duration-500">
               <MarkdownMessage content={content} />
             </div>
           )}
@@ -248,15 +252,17 @@ export const AssistantBubble = React.memo(
         {!isStreaming && !hasPendingTool && (
           <div className="flex items-center justify-between gap-3 text-gray-600 px-4">
             {model && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-400">{model}</span>
+              /* Added truncate to model name to prevent overflow on mobile */
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs text-gray-400 truncate">{model}</span>
                 {estimatedTokens !== undefined && (
-                  <span className="text-[10px] text-gray-400">(~{estimatedTokens} tokens)</span>
+                  <span className="text-[10px] text-gray-400 shrink-0">(~{estimatedTokens} tokens)</span>
                 )}
               </div>
             )}
-            <div className="flex gap-3 items-center ml-auto">
+            <div className="flex gap-3 items-center ml-auto shrink-0">
               <button
+                type="button"
                 onClick={handleCopy}
                 className="hover:text-black transition-colors"
                 title={copied ? 'Copied!' : 'Copy response'}
@@ -269,6 +275,7 @@ export const AssistantBubble = React.memo(
                 />
               </button>
               <button
+                type="button"
                 onClick={onThumbsUp}
                 className="hover:text-black transition-colors"
                 title="Good response"
@@ -277,6 +284,7 @@ export const AssistantBubble = React.memo(
                 <HugeiconRenderer icon={ThumbsUpIcon} size={18} />
               </button>
               <button
+                type="button"
                 onClick={onThumbsDown}
                 className="hover:text-black transition-colors"
                 title="Bad response"
@@ -285,6 +293,7 @@ export const AssistantBubble = React.memo(
                 <HugeiconRenderer icon={ThumbsDownIcon} size={18} />
               </button>
               <button
+                type="button"
                 onClick={onRegenerate}
                 className="hover:text-black transition-colors"
                 title="Regenerate response"

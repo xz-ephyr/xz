@@ -18,10 +18,18 @@ export const CopyButton = ({
     });
   };
 
+  const label = copied ? 'Copied!' : 'Copy to clipboard';
   return (
     <button
+      type="button"
       onClick={handleCopy}
-      className={`${alwaysVisible ? '' : 'opacity-0 group-hover:opacity-100'} p-1 mt-1 text-gray-600 hover:text-black transition-opacity`}
+      title={label}
+      aria-label={label}
+      /*
+       * Ensured visibility on mobile by removing opacity-0 for small screens,
+       * while maintaining hover effect on larger viewports.
+       */
+      className={`${alwaysVisible ? '' : 'md:opacity-0 md:group-hover:opacity-100'} p-1 mt-1 text-gray-600 hover:text-black transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm`}
     >
       {copied ? (
         <HugeiconsIcon

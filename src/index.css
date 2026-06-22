@@ -93,9 +93,14 @@ body {
   }
 }
 
+/*
+ * Reversing the gradient mask so it fades the TOP of the container.
+ * This ensures the most recent content (at the bottom) is fully opaque
+ * during auto-scrolling streaming.
+ */
 .thinking-pad-mask {
-  mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+  mask-image: linear-gradient(to top, black 0%, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 70%, transparent 100%);
 }
 
 .thinking-pad-item-enter {
