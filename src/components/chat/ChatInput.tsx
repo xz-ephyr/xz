@@ -28,8 +28,11 @@ function PlusDropdown({
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={onToggle}
         className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-neutral-200/60 transition-colors text-black"
+        aria-label="Add content or toggle settings"
+        title="Add content or toggle settings"
       >
         <HugeiconsIcon icon={PlusSignIcon} size={18} />
       </button>
@@ -39,8 +42,10 @@ function PlusDropdown({
           className={`absolute ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-50`}
         >
           <button
+            type="button"
             onClick={() => { onToggleThinking(); onToggle(); }}
             className="w-full text-left px-4 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center justify-between"
+            aria-label="Toggle thinking mode"
           >
             <span className="flex items-center gap-2"><HugeiconsIcon icon={Idea01Icon} size={14} /> Thinking Mode</span>
             {isThinkingEnabled && <div className="w-2 h-2 rounded-full bg-blue-500"></div>}
@@ -59,16 +64,19 @@ function ThinkingPill({
   size?: 'normal' | 'small';
 }) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onToggleThinking}
       className={`group flex items-center gap-2 bg-blue-100 text-blue-900 ${size === 'normal' ? 'px-4 py-1.5 text-sm' : 'px-3 py-1 text-xs'} rounded-full font-medium cursor-pointer transition-all active:scale-95`}
+      aria-label="Disable thinking mode"
+      title="Disable thinking mode"
     >
       <div className={`relative flex items-center justify-center ${size === 'normal' ? 'w-4 h-4' : 'w-3.5 h-3.5'}`}>
         <HugeiconsIcon icon={Idea01Icon} size={size === 'normal' ? 16 : 14} className="group-hover:hidden" />
         <HugeiconsIcon icon={Cancel01Icon} size={size === 'normal' ? 16 : 14} className="hidden group-hover:block" />
       </div>
       Think
-    </div>
+    </button>
   );
 }
 
@@ -83,11 +91,15 @@ function SendButton({
   onSend: () => void;
   hasValue: boolean;
 }) {
+  const label = isLoading ? 'Stop generation' : 'Send message';
   return (
     <button
+      type="button"
       onClick={isLoading ? onStop : onSend}
       disabled={!hasValue && !isLoading}
       className="p-1.5 text-white rounded-full bg-black disabled:opacity-50 transition-opacity hover:opacity-90 active:scale-95"
+      aria-label={label}
+      title={label}
     >
       <HugeiconsIcon
         icon={isLoading ? StopIcon : ArrowUp02Icon}
