@@ -6,10 +6,10 @@ import {
   CodeIcon,
   ViewIcon,
 } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { Artifact } from '../../hooks/useArtifacts';
 import { ArtifactRenderer } from './ArtifactRenderer';
 import { isTauri } from '../../lib/tauri';
+import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 
 interface ArtifactPaneProps {
   isOpen: boolean;
@@ -18,24 +18,6 @@ interface ArtifactPaneProps {
   activeArtifact: Artifact | null;
   onVersionSelect: (artifact: Artifact) => void;
 }
-
-const HugeiconRenderer = ({
-  icon: Icon,
-  size = 18,
-  className,
-}: {
-  icon: any;
-  size?: number;
-  className?: string;
-}) => (
-  <HugeiconsIcon
-    icon={Icon}
-    size={size}
-    color="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  />
-);
 
 export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
   isOpen,
