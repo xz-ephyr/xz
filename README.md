@@ -1,57 +1,89 @@
 <div align="center">
 
-# 🌌 xz
-### *Autonomous Research Workstation*
+# xz
+### *AI-Native Code Editor*
 
-**A private, local-first research engine designed for verification, traceability, and speed.**
+**A local-first, multi-model AI coding environment with live artifact previews, project-aware context, and a built-in IDE.**
 
 ---
 
 [![Tauri](https://img.shields.io/badge/Tauri-2.0-FFC131?style=for-the-badge&logo=tauri)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
-[![Rust](https://img.shields.io/badge/Rust-1.77-000000?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
 </div>
 
 ---
 
-## 🚀 The Mission
-**xz** is built to bridge the gap between AI generation and verifiable truth. It transforms complex research topics into structured, cited reports, ensuring that your data, keys, and research remain entirely **local, encrypted, and under your control.**
+## Overview
 
-## ✨ Key Capabilities
-*   **🤖 Autonomous Agentic Workflow**
-    Plan, search, extract, and synthesize information through deep, recursive research loops.
-*   **🛡️ Security-First Architecture**
-    Strict trust separation between an untrusted React frontend and a hardened Rust backend.
-*   **🔒 Privacy-Locked Persistence**
-    Everything you do is stored in an encrypted database (SQLCipher) with secrets managed only by your OS-native credential vault.
-*   **🔍 Verifiable Grounding**
-    Stop guessing. Every claim is mapped to its source, providing full citation traceability for every research report.
+xz is a desktop AI coding assistant that runs on your local machine. Chat with multiple AI models (Gemini, Groq, Mistral, OpenAI-compatible, Cerebras) in a context that understands your project structure — files, folders, and code.
 
-## 🏗️ Technical Foundation
+## Features
+
+- **AI Chat with Project Context** — The model knows what project you're in, sees your file tree, and can read/write files directly on disk
+- **Multi-Model Support** — Google Gemini, Groq, Mistral, OpenAI-compatible (OpenRouter, OpenCode Zen), Cerebras with automatic fallback chains
+- **Live Artifact Preview** — HTML, React, SVG, and Markdown render in a sandboxed side panel, streaming in real-time as the model generates
+- **Built-in IDE** — Full file tree explorer with a CodeMirror 6 editor, syntax highlighting, and direct file save
+- **Extended Thinking** — Collapsible chain-of-thought display for models that support reasoning
+- **Project-Aware** — Dedicated project folders with persistent context; the AI knows which project it's working in
+- **Local-First** — All data stored in local SQLite via an Express backend. No cloud dependency.
+- **Tauri Desktop** — Native file system access, OS-native dialogs, runs as a standalone desktop app
+
+## Architecture
 
 | Layer | Technology |
 | :--- | :--- |
 | **Shell** | Tauri 2.0 (Rust) |
-| **Interface** | React 19 + Vite |
-| **Storage** | SQLite + SQLCipher |
-| **Secrets** | OS Keyring (Credential Manager) |
+| **Frontend** | React 19 + Vite + TypeScript |
+| **AI SDK** | Vercel AI SDK (ai v6) |
+| **Editor** | CodeMirror 6 |
+| **Backend** | Express.js + better-sqlite3 |
+| **Sandboxing** | iframe + CSP + DOMPurify-style sanitization |
 
-## 🛠️ Development
-
-Get started locally with these commands:
+## Getting Started
 
 ```powershell
 # Install dependencies
 npm install
+cd server && npm install
 
-# Launch the development environment
+# Start the backend (in one terminal)
+cd server && npm run dev
+
+# Start the frontend (in another terminal)
+npm run dev
+```
+
+For Tauri desktop:
+```powershell
 npm run tauri:dev
+```
+
+## Project Structure
+
+```
+xz/
+├── src/                    # React frontend
+│   ├── components/         # UI components
+│   │   ├── artifacts/      # Artifact preview, IDE pane, renderer
+│   │   ├── chat/           # Chat bubbles, input, thinking display
+│   │   └── ui/             # Shared UI primitives
+│   ├── hooks/              # React hooks (useArtifacts, etc.)
+│   ├── pages/              # Route pages (Chat, Chats, Settings)
+│   ├── services/           # AI service, DB client, file system
+│   │   └── ai/             # System prompt, tool config, context
+│   ├── lib/                # Utilities
+│   ├── config/             # Model definitions, API keys
+│   └── types/              # TypeScript interfaces
+├── server/                 # Express.js backend
+│   └── src/                # API endpoints, SQLite queries
+└── src-tauri/              # Tauri Rust shell
 ```
 
 ---
 
 <div align="center">
-  <sub>Built for those who value privacy and accuracy in research.</sub>
+  <sub>Built for local-first AI-assisted development.</sub>
 </div>
