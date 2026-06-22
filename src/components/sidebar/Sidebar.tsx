@@ -131,6 +131,7 @@ export default function Sidebar() {
       }
     } catch (err) {
       console.error('Failed to open directory:', err);
+      addToast('Could not open folder. Make sure the server is running and try again.', 'error');
     }
   };
 
@@ -214,7 +215,7 @@ export default function Sidebar() {
                   <h2 className="text-sm font-bold text-gray-500 whitespace-nowrap">Projects</h2>
                   <button
                     onClick={handleAddProject}
-                    className="text-gray-500 hover:text-black hover:bg-[#e5e5e5] active:bg-[#d4d4d4] p-1 rounded-[4px] transition-all active:scale-95"
+                    className="text-gray-500 hover:text-black hover:bg-[#e5e5e5] active:bg-[#d4d4d4] p-1 rounded-[6px] transition-all active:scale-95"
                     aria-label="Add project"
                     title="Add project"
                   >

@@ -71,7 +71,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleNewChat}
-            className="p-1 hover:bg-[#e5e5e5] rounded-[4px]"
+            className="p-1 hover:bg-[#e5e5e5] rounded-[6px]"
             title="New Chat"
             aria-label="New Chat"
           >
@@ -82,7 +82,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 hover:bg-[#e5e5e5] rounded-[4px]"
+            className="p-1 hover:bg-[#e5e5e5] rounded-[6px]"
             title="Project options"
             aria-label="Project options"
           >
@@ -96,15 +96,15 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
         </div>
 
         {showMenu && (
-          <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-50">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(project.id);
-                setShowMenu(false);
-              }}
-              className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
-            >
+            <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-neutral-200 rounded-xl shadow-lg py-1 z-50">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(project.id);
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-[8px] mx-1 flex items-center gap-2"
+              >
               <HugeiconRenderer icon={Delete02Icon} size={14} />
               Delete Project
             </button>
