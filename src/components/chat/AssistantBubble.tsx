@@ -139,12 +139,14 @@ export const AssistantBubble = React.memo(
               />
 
               <div className="flex gap-3">
-                <div className="flex flex-col items-center shrink-0">
-                  <div className="flex items-center justify-center w-5 h-5">
-                    <HugeiconsIcon icon={Clock01Icon} size={14} className="text-neutral-400" />
+                {isReasoningOpen && (
+                  <div className="flex flex-col items-center shrink-0">
+                    <div className="flex items-center justify-center w-5 h-5">
+                      <HugeiconsIcon icon={Clock01Icon} size={14} className="text-neutral-400" />
+                    </div>
+                    <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />
                   </div>
-                  <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />
-                </div>
+                )}
 
                 <div className="flex flex-col gap-2 flex-1 min-w-0">
                   <div
