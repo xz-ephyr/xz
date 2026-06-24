@@ -163,22 +163,22 @@ export const AssistantBubble = React.memo(
                             {s}
                           </div>
                         ))}
+
+                        {toolInvocations && toolInvocations.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pb-4 pt-2">
+                            {toolInvocations.map((ti, idx) => (
+                              <ToolCallPill
+                                key={ti.toolCallId || idx}
+                                toolName={ti.toolName}
+                                state={ti.state}
+                                args={ti.args}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-
-                  {toolInvocations && toolInvocations.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pb-4">
-                      {toolInvocations.map((ti, idx) => (
-                        <ToolCallPill
-                          key={ti.toolCallId || idx}
-                          toolName={ti.toolName}
-                          state={ti.state}
-                          args={ti.args}
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
