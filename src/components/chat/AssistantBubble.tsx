@@ -167,7 +167,7 @@ export const AssistantBubble = React.memo(
                 </div>
 
                 {toolInvocations && toolInvocations.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pb-4">
+                  <div className="flex flex-wrap gap-2">
                     {toolInvocations.map((ti, idx) => (
                       <ToolCallPill
                         key={ti.toolCallId || idx}
@@ -178,11 +178,17 @@ export const AssistantBubble = React.memo(
                     ))}
                   </div>
                 )}
+
+                {content && (
+                  <div className="font-normal text-neutral-900 pb-4">
+                    <MarkdownMessage content={content} />
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {content && (
+          {!showThought && content && (
             <div className="font-normal text-neutral-900">
               <MarkdownMessage content={content} />
             </div>
