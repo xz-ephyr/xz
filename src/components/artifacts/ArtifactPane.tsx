@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import {
   Cancel01Icon,
-  Download01Icon,
   ArrowDown01Icon,
   CodeIcon,
   ViewIcon,
 } from '@hugeicons/core-free-icons';
 import { Artifact } from '../../hooks/useArtifacts';
 import { ArtifactRenderer } from './ArtifactRenderer';
-import { isTauri } from '../../lib/tauri';
 import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 
 interface ArtifactPaneProps {
@@ -30,34 +28,6 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
   const [view, setView] = useState<'preview' | 'code'>('preview');
 
   if (!isOpen || !activeArtifact) return null;
-
-  const handleDownload = async () => {
-    try {
-      if (isTauri()) {
-        // Desktop path: use native save dialog
-        const { save } = await import('@tauri-apps/plugin-dialog');
-        const { writeTextFile } = await import('@tauri-apps/plugin-fs');
-        const path = await save({
-          defaultPath: activeArtifact.title,
-          filters: [{ name: 'All Files', extensions: ['*'] }],
-        });
-        if (path) {
-          await writeTextFile(path, activeArtifact.content);
-        }
-      } else {
-        // Web path: browser blob download
-        const blob = new Blob([activeArtifact.content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = activeArtifact.title;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      console.error('Download error:', err);
-    }
-  };
 
   return (
     <div className="w-full h-full border-l border-neutral-200 bg-white flex flex-col z-10">
@@ -139,14 +109,6 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
 
       <div className="flex-1 overflow-hidden relative">
         <ArtifactRenderer type={activeArtifact.type} content={activeArtifact.content} mode={view} />
-        <button
-          onClick={handleDownload}
-          className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 rounded-[6px] text-xs font-medium text-neutral-700 transition-colors z-20"
-          title="Download"
-        >
-          <HugeiconRenderer icon={Download01Icon} size={14} />
-          Download
-        </button>
       </div>
     </div>
   );

@@ -16,6 +16,7 @@ interface ArtifactCardData {
   title: string;
   type: string;
   artifactId: string;
+  content?: string;
 }
 
 interface AssistantBubbleProps {
@@ -171,6 +172,7 @@ export const AssistantBubble = React.memo(
               key={card.artifactId}
               title={card.title}
               type={card.type}
+              content={card.content}
               onClick={() => onArtifactClick?.(card.artifactId)}
             />
           ))}

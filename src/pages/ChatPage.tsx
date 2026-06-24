@@ -18,6 +18,8 @@ import { ProjectIDE } from '../components/artifacts/ProjectIDE';
 import { IDEPromptModal } from '../components/chat/IDEPromptModal';
 import { useToast } from '../components/ui/Toast';
 import { mapUIMessageToLegacyMessage } from '../lib/chatUtils';
+import { HugeiconRenderer } from '../components/ui/HugeiconRenderer';
+import { ArrowDown02Icon } from '@hugeicons/core-free-icons';
 
 export const ChatPage = () => {
   const { uuid } = useParams();
@@ -49,6 +51,7 @@ const isResizingRef = useRef(false);
 
 const scrollContainerRef = useRef<HTMLDivElement>(null);
 const isNearBottomRef = useRef(true);
+const [showScrollButton, setShowScrollButton] = useState(false);
 
 const SCROLL_THRESHOLD = 150;
 
@@ -86,6 +89,7 @@ const SCROLL_THRESHOLD = 150;
     if (el) {
       const near = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
       isNearBottomRef.current = near;
+      setShowScrollButton(!near);
     }
   }, []);
 
@@ -426,16 +430,27 @@ const SCROLL_THRESHOLD = 150;
     }
   }, [rawMessages, project, isIDEOpen, setActiveArtifactId, setIsArtifactOpen, updateArtifactContent, addOrUpdateArtifact]);
 
+  const scrollToBottom = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
+  }, []);
+
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
-      <div className={`flex flex-col flex-1 min-w-0 bg-white transition-all duration-300 relative`}>
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className={`flex-1 overflow-y-auto ${messages.length === 0 ? 'flex flex-col items-center justify-start pt-[15vh] p-4' : ''}`}
+    <div className="flex flex-col h-screen overflow-hidden bg-white relative">
+      {messages.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 z-10 h-[37px] border-b border-neutral-100 bg-white" />
+      )}
+      <div className="flex flex-1 min-h-0 pt-[37px]">
+        <div className="flex flex-col flex-1 min-w-0 bg-white transition-all duration-300 relative">
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className={`flex-1 overflow-y-auto ${messages.length === 0 ? 'flex flex-col items-center justify-start pt-[15vh] p-4' : ''}`}
         >
-          {messages.length > 0 && <div className="h-[20px] bg-white w-full shrink-0" />}
-          <div className="w-full mx-auto px-4" style={{ maxWidth: 'min(780px, 100%)' }}>
+          {messages.length > 0 && <div className="h-[8px] bg-white w-full shrink-0" />}
+          <div className="w-full mx-auto px-4 pb-24" style={{ maxWidth: 'min(780px, 100%)' }}>
             {messages.map((m: any, i: number) => (
               <React.Fragment key={m.id || i}>
                 {m.role === 'user' ? (
@@ -456,7 +471,8 @@ const SCROLL_THRESHOLD = 150;
                         const title = ti.args?.title || 'Untitled Artifact';
                         const type = ti.args?.type || 'markdown';
                         const artifactId = title.toLowerCase().replace(/\s+/g, '-');
-                        return { title, type, artifactId };
+                        const content = ti.args?.content || ti.result?.content || '';
+                        return { title, type, artifactId, content };
                       })}
                       onArtifactClick={(artifactId: string) => {
                         setActiveArtifactId(artifactId);
@@ -499,6 +515,18 @@ const SCROLL_THRESHOLD = 150;
             )}
           </div>
         </div>
+
+        {showScrollButton && (
+          <div className="shrink-0 flex justify-center w-full mx-auto bg-white relative" style={{ height: 0 }}>
+            <button
+              onClick={scrollToBottom}
+              className="absolute left-1/2 -translate-x-1/2 bottom-8 flex items-center justify-center w-9 h-9 rounded-full bg-neutral-100 hover:bg-neutral-200 text-black transition-all shadow-sm z-10"
+              title="Scroll to bottom"
+            >
+              <HugeiconRenderer icon={ArrowDown02Icon} size={18} />
+            </button>
+          </div>
+        )}
 
         {messages.length > 0 && (
           <div className="shrink-0 pb-8 w-full mx-auto px-4 bg-white" style={{ maxWidth: 'min(780px, 100%)' }}>
@@ -543,8 +571,9 @@ const SCROLL_THRESHOLD = 150;
               onSave={() => loadProjectContext(project)}
             />
           )}
-        </div>
-      )}
+          </div>
+        )}{/* closes artifact conditional */}
+      </div>{/* closes row div */}
 
       {showIDEPrompt && (
         <IDEPromptModal
