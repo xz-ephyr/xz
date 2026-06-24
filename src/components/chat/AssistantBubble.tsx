@@ -6,7 +6,12 @@ import {
   ArrowTurnBackwardIcon,
   Copy01Icon,
   Tick01Icon,
+  Clock01Icon,
+  PencilEdit01Icon,
+  PencilEdit02Icon,
+  File02Icon,
 } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { ArtifactPreviewCard } from '../artifacts/ArtifactPreviewCard';
 import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 import { ToolCallPill } from './ToolCallPill';
@@ -98,8 +103,14 @@ export const AssistantBubble = React.memo(
             <div className="flex items-center gap-2 text-neutral-500">
               {pendingTools.map((ti) => {
                 const fileName = ti.args?.file_path || ti.args?.path || ti.args?.title || ti.args?.filename || '';
+                const toolIcon =
+                  ti.toolName === 'write_file' || ti.toolName === 'create_artifact' ? <HugeiconsIcon icon={PencilEdit01Icon} size={13} className="text-neutral-400 shrink-0" /> :
+                  ti.toolName === 'edit_file' ? <HugeiconsIcon icon={PencilEdit02Icon} size={13} className="text-neutral-400 shrink-0" /> :
+                  ti.toolName === 'read_file' ? <HugeiconsIcon icon={File02Icon} size={13} className="text-neutral-400 shrink-0" /> :
+                  null;
                 return (
                   <div key={ti.toolCallId} className="flex items-center gap-1.5 px-2 py-1 bg-neutral-50 rounded-[6px] text-xs font-medium text-neutral-500 border border-neutral-200">
+                    {toolIcon}
                     <span className="thinking-shimmer-text capitalize">
                       {ti.toolName === 'grep_tool' ? 'searching' :
                        ti.toolName === 'list_dir' ? 'browsing' :
@@ -120,43 +131,53 @@ export const AssistantBubble = React.memo(
           )}
 
           {showThought && (
-            <div className="flex flex-col gap-2">
-              <ThoughtLabel
-                isActivelyThinking={showThinking}
-                isOpen={isReasoningOpen}
-                onClick={() => setIsReasoningOpen(!isReasoningOpen)}
-              />
+            <div className="flex gap-3">
+              <div className="flex flex-col items-center shrink-0">
+                <div className="flex items-center justify-center w-5 h-5">
+                  <HugeiconsIcon icon={Clock01Icon} size={14} className="text-neutral-400" />
+                </div>
+                <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />
+              </div>
 
-              <div
-                className={`grid ${isReasoningOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-              >
-                <div className="overflow-hidden">
-                  <div
-                    ref={scrollRef}
-                    className="overflow-y-auto no-scrollbar relative flex flex-col gap-2 pt-1"
-                  >
-                    {sentences.map((s, idx) => (
-                      <div
-                        key={idx}
-                        className="text-[15px] leading-relaxed text-neutral-500"
-                      >
-                        {s}
-                      </div>
-                    ))}
-                    {toolInvocations && toolInvocations.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pb-4">
-                        {toolInvocations.map((ti, idx) => (
-                          <ToolCallPill
-                            key={ti.toolCallId || idx}
-                            toolName={ti.toolName}
-                            state={ti.state}
-                            args={ti.args}
-                          />
-                        ))}
-                      </div>
-                    )}
+              <div className="flex flex-col gap-2 flex-1 min-w-0">
+                <ThoughtLabel
+                  isActivelyThinking={showThinking}
+                  isOpen={isReasoningOpen}
+                  onClick={() => setIsReasoningOpen(!isReasoningOpen)}
+                />
+
+                <div
+                  className={`grid ${isReasoningOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                >
+                  <div className="overflow-hidden">
+                    <div
+                      ref={scrollRef}
+                      className="overflow-y-auto no-scrollbar flex flex-col gap-2 pt-1"
+                    >
+                      {sentences.map((s, idx) => (
+                        <div
+                          key={idx}
+                          className="text-[15px] leading-relaxed text-neutral-500"
+                        >
+                          {s}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
+
+                {toolInvocations && toolInvocations.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pb-4">
+                    {toolInvocations.map((ti, idx) => (
+                      <ToolCallPill
+                        key={ti.toolCallId || idx}
+                        toolName={ti.toolName}
+                        state={ti.state}
+                        args={ti.args}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

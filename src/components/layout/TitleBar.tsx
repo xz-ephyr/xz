@@ -26,7 +26,7 @@ export default function TitleBar() {
   }
 
   return (
-    <div className="flex items-center justify-end h-9 px-3 bg-white border-b border-neutral-200 shrink-0 select-none">
+    <div className="flex items-center justify-end h-9 px-3 bg-white border-b border-white shrink-0 select-none">
       <ZoomTrigger
         zoom={zoom}
         isOpen={isZoomOpen}

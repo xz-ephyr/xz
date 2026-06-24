@@ -7,10 +7,13 @@ export const COT_INSTRUCTIONS = `### THINKING GUIDELINES
 `;
 
 export function getSmartSystemPrompt(basePrompt: string, projectContext?: string) {
+  const isProjectMode = !!projectContext;
   let prompt = `${basePrompt}\n\n${COT_INSTRUCTIONS}`;
 
   if (projectContext) {
     prompt += `\n\n### PROJECT CONTEXT\n${projectContext}\n\nYou are working inside this project. Use the file tools to read, create, and edit files relative to the project root.`;
+  } else {
+    prompt += `\n\n### CHAT MODE\nYou are in a general chat conversation. You do NOT have access to a file system. You can use write_file to create shareable artifacts, but you CANNOT use list_dir or grep_tool as there is no project to search.`;
   }
 
   return prompt;

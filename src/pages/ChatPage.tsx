@@ -87,6 +87,11 @@ const SCROLL_THRESHOLD = 150;
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (el) {
+      const hasOverflow = el.scrollHeight > el.clientHeight;
+      if (!hasOverflow) {
+        setShowScrollButton(false);
+        return;
+      }
       const near = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
       isNearBottomRef.current = near;
       setShowScrollButton(!near);
@@ -241,10 +246,12 @@ const SCROLL_THRESHOLD = 150;
   useEffect(() => {
     if (uuid) {
       const loadSession = async () => {
-        if (uuid !== 'new') {
+        // Don't load from DB if there's a pending first message — it would
+        // race with sendMessage and overwrite the user bubble + stream.
+        if (!sessionStorage.getItem('pending-first-message') && uuid !== 'new') {
           const storedMessages = await DatabaseService.getMessages(uuid);
           setMessages(storedMessages.map(mapUIMessageToLegacyMessage));
-        } else {
+        } else if (uuid === 'new') {
           setMessages([]);
         }
 
