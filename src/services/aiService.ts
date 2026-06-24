@@ -7,7 +7,6 @@ import { streamText, stepCountIs, tool, convertToModelMessages } from 'ai';
 import type { OpenAIProvider } from '@ai-sdk/openai';
 import {
   SYSTEM_PROMPT,
-  createArtifactTool,
   readFileTool,
   writeFileTool,
   editFileTool,
@@ -120,6 +119,14 @@ function buildFallbackChain(primaryModelName: string, sessionId?: string): strin
   ];
 }
 
+let toolQueue: Promise<any> = Promise.resolve();
+
+function sequential<T>(fn: () => Promise<T>): Promise<T> {
+  const result = toolQueue.then(fn, fn);
+  toolQueue = result.then(() => {}, () => {});
+  return result;
+}
+
 export async function chatCompletion({
   messages,
   modelName,
@@ -219,22 +226,11 @@ export async function chatCompletion({
           console.error(`AI stream failed for ${currentModelName}:`, getAIErrorMessage(error));
         },
         tools: {
-          create_artifact: tool({
-            description: createArtifactTool.description,
-            parameters: createArtifactTool.parameters,
-            // @ts-expect-error - dynamic types
-            execute: async (args: any) => ({
-              success: true,
-              type: args.type || 'markdown',
-              title: args.title || 'Untitled Artifact',
-              content: args.content || '',
-            }),
-          }),
           read_file: tool({
             description: readFileTool.description,
             parameters: readFileTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async ({ path }: { path: string }) => {
+            execute: ({ path }: { path: string }) => sequential(async () => {
               if (!projectPath) return { error: 'Not in project mode.' };
               try {
                 const fullPath = await resolveProjectPath(projectPath, path);
@@ -244,13 +240,13 @@ export async function chatCompletion({
               } catch (e: any) {
                 return { error: `Failed to read: ${e.message || e}` };
               }
-            },
+            }),
           }),
           write_file: tool({
             description: writeFileTool.description,
             parameters: writeFileTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async ({ path, content }: { path: string; content: string }) => {
+            execute: ({ path, content }: { path: string; content: string }) => sequential(async () => {
               if (!projectPath)
                 return { success: true, is_artifact: true, title: path, content };
               try {
@@ -261,13 +257,13 @@ export async function chatCompletion({
               } catch (e: any) {
                 return { error: `Failed to write: ${e.message || e}` };
               }
-            },
+            }),
           }),
           edit_file: tool({
             description: editFileTool.description,
             parameters: editFileTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async ({
+            execute: ({
               path,
               target_content,
               replacement_content,
@@ -275,7 +271,7 @@ export async function chatCompletion({
               path: string;
               target_content: string;
               replacement_content: string;
-            }) => {
+            }) => sequential(async () => {
               if (!projectPath) return { error: 'Not in project mode.' };
               try {
                 const fullPath = await resolveProjectPath(projectPath, path);
@@ -305,13 +301,13 @@ export async function chatCompletion({
               } catch (e: any) {
                 return { error: `Failed to edit: ${e.message || e}` };
               }
-            },
+            }),
           }),
           write_to_plan: tool({
             description: writeToPlanTool.description,
             parameters: writeToPlanTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async ({ filename, content }: { filename: string; content: string }) => {
+            execute: ({ filename, content }: { filename: string; content: string }) => sequential(async () => {
               if (projectPath) {
                 try {
                   const fullPath = await resolveProjectPath(projectPath, filename);
@@ -323,13 +319,13 @@ export async function chatCompletion({
                 }
               }
               return { success: true, is_artifact: true, title: filename, content };
-            },
+            }),
           }),
           list_dir: tool({
             description: listDirTool.description,
             parameters: listDirTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async ({ path }: { path: string }) => {
+            execute: ({ path }: { path: string }) => sequential(async () => {
               if (!projectPath) return { error: 'Not in project mode.' };
               try {
                 const fullPath = await resolveProjectPath(projectPath, path);
@@ -345,13 +341,13 @@ export async function chatCompletion({
               } catch (e: any) {
                 return { error: `Failed to list: ${e.message || e}` };
               }
-            },
+            }),
           }),
           grep_tool: tool({
             description: grepTool.description,
             parameters: grepTool.parameters,
             // @ts-expect-error - dynamic types
-            execute: async ({ pattern, path }: { pattern: string; path: string }) => {
+            execute: ({ pattern, path }: { pattern: string; path: string }) => sequential(async () => {
               if (!projectPath) return { error: 'Not in project mode.' };
               try {
                 const fullPath = await resolveProjectPath(projectPath, path);
@@ -388,7 +384,7 @@ export async function chatCompletion({
               } catch (e: any) {
                 return { error: `Grep failed: ${e.message || e}` };
               }
-            },
+            }),
           }),
         },
       });

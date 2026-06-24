@@ -128,24 +128,25 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
           </div>
 
           <button
-            onClick={handleDownload}
-            className="p-2 hover:bg-neutral-100 rounded-md transition-colors text-neutral-600 hover:text-black"
-            title="Download"
-          >
-            <HugeiconRenderer icon={Download01Icon} />
-          </button>
-          <button
             onClick={onClose}
-            className="p-2 hover:bg-neutral-100 rounded-md transition-colors text-neutral-600 hover:text-black"
+            className="p-1.5 hover:bg-neutral-100 rounded-[6px] transition-colors text-neutral-500 hover:text-neutral-700"
             title="Close"
           >
-            <HugeiconRenderer icon={Cancel01Icon} />
+            <HugeiconRenderer icon={Cancel01Icon} size={16} />
           </button>
         </div>
       </div>
 
       <div className="flex-1 overflow-hidden relative">
         <ArtifactRenderer type={activeArtifact.type} content={activeArtifact.content} mode={view} />
+        <button
+          onClick={handleDownload}
+          className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 rounded-[6px] text-xs font-medium text-neutral-700 transition-colors z-20"
+          title="Download"
+        >
+          <HugeiconRenderer icon={Download01Icon} size={14} />
+          Download
+        </button>
       </div>
     </div>
   );

@@ -46,14 +46,8 @@ export const AssistantBubble = React.memo(
     onThumbsDown,
     onRegenerate,
   }: AssistantBubbleProps) => {
-    const [isReasoningOpen, setIsReasoningOpen] = useState(isStreaming);
+    const [isReasoningOpen, setIsReasoningOpen] = useState(false);
     const [copied, setCopied] = useState(false);
-
-    useEffect(() => {
-      if (!isStreaming && reasoning) {
-        setIsReasoningOpen(true);
-      }
-    }, [isStreaming, reasoning]);
 
     const handleCopy = () => {
       onCopy();
@@ -138,7 +132,7 @@ export const AssistantBubble = React.memo(
                 <div className="overflow-hidden">
                   <div
                     ref={scrollRef}
-                    className="h-[90px] overflow-y-auto no-scrollbar thinking-pad-mask relative flex flex-col gap-2 pt-1"
+                    className="overflow-y-auto no-scrollbar relative flex flex-col gap-2 pt-1"
                   >
                     {sentences.map((s, idx) => (
                       <div
@@ -171,16 +165,16 @@ export const AssistantBubble = React.memo(
               <MarkdownMessage content={content} />
             </div>
           )}
-        </div>
 
-        {artifactCards?.map((card) => (
-          <ArtifactPreviewCard
-            key={card.artifactId}
-            title={card.title}
-            type={card.type}
-            onClick={() => onArtifactClick?.(card.artifactId)}
-          />
-        ))}
+          {artifactCards?.map((card) => (
+            <ArtifactPreviewCard
+              key={card.artifactId}
+              title={card.title}
+              type={card.type}
+              onClick={() => onArtifactClick?.(card.artifactId)}
+            />
+          ))}
+        </div>
 
         {!isStreaming && !hasPendingTool && (
           <div className="flex items-center gap-3 text-gray-600 px-4">

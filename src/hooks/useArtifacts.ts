@@ -27,6 +27,13 @@ export function useArtifacts() {
         return prev;
       }
 
+      if (latestVersion && versions.length > 1) {
+        const prevVersion = versions[versions.length - 2];
+        if (prevVersion && prevVersion.content === content) {
+          return prev;
+        }
+      }
+
       const newVersion: Artifact = {
         id,
         type,

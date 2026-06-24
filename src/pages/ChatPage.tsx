@@ -131,11 +131,8 @@ const SCROLL_THRESHOLD = 150;
 
             if (toolName === 'create_artifact') {
               const args = toolInvocation.args || {};
-              const type = args.type || 'markdown';
-              const title = args.title || 'Untitled Artifact';
               const content = args.content || '';
               const path = args.path;
-              addOrUpdateArtifact(type, title, content);
 
               if (project && path) {
                 try {
@@ -413,7 +410,6 @@ const SCROLL_THRESHOLD = 150;
         if (!title) continue;
 
         const id = title.toLowerCase().replace(/\s+/g, '-');
-        const type = parsed.type || 'markdown';
         const content = parsed.content || '';
 
         setActiveArtifactId(id);
@@ -424,12 +420,7 @@ const SCROLL_THRESHOLD = 150;
           setIsArtifactOpen(true);
         }
 
-        const st = part.state;
-        if (st === 'input-streaming') {
-          updateArtifactContent(id, content);
-        } else if (st === 'input-available' || st === 'output-available') {
-          addOrUpdateArtifact(type, title, content);
-        }
+        updateArtifactContent(id, content);
         break;
       }
     }

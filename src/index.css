@@ -77,12 +77,16 @@ body {
 .cm-editor {
   font-size: 13px;
   line-height: 1.6;
+  background: #fafafa;
 }
 .cm-editor .cm-scroller {
   padding: 10px 0;
 }
 .cm-editor.cm-focused {
   outline: none;
+}
+.cm-editor .cm-gutters {
+  background: #fafafa;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -91,16 +95,6 @@ body {
     background: none;
     color: #a1a1aa;
   }
-}
-
-/*
- * Reversing the gradient mask so it fades the TOP of the container.
- * This ensures the most recent content (at the bottom) is fully opaque
- * during auto-scrolling streaming.
- */
-.thinking-pad-mask {
-  mask-image: linear-gradient(to top, black 0%, black 70%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to top, black 0%, black 70%, transparent 100%);
 }
 
 .thinking-pad-item-enter {

@@ -8,11 +8,15 @@ interface MarkdownMessageProps {
 }
 
 export function MarkdownMessage({ content }: MarkdownMessageProps) {
+  const sanitized = content.replace(/<br\s*\/?>/gi, '\n');
   return (
     <div className="text-[15px] leading-relaxed break-words text-neutral-900">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          pre({ children }) {
+            return <div className="w-full">{children}</div>;
+          },
           code({ inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
@@ -106,7 +110,7 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
           },
         }}
       >
-        {content}
+        {sanitized}
       </ReactMarkdown>
     </div>
   );

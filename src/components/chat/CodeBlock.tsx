@@ -56,7 +56,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ content, language }) => {
   };
 
   return (
-    <div className="relative group rounded-[12px] overflow-hidden my-4 bg-neutral-50 border border-neutral-200">
+    <div className="relative w-full rounded-[6px] overflow-hidden my-4 bg-neutral-50 border border-neutral-200">
       {language && (
         <div className="px-4 py-1.5 text-[11px] uppercase tracking-wide text-neutral-500 bg-neutral-50 border-b border-neutral-200">
           {language}
