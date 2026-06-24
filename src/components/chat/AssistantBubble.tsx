@@ -131,64 +131,60 @@ export const AssistantBubble = React.memo(
           )}
 
           {showThought && (
-            <div className="flex gap-3">
-              <div className="flex flex-col items-center shrink-0">
-                <div className="flex items-center justify-center w-5 h-5">
-                  <HugeiconsIcon icon={Clock01Icon} size={14} className="text-neutral-400" />
+            <div className="flex flex-col gap-2">
+              <ThoughtLabel
+                isActivelyThinking={showThinking}
+                isOpen={isReasoningOpen}
+                onClick={() => setIsReasoningOpen(!isReasoningOpen)}
+              />
+
+              <div className="flex gap-3">
+                <div className="flex flex-col items-center shrink-0">
+                  <div className="flex items-center justify-center w-5 h-5">
+                    <HugeiconsIcon icon={Clock01Icon} size={14} className="text-neutral-400" />
+                  </div>
+                  <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />
                 </div>
-                <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />
-              </div>
 
-              <div className="flex flex-col gap-2 flex-1 min-w-0">
-                <ThoughtLabel
-                  isActivelyThinking={showThinking}
-                  isOpen={isReasoningOpen}
-                  onClick={() => setIsReasoningOpen(!isReasoningOpen)}
-                />
-
-                <div
-                  className={`grid ${isReasoningOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-                >
-                  <div className="overflow-hidden">
-                    <div
-                      ref={scrollRef}
-                      className="overflow-y-auto no-scrollbar flex flex-col gap-2 pt-1"
-                    >
-                      {sentences.map((s, idx) => (
-                        <div
-                          key={idx}
-                          className="text-[15px] leading-relaxed text-neutral-500"
-                        >
-                          {s}
-                        </div>
-                      ))}
+                <div className="flex flex-col gap-2 flex-1 min-w-0">
+                  <div
+                    className={`grid ${isReasoningOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                  >
+                    <div className="overflow-hidden">
+                      <div
+                        ref={scrollRef}
+                        className="overflow-y-auto no-scrollbar flex flex-col gap-2 pt-1"
+                      >
+                        {sentences.map((s, idx) => (
+                          <div
+                            key={idx}
+                            className="text-[15px] leading-relaxed text-neutral-500"
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
+
+                  {toolInvocations && toolInvocations.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pb-4">
+                      {toolInvocations.map((ti, idx) => (
+                        <ToolCallPill
+                          key={ti.toolCallId || idx}
+                          toolName={ti.toolName}
+                          state={ti.state}
+                          args={ti.args}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-
-                {toolInvocations && toolInvocations.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {toolInvocations.map((ti, idx) => (
-                      <ToolCallPill
-                        key={ti.toolCallId || idx}
-                        toolName={ti.toolName}
-                        state={ti.state}
-                        args={ti.args}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {content && (
-                  <div className="font-normal text-neutral-900 pb-4">
-                    <MarkdownMessage content={content} />
-                  </div>
-                )}
               </div>
             </div>
           )}
 
-          {!showThought && content && (
+          {content && (
             <div className="font-normal text-neutral-900">
               <MarkdownMessage content={content} />
             </div>
