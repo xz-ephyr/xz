@@ -14,6 +14,33 @@ export function hasPartialArtifact(content: string): boolean {
   return /<antArtifact\b/i.test(content);
 }
 
+export function extractThinkTags(content: string): { cleanContent: string; thinking: string } {
+  let cleanContent = content;
+  const thinkingParts: string[] = [];
+
+  const fullRegex = /<think>([\s\S]*?)<\/think>/gi;
+  let match: RegExpExecArray | null;
+  const regex = new RegExp(fullRegex.source, 'gi');
+  while ((match = regex.exec(content)) !== null) {
+    thinkingParts.push(match[1].trim());
+    cleanContent = cleanContent.replace(match[0], '');
+  }
+
+  if (!content.includes('</think>')) {
+    const incompleteRegex = /<think>([\s\S]*?)$/i;
+    const incompleteMatch = incompleteRegex.exec(cleanContent);
+    if (incompleteMatch) {
+      thinkingParts.push(incompleteMatch[1].trim());
+      cleanContent = cleanContent.replace(incompleteMatch[0], '');
+    }
+  }
+
+  return {
+    cleanContent: cleanContent.trim(),
+    thinking: thinkingParts.join('\n'),
+  };
+}
+
 export const mapUIMessageToLegacyMessage = (m: any): any => {
   if (!m) return m;
 
@@ -46,6 +73,13 @@ export const mapUIMessageToLegacyMessage = (m: any): any => {
     if (idx !== -1) {
       content = (content.slice(0, idx) + content.slice(idx + reasoning.length)).trim();
     }
+  }
+
+  // Extract <think> tags from content (for models like Qwen that output thinking as plain text)
+  const { cleanContent: thinkStripped, thinking } = extractThinkTags(content);
+  content = thinkStripped;
+  if (thinking) {
+    reasoning = reasoning ? `${reasoning}\n\n${thinking}` : thinking;
   }
 
   // Extract toolInvocations from parts
