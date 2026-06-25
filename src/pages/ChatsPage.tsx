@@ -15,6 +15,7 @@ import { ChatSessionManager } from '../services/ChatSessionManager';
 import { cn } from '../lib/utils';
 import { useToast } from '../components/ui/Toast';
 import { HugeiconRenderer } from '../components/ui/HugeiconRenderer';
+import { useSessionTitle } from '../hooks/useSessionTitle';
 
 const ChatListItem = ({
   chat,
@@ -164,6 +165,7 @@ export const ChatsPage = () => {
   const [sessionType, setSessionType] = useState<'normal' | 'project'>('normal');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const { setUserEdited } = useSessionTitle();
 
   const refreshChats = async () => {
     const allChats = await ChatSessionManager.getAll(sessionType === 'normal' ? null : undefined);
@@ -215,6 +217,7 @@ export const ChatsPage = () => {
 
   const handleRename = async (id: string, newTitle: string) => {
     await ChatSessionManager.rename(id, newTitle);
+    setUserEdited(true);
     refreshChats();
   };
 

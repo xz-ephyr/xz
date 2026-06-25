@@ -3,7 +3,7 @@ import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createCerebras } from '@ai-sdk/cerebras';
-import { streamText, stepCountIs, convertToModelMessages } from 'ai';
+import { streamText, generateText, stepCountIs, convertToModelMessages } from 'ai';
 import type { OpenAIProvider } from '@ai-sdk/openai';
 import { SYSTEM_PROMPT } from './ai/config';
 import { API_KEYS, getModelDefinition, getUsedModels, markModelUsed, AI_MODELS, type Provider } from '../config/models';
@@ -210,4 +210,25 @@ export async function chatCompletion({
   throw new Error(
     `All AI models failed. Tried: ${uniqueChain.join(', ')}.\nErrors:\n${errors.join('\n')}\n\nCheck your API keys in Settings.`
   );
+}
+
+// ── Session title generation ─────────────────────────────────────────
+
+const TITLE_MODEL = 'gemini-3.5-flash';
+
+export async function generateSessionTitle(userMessage: string): Promise<string> {
+  const providers = getProviders();
+  const model = providers.google(TITLE_MODEL);
+  try {
+    const { text } = await generateText({
+      model,
+      system: 'You are a title generator. Respond with ONLY a short title (3–6 words, no quotes, no punctuation at the end) that summarises the user\'s intent or question.',
+      messages: [{ role: 'user', content: userMessage }],
+      maxRetries: 1,
+    });
+    const cleaned = text.replace(/["'']/g, '').trim();
+    return cleaned.length > 60 ? cleaned.slice(0, 60) : cleaned || 'New conversation';
+  } catch {
+    return 'New conversation';
+  }
 }

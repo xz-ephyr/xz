@@ -13,6 +13,8 @@ import { useToast } from '../components/ui/Toast';
 import { mapUIMessageToLegacyMessage } from '../lib/chatUtils';
 import { HugeiconRenderer } from '../components/ui/HugeiconRenderer';
 import { ArrowDown02Icon } from '@hugeicons/core-free-icons';
+import { ArtifactPanel } from '../components/artifact/ArtifactPanel';
+import { useArtifacts } from '../hooks/useArtifacts';
 
 export const ChatPage = () => {
   const { uuid } = useParams();
@@ -22,8 +24,18 @@ export const ChatPage = () => {
   const isThinkingEnabledRef = useRef(false);
   const currentModelRef = useRef<string | null>(null);
   const { addToast } = useToast();
+  const { setTitle: setSessionTitle, setSessionId, setUserEdited } = useSessionTitle();
 
   const toggleThinking = () => setIsThinkingEnabled((prev) => !prev);
+
+  const {
+    artifacts,
+    activeArtifactId,
+    isPanelOpen,
+    addArtifacts,
+    selectArtifact,
+    closePanel,
+  } = useArtifacts();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -48,13 +60,21 @@ export const ChatPage = () => {
   const handleChatFinish = useCallback(
     async (event: any) => {
       const message = mapUIMessageToLegacyMessage(event.message);
+      if (message.artifacts?.length > 0) {
+        const autoArtifacts = localStorage.getItem('auto_artifacts') !== 'false';
+        if (autoArtifacts) {
+          addArtifacts(message.artifacts);
+        }
+      }
       if (uuid && uuid !== 'new') {
-        DatabaseService.saveMessages(uuid, [message]).catch((e) =>
+        const msgToSave = { ...message };
+        delete msgToSave.artifacts;
+        DatabaseService.saveMessages(uuid, [msgToSave]).catch((e) =>
           console.error('Failed to save assistant message to DB:', e)
         );
       }
     },
-    [uuid]
+    [uuid, addArtifacts]
   );
 
   const [modelRevision, setModelRevision] = useState(0);
@@ -128,13 +148,24 @@ export const ChatPage = () => {
         if (!sessionStorage.getItem('pending-first-message') && uuid !== 'new') {
           const storedMessages = await DatabaseService.getMessages(uuid);
           setMessages(storedMessages.map(mapUIMessageToLegacyMessage));
+          const session = await ChatSessionManager.getSession(uuid);
+          if (session) {
+            setSessionId(uuid);
+            setSessionTitle(session.title);
+            setUserEdited(false);
+          }
         } else if (uuid === 'new') {
+          setSessionId('new');
+          setSessionTitle('New conversation');
+          setUserEdited(false);
           setMessages([]);
         }
       };
       loadSession();
+    } else {
+      setSessionId(null);
     }
-  }, [uuid, setMessages]);
+  }, [uuid, setMessages, setSessionId, setSessionTitle, setUserEdited]);
 
   useEffect(() => {
     isThinkingEnabledRef.current = isThinkingEnabled;
@@ -145,6 +176,16 @@ export const ChatPage = () => {
   }, [currentModel]);
 
   const messages = rawMessages.map(mapUIMessageToLegacyMessage);
+
+  useEffect(() => {
+    const latestMsg = messages[messages.length - 1];
+    if (latestMsg?.artifacts?.length > 0) {
+      const autoArtifacts = localStorage.getItem('auto_artifacts') !== 'false';
+      if (autoArtifacts) {
+        addArtifacts(latestMsg.artifacts);
+      }
+    }
+  }, [messages, addArtifacts]);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -166,9 +207,15 @@ export const ChatPage = () => {
   const handleSend = useCallback(
     async (content: string) => {
       if (uuid === 'new') {
-        const snippet = content.trim().slice(0, 60);
-        const title = snippet.length > 0 ? snippet : 'New conversation';
-        const session = await ChatSessionManager.create(title);
+        const session = await ChatSessionManager.create('New conversation');
+        setSessionId(session.id);
+        setUserEdited(false);
+        generateSessionTitle(content).then(async (generatedTitle) => {
+          if (generatedTitle && generatedTitle !== 'New conversation') {
+            await ChatSessionManager.rename(session.id, generatedTitle);
+            setSessionTitle(generatedTitle);
+          }
+        }).catch(() => {});
         sessionStorage.setItem('pending-first-message', content);
         navigate(`/thread/${session.id}`);
         return;
@@ -215,7 +262,7 @@ export const ChatPage = () => {
         <div className="absolute top-0 left-0 right-0 z-10 h-[37px] border-b border-neutral-100 bg-white" />
       )}
       <div className="flex flex-1 min-h-0 pt-[37px]">
-        <div className="flex flex-col flex-1 min-w-0 bg-white transition-all duration-300 relative">
+        <div className={`flex flex-col min-w-0 bg-white transition-all duration-300 relative ${isPanelOpen ? 'w-[calc(100%-460px)]' : 'flex-1'}`}>
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
@@ -292,6 +339,24 @@ export const ChatPage = () => {
             </div>
           )}
         </div>
+
+        {isPanelOpen && artifacts.length > 0 && (
+          <div className="w-[460px] shrink-0 border-l border-neutral-200 overflow-hidden">
+            <ArtifactPanel
+              artifacts={artifacts}
+              activeArtifactId={activeArtifactId}
+              onSelectArtifact={selectArtifact}
+              onClose={closePanel}
+              onRegenerate={(prompt) => {
+                const chatInput = document.querySelector('textarea');
+                if (chatInput) {
+                  chatInput.value = prompt;
+                  chatInput.focus();
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

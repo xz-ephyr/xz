@@ -17,6 +17,10 @@ export const ChatSessionManager = {
     return DatabaseService.createSession(title, lastMessage, projectId) as unknown as Promise<ChatSession>;
   },
 
+  getSession: async (id: string): Promise<ChatSession | null> => {
+    return DatabaseService.getSession(id) as unknown as Promise<ChatSession | null>;
+  },
+
   delete: async (id: string) => {
     await DatabaseService.deleteSession(id);
   },

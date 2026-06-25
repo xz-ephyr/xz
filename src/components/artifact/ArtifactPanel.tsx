@@ -1,0 +1,179 @@
+import { useState, useCallback, useMemo } from 'react';
+import type { Artifact } from '../../types/artifact';
+import { ARTIFACT_TYPE_LABELS } from '../../types/artifact';
+import { ArtifactTabs } from './ArtifactTabs';
+import { CodePreview } from './CodePreview';
+import { MarkdownPreview } from './MarkdownPreview';
+import { MermaidPreview } from './MermaidPreview';
+import { SvgPreview } from './SvgPreview';
+import { HtmlPreview } from './HtmlPreview';
+import { ReactPreview } from './ReactPreview';
+import { CloseIcon } from './icons';
+
+interface ArtifactPanelProps {
+  artifacts: Artifact[];
+  activeArtifactId: string | null;
+  onSelectArtifact: (id: string) => void;
+  onClose: () => void;
+  onRegenerate: (prompt: string) => void;
+}
+
+type TabId = 'preview' | 'code' | 'split';
+
+export function ArtifactPanel({
+  artifacts,
+  activeArtifactId,
+  onSelectArtifact,
+  onClose,
+  onRegenerate,
+}: ArtifactPanelProps) {
+  const [activeTab, setActiveTab] = useState<TabId>('preview');
+
+  const activeArtifact = useMemo(() => {
+    if (activeArtifactId) {
+      return artifacts.find((a) => a.identifier === activeArtifactId) || artifacts[0];
+    }
+    return artifacts[0];
+  }, [artifacts, activeArtifactId]);
+
+  const currentIndex = useMemo(() => {
+    return artifacts.findIndex((a) => a.identifier === activeArtifact?.identifier);
+  }, [artifacts, activeArtifact]);
+
+  const handlePrevious = useCallback(() => {
+    if (currentIndex > 0) {
+      const prev = artifacts[currentIndex - 1];
+      onSelectArtifact(prev.identifier);
+    }
+  }, [currentIndex, artifacts, onSelectArtifact]);
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < artifacts.length - 1) {
+      const next = artifacts[currentIndex + 1];
+      onSelectArtifact(next.identifier);
+    }
+  }, [currentIndex, artifacts, onSelectArtifact]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  if (!activeArtifact) return null;
+
+  const renderPreview = () => {
+    switch (activeArtifact.type) {
+      case 'code':
+        return <CodePreview content={activeArtifact.content} language={activeArtifact.language} />;
+      case 'markdown':
+        return <MarkdownPreview content={activeArtifact.content} />;
+      case 'mermaid':
+        return <MermaidPreview content={activeArtifact.content} onError={(err) => onRegenerate?.(`Fix this mermaid diagram: ${err}`)} />;
+      case 'svg':
+        return <SvgPreview content={activeArtifact.content} />;
+      case 'html':
+        return <HtmlPreview content={activeArtifact.content} />;
+      case 'react':
+        return <ReactPreview content={activeArtifact.content} onError={(err) => onRegenerate?.(`Fix this React component: ${err}`)} />;
+      default:
+        return <CodePreview content={activeArtifact.content} language={activeArtifact.language} />;
+    }
+  };
+
+  return (
+    <div
+      className="flex flex-col h-full bg-white border-l border-neutral-200"
+      style={{ width: '100%', minWidth: 0 }}
+      onKeyDown={handleKeyDown}
+      tabIndex={-1}
+    >
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-200 shrink-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider shrink-0">
+            {ARTIFACT_TYPE_LABELS[activeArtifact.type]}
+          </span>
+          <span className="text-sm font-medium text-neutral-800 truncate">
+            {activeArtifact.title}
+          </span>
+          {artifacts.length > 1 && (
+            <span className="text-xs text-neutral-400 shrink-0">
+              {currentIndex + 1}/{artifacts.length}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {artifacts.length > 1 && (
+            <div className="flex items-center gap-1 mr-2">
+              <button
+                onClick={handlePrevious}
+                disabled={currentIndex <= 0}
+                className="p-1 rounded-md hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed text-neutral-500"
+                title="Previous artifact"
+              >
+                <ChevronLeftIcon />
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={currentIndex >= artifacts.length - 1}
+                className="p-1 rounded-md hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed text-neutral-500"
+                title="Next artifact"
+              >
+                <ChevronRightIcon />
+              </button>
+            </div>
+          )}
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors"
+            title="Close artifact panel (Esc)"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      </div>
+
+      <ArtifactTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+      <div className="flex-1 overflow-hidden">
+        {activeTab === 'preview' && (
+          <div className="h-full overflow-auto">{renderPreview()}</div>
+        )}
+        {activeTab === 'code' && (
+          <div className="h-full overflow-auto">
+            <CodePreview content={activeArtifact.content} language={activeArtifact.language} />
+          </div>
+        )}
+        {activeTab === 'split' && (
+          <div className="flex h-full">
+            <div className="flex-1 overflow-auto border-r border-neutral-200">
+              {renderPreview()}
+            </div>
+            <div className="flex-1 overflow-auto">
+              <CodePreview content={activeArtifact.content} language={activeArtifact.language} />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

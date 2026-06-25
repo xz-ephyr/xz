@@ -1,3 +1,5 @@
+import { parseArtifacts } from './artifactParser';
+
 export const mapUIMessageToLegacyMessage = (m: any): any => {
   if (!m) return m;
 
@@ -50,10 +52,14 @@ export const mapUIMessageToLegacyMessage = (m: any): any => {
       });
   }
 
+  // Extract artifacts from content
+  const { artifacts, cleanText } = parseArtifacts(content);
+
   return {
     ...m,
-    content,
+    content: cleanText || content,
     reasoning,
     toolInvocations,
+    artifacts,
   };
 };
