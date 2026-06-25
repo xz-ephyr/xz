@@ -347,7 +347,7 @@ export const ChatPage = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#111110] relative">
-      <TitleBar />
+      {uuid !== 'new' && <TitleBar />}
       <div className="flex flex-1 min-h-0">
         <div
           className={`flex flex-col min-w-0 bg-white dark:bg-[#111110] transition-all duration-300 relative ${
