@@ -1,5 +1,19 @@
 import { parseArtifacts } from './artifactParser';
 
+const artifactMetadataRegex = /^\s*\*\s*(?:Type|Identifier|Title):\s*`[^`]+`\s*$/gim;
+
+export function cleanReasoning(reasoning: string): string {
+  return reasoning
+    .split('\n')
+    .filter((line) => !artifactMetadataRegex.test(line))
+    .join('\n')
+    .trim();
+}
+
+export function hasPartialArtifact(content: string): boolean {
+  return /<antArtifact\b/i.test(content);
+}
+
 export const mapUIMessageToLegacyMessage = (m: any): any => {
   if (!m) return m;
 
@@ -19,6 +33,11 @@ export const mapUIMessageToLegacyMessage = (m: any): any => {
       .filter((part: any) => part.type === 'reasoning')
       .map((part: any) => part.reasoning || (part as any).text || '')
       .join('');
+  }
+
+  // Strip artifact metadata from reasoning
+  if (reasoning) {
+    reasoning = cleanReasoning(reasoning);
   }
 
   // Strip reasoning text that leaks into content from thinking models
@@ -61,5 +80,6 @@ export const mapUIMessageToLegacyMessage = (m: any): any => {
     reasoning,
     toolInvocations,
     artifacts,
+    hasPartialArtifact: hasPartialArtifact(content),
   };
 };

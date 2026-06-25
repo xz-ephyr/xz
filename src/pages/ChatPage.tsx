@@ -19,21 +19,6 @@ import { useSessionTitle } from '../hooks/useSessionTitle';
 import TitleBar from '../components/layout/TitleBar';
 
 const MOBILE_BREAKPOINT = 768;
-const STORAGE_KEY = 'xz_artifact_panel_width';
-const DEFAULT_PANEL_WIDTH = 460;
-const MIN_PANEL_WIDTH = 300;
-const MAX_PANEL_WIDTH = 800;
-
-function getInitialPanelWidth(): number {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const w = parseInt(stored, 10);
-      if (!isNaN(w) && w >= MIN_PANEL_WIDTH && w <= MAX_PANEL_WIDTH) return w;
-    }
-  } catch { /* invalid stored value */ }
-  return DEFAULT_PANEL_WIDTH;
-}
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
@@ -58,11 +43,6 @@ export const ChatPage = () => {
   const isMobile = useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 
   const toggleThinking = () => setIsThinkingEnabled((prev) => !prev);
-
-  const [panelWidth, setPanelWidth] = useState(getInitialPanelWidth);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const startWidth = useRef(0);
 
   const {
     artifacts,
@@ -312,42 +292,9 @@ export const ChatPage = () => {
     }
   }, []);
 
-  const handleResizeStart = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      isDragging.current = true;
-      startX.current = e.clientX;
-      startWidth.current = panelWidth;
-
-      const handleMouseMove = (ev: MouseEvent) => {
-        if (!isDragging.current) return;
-        const delta = startX.current - ev.clientX;
-        const newWidth = Math.max(MIN_PANEL_WIDTH, Math.min(MAX_PANEL_WIDTH, startWidth.current + delta));
-        setPanelWidth(newWidth);
-      };
-
-      const handleMouseUp = () => {
-        isDragging.current = false;
-        localStorage.setItem(STORAGE_KEY, String(panelWidth));
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-      };
-
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    },
-    [panelWidth]
-  );
-
-  const currentPanelWidth = isMobile ? '100%' : panelWidth;
-
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#111110] relative">
-      {uuid !== 'new' && <TitleBar />}
+      {uuid !== 'new' && messages.length > 0 && <TitleBar />}
       <div className="flex flex-1 min-h-0">
         <div
           className={`flex flex-col min-w-0 bg-white dark:bg-[#111110] transition-all duration-300 relative ${
@@ -378,6 +325,8 @@ export const ChatPage = () => {
                       }
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
+                      artifacts={m.artifacts}
+                      hasPartialArtifact={m.hasPartialArtifact}
                       onCopy={() => navigator.clipboard.writeText(m.content)}
                       onThumbsUp={() => console.log('Thumbs up')}
                       onThumbsDown={() => console.log('Thumbs down')}
@@ -436,36 +385,25 @@ export const ChatPage = () => {
         </div>
 
         {isPanelOpen && artifacts.length > 0 && (
-          <>
-            {!isMobile && (
-              <div
-                className="w-[5px] shrink-0 cursor-col-resize hover:bg-neutral-300 dark:hover:bg-neutral-600 active:bg-neutral-400 dark:active:bg-neutral-500 transition-colors bg-transparent"
-                onMouseDown={handleResizeStart}
-              />
+          <div className="flex-1 border-l border-neutral-200 dark:border-neutral-700 overflow-hidden min-w-0">
+            {isMobile && (
+              <div className="absolute inset-0 z-50 bg-black/30" onClick={closePanel} />
             )}
-            <div
-              className="shrink-0 border-l border-neutral-200 dark:border-neutral-700 overflow-hidden"
-              style={{ width: currentPanelWidth }}
-            >
-              {isMobile && (
-                <div className="absolute inset-0 z-50 bg-black/30" onClick={closePanel} />
-              )}
-              <ArtifactPanel
-                artifacts={artifacts}
-                activeArtifactId={activeArtifactId}
-                onSelectArtifact={selectArtifact}
-                onClose={closePanel}
-                onRegenerate={(prompt) => {
-                  const chatInput = document.querySelector('textarea');
-                  if (chatInput) {
-                    chatInput.value = prompt;
-                    chatInput.focus();
-                  }
-                }}
-                onRollback={rollbackArtifact}
-              />
-            </div>
-          </>
+            <ArtifactPanel
+              artifacts={artifacts}
+              activeArtifactId={activeArtifactId}
+              onSelectArtifact={selectArtifact}
+              onClose={closePanel}
+              onRegenerate={(prompt) => {
+                const chatInput = document.querySelector('textarea');
+                if (chatInput) {
+                  chatInput.value = prompt;
+                  chatInput.focus();
+                }
+              }}
+              onRollback={rollbackArtifact}
+            />
+          </div>
         )}
       </div>
     </div>
