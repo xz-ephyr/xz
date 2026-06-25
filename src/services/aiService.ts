@@ -214,12 +214,10 @@ export async function chatCompletion({
 
 // ── Session title generation ─────────────────────────────────────────
 
-const TITLE_MODEL = 'gemini-3.5-flash';
-
 export async function generateSessionTitle(userMessage: string): Promise<string> {
   const providers = getProviders();
-  const model = providers.google(TITLE_MODEL);
   try {
+    const model = providers.groq('llama-3.1-8b-instant');
     const { text } = await generateText({
       model,
       system: 'You are a title generator. Respond with ONLY a short title (3–6 words, no quotes, no punctuation at the end) that summarises the user\'s intent or question.',

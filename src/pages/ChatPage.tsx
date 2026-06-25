@@ -16,6 +16,7 @@ import { ArrowDown02Icon } from '@hugeicons/core-free-icons';
 import { ArtifactPanel } from '../components/artifact/ArtifactPanel';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { useSessionTitle } from '../hooks/useSessionTitle';
+import TitleBar from '../components/layout/TitleBar';
 
 const MOBILE_BREAKPOINT = 768;
 const STORAGE_KEY = 'xz_artifact_panel_width';
@@ -53,7 +54,7 @@ export const ChatPage = () => {
   const isThinkingEnabledRef = useRef(false);
   const currentModelRef = useRef<string | null>(null);
   const { addToast } = useToast();
-  const { setTitle: setSessionTitle, setSessionId, setUserEdited } = useSessionTitle();
+  const { setTitle: setSessionTitle, setSessionId, setIsTitleGenerating } = useSessionTitle();
   const isMobile = useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 
   const toggleThinking = () => setIsThinkingEnabled((prev) => !prev);
@@ -191,12 +192,10 @@ export const ChatPage = () => {
           if (session) {
             setSessionId(uuid);
             setSessionTitle(session.title);
-            setUserEdited(false);
           }
         } else if (uuid === 'new') {
           setSessionId('new');
           setSessionTitle('New conversation');
-          setUserEdited(false);
           setMessages([]);
         }
       };
@@ -204,7 +203,7 @@ export const ChatPage = () => {
     } else {
       setSessionId(null);
     }
-  }, [uuid, setMessages, setSessionId, setSessionTitle, setUserEdited]);
+  }, [uuid, setMessages, setSessionId, setSessionTitle]);
 
   useEffect(() => {
     isThinkingEnabledRef.current = isThinkingEnabled;
@@ -243,18 +242,13 @@ export const ChatPage = () => {
     return () => window.removeEventListener('reset-chat', handleResetChat);
   }, [setMessages]);
 
+  const titleGeneratedRef = useRef(false);
+
   const handleSend = useCallback(
     async (content: string) => {
       if (uuid === 'new') {
         const session = await ChatSessionManager.create('New conversation');
         setSessionId(session.id);
-        setUserEdited(false);
-        generateSessionTitle(content).then(async (generatedTitle) => {
-          if (generatedTitle && generatedTitle !== 'New conversation') {
-            await ChatSessionManager.rename(session.id, generatedTitle);
-            setSessionTitle(generatedTitle);
-          }
-        }).catch(() => {});
         sessionStorage.setItem('pending-first-message', content);
         navigate(`/thread/${session.id}`);
         return;
@@ -274,8 +268,31 @@ export const ChatPage = () => {
       }
 
       sendMessage({ text: content });
+
+      // Generate AI title if still placeholder and not already generating
+      if (!titleGeneratedRef.current && uuid && uuid !== 'new') {
+        const session = await ChatSessionManager.getSession(uuid).catch(() => null);
+        const sessionTitle = session?.title || '';
+        if (sessionTitle === 'New conversation' || sessionTitle === '') {
+          setIsTitleGenerating(true);
+          generateSessionTitle(content).then(async (generatedTitle) => {
+            if (generatedTitle && generatedTitle !== 'New conversation') {
+              await ChatSessionManager.rename(uuid, generatedTitle);
+              setSessionTitle(generatedTitle);
+            }
+            setIsTitleGenerating(false);
+            titleGeneratedRef.current = true;
+          }).catch(() => {
+            setIsTitleGenerating(false);
+            titleGeneratedRef.current = true;
+          });
+        } else {
+          setSessionTitle(sessionTitle);
+          titleGeneratedRef.current = true;
+        }
+      }
     },
-    [uuid, sendMessage, navigate, setSessionId, setSessionTitle, setUserEdited]
+    [uuid, sendMessage, navigate, setSessionId, setSessionTitle, setIsTitleGenerating]
   );
 
   useEffect(() => {
@@ -330,6 +347,7 @@ export const ChatPage = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#111110] relative">
+      <TitleBar />
       <div className="flex flex-1 min-h-0">
         <div
           className={`flex flex-col min-w-0 bg-white dark:bg-[#111110] transition-all duration-300 relative ${
