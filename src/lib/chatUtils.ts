@@ -1,3 +1,4 @@
+import type { Artifact } from '../types/artifact';
 import { parseArtifacts } from './artifactParser';
 
 const artifactMetadataRegex = /^\s*\*\s*(?:Type|Identifier|Title):\s*`[^`]+`\s*$/gim;
@@ -106,21 +107,32 @@ export const mapUIMessageToLegacyMessage = (m: any): any => {
       });
   }
 
-  // Extract artifacts from content
-  const { artifacts: parsedArtifacts, cleanText } = parseArtifacts(content);
+  // Extract artifacts — only from writeArtifact tool (first call only) OR antArtifact fallback, never both
+  const writeArtifactCalls = (toolInvocations || [])
+    .filter((ti: any) => ti.toolName === 'writeArtifact' && ti.args?.identifier && ti.args?.content);
 
-  // Extract artifacts from writeArtifact tool calls
-  const toolArtifacts = (toolInvocations || [])
-    .filter((ti: any) => ti.toolName === 'writeArtifact' && ti.args?.identifier && ti.args?.content)
-    .map((ti: any) => ({
-      identifier: ti.args.identifier,
-      type: ti.args.type || 'code',
-      title: ti.args.title || ti.args.identifier,
-      language: ti.args.language,
-      content: ti.args.content,
+  let parsedArtifacts: Artifact[] = [];
+  let cleanText = content;
+  let toolArtifacts: any[] = [];
+
+  if (writeArtifactCalls.length > 0) {
+    // Tool was used — take only the first call, skip antArtifact parsing to prevent duplicates
+    const call = writeArtifactCalls[0];
+    toolArtifacts = [{
+      identifier: call.args.identifier,
+      type: call.args.type || 'code',
+      title: call.args.title || call.args.identifier,
+      language: call.args.language,
+      content: call.args.content,
       version: 0,
       createdAt: Date.now(),
-    }));
+    }];
+  } else {
+    // No tool call — fall back to parsing antArtifact tags from content
+    const parsed = parseArtifacts(content);
+    parsedArtifacts = parsed.artifacts;
+    cleanText = parsed.cleanText;
+  }
 
   const allArtifacts = [...parsedArtifacts, ...toolArtifacts];
 

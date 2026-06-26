@@ -7,11 +7,13 @@ interface WritingToolShimmerProps {
   done?: boolean;
 }
 
-export const WritingToolShimmer = React.memo(({ title }: WritingToolShimmerProps) => {
+export const WritingToolShimmer = React.memo(({ title, done = false }: WritingToolShimmerProps) => {
   return (
-    <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-neutral-50 dark:bg-neutral-800 rounded-[6px] text-xs font-medium border border-neutral-200 dark:border-neutral-700 min-w-0 text-neutral-500 dark:text-neutral-400">
-      <HugeiconsIcon icon={PencilEdit02Icon} size={14} className="shrink-0" />
-      <span className="truncate">Writing: {title}</span>
+    <div className="inline-flex items-center gap-1.5 text-xs font-medium min-w-0">
+      <HugeiconsIcon icon={PencilEdit02Icon} size={14} className="text-neutral-400 dark:text-neutral-500 shrink-0" />
+      <span className={`${done ? 'text-neutral-500 dark:text-neutral-400' : 'thinking-shimmer-text'} truncate`}>
+        {done ? 'Wrote' : 'Writing'}: {title}
+      </span>
     </div>
   );
 });
