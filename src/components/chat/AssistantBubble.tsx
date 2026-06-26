@@ -52,6 +52,8 @@ export const AssistantBubble = React.memo(
     };
 
     const hasPendingTool = toolInvocations?.some((ti) => ti.state !== 'result');
+    const hasWriteArtifact = toolInvocations?.some((ti) => ti.toolName === 'writeArtifact');
+    const hasOtherPendingTool = toolInvocations?.some((ti) => ti.toolName !== 'writeArtifact' && ti.state !== 'result');
     const showThinking = isStreaming && !content;
 
     const pendingTools = toolInvocations?.filter((ti) => ti.state !== 'result') || [];
@@ -80,17 +82,9 @@ export const AssistantBubble = React.memo(
   return (
     <div className="mb-6 w-full group/bubble">
       <div className="text-base px-4 py-4 break-words flex flex-col gap-2">
-        {hasPendingTool && (
+        {hasOtherPendingTool && (
           <div className="flex items-center gap-2 text-neutral-500">
-            {pendingTools.map((ti) => {
-              if (ti.toolName === 'writeArtifact') {
-                return (
-                  <WritingToolShimmer
-                    key={ti.toolCallId}
-                    title={ti.args?.title || ti.args?.identifier || ''}
-                  />
-                );
-              }
+            {pendingTools.filter((ti) => ti.toolName !== 'writeArtifact').map((ti) => {
               const fileName = ti.args?.file_path || ti.args?.path || ti.args?.title || ti.args?.filename || '';
               return (
                 <div key={ti.toolCallId} className="flex items-center gap-1.5 px-2 py-1 bg-neutral-50 rounded-[6px] text-xs font-medium text-neutral-500 border border-neutral-200">
@@ -104,7 +98,7 @@ export const AssistantBubble = React.memo(
           </div>
         )}
 
-        {isStreaming && !reasoning && !hasPendingTool && !content && (
+        {isStreaming && !reasoning && !hasPendingTool && !hasWriteArtifact && !content && (
           <div className="flex items-center gap-2 text-neutral-400">
             <span className="text-sm">Thinking...</span>
           </div>
@@ -158,6 +152,18 @@ export const AssistantBubble = React.memo(
             <MarkdownMessage content={content} />
           </div>
         )}
+
+        {hasWriteArtifact && (
+          <div className="flex items-center gap-2 text-neutral-500">
+            {toolInvocations?.filter((ti) => ti.toolName === 'writeArtifact').map((ti) => (
+              <WritingToolShimmer
+                key={ti.toolCallId}
+                title={ti.args?.title || ti.args?.identifier || ''}
+                done={ti.state === 'result'}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
         {artifacts && artifacts.length > 0 && !isStreaming && onOpenArtifact && (
@@ -169,7 +175,7 @@ export const AssistantBubble = React.memo(
           </div>
         )}
 
-        {!isStreaming && !hasPendingTool && (
+        {!isStreaming && !hasOtherPendingTool && (
           <div className="flex items-center gap-3 text-gray-600 px-4">
             <button
               type="button"
