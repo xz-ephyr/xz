@@ -52,6 +52,7 @@ export const ChatPage = () => {
     rollbackArtifact,
     selectArtifact,
     closePanel,
+    openPanel,
   } = useArtifacts();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -292,6 +293,14 @@ export const ChatPage = () => {
     }
   }, []);
 
+  const handleOpenArtifact = useCallback(
+    (artifactId: string) => {
+      selectArtifact(artifactId);
+      openPanel();
+    },
+    [selectArtifact, openPanel]
+  );
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#111110] relative">
       {uuid !== 'new' && messages.length > 0 && <TitleBar />}
@@ -326,7 +335,11 @@ export const ChatPage = () => {
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
                       artifacts={m.artifacts}
-                      hasPartialArtifact={m.hasPartialArtifact}
+                      onOpenArtifact={
+                        m.artifacts?.length > 0
+                          ? () => handleOpenArtifact(m.artifacts[0].identifier)
+                          : undefined
+                      }
                       onCopy={() => navigator.clipboard.writeText(m.content)}
                       onThumbsUp={() => console.log('Thumbs up')}
                       onThumbsDown={() => console.log('Thumbs down')}

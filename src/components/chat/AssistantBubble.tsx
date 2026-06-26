@@ -11,7 +11,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 import { ThoughtLabel } from './ThoughtLabel';
-import { ArtifactPreviewCard } from './ArtifactPreviewCard';
+import { ArtifactsPreviewCard } from './ArtifactsPreviewCard';
 
 interface AssistantBubbleProps {
   content: string;
@@ -20,7 +20,7 @@ interface AssistantBubbleProps {
   toolInvocations?: any[];
   reasoning?: string;
   artifacts?: any[];
-  hasPartialArtifact?: boolean;
+  onOpenArtifact?: () => void;
   onCopy: () => void;
   onThumbsUp: () => void;
   onThumbsDown: () => void;
@@ -35,7 +35,7 @@ export const AssistantBubble = React.memo(
     toolInvocations,
     reasoning,
     artifacts,
-    hasPartialArtifact,
+    onOpenArtifact,
     onCopy,
     onThumbsUp,
     onThumbsDown,
@@ -151,11 +151,11 @@ export const AssistantBubble = React.memo(
         )}
       </div>
 
-        {(hasPartialArtifact || (artifacts && artifacts.length > 0)) && (
+        {artifacts && artifacts.length > 0 && !isStreaming && onOpenArtifact && (
           <div className="px-4 pb-2">
-            <ArtifactPreviewCard
-              isStreaming={isStreaming}
-              artifact={artifacts?.[0] || null}
+            <ArtifactsPreviewCard
+              artifact={artifacts[0]}
+              onClick={onOpenArtifact}
             />
           </div>
         )}
