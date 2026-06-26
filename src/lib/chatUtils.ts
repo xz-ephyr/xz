@@ -136,11 +136,39 @@ export const mapUIMessageToLegacyMessage = (m: any): any => {
 
   const allArtifacts = [...parsedArtifacts, ...toolArtifacts];
 
+  // Split content around writeArtifact tool call for shimmer placement
+  let contentBeforeTool: string | undefined;
+  let contentAfterTool: string | undefined;
+  if (writeArtifactCalls.length > 0 && Array.isArray(m.parts)) {
+    const writeToolPartIdx = m.parts.findIndex(
+      (part: any) => {
+        const type = part.type || '';
+        const name = part.toolName || '';
+        return (type === 'dynamic-tool' || type.startsWith('tool-')) &&
+               (name === 'writeArtifact' || type.includes('writeArtifact'));
+      }
+    );
+    if (writeToolPartIdx >= 0) {
+      contentBeforeTool = m.parts
+        .slice(0, writeToolPartIdx)
+        .filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
+        .join('');
+      contentAfterTool = m.parts
+        .slice(writeToolPartIdx + 1)
+        .filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
+        .join('');
+    }
+  }
+
   return {
     ...m,
     content: cleanText || content,
     reasoning,
     toolInvocations,
+    contentBeforeTool,
+    contentAfterTool,
     artifacts: allArtifacts,
     hasPartialArtifact: hasPartialArtifact(content),
   };

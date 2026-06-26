@@ -21,6 +21,8 @@ interface AssistantBubbleProps {
   toolInvocations?: any[];
   reasoning?: string;
   artifacts?: any[];
+  contentBeforeTool?: string;
+  contentAfterTool?: string;
   onOpenArtifact?: (artifact: any) => void;
   onCopy: () => void;
   onThumbsUp: () => void;
@@ -36,6 +38,8 @@ export const AssistantBubble = React.memo(
     toolInvocations,
     reasoning,
     artifacts,
+    contentBeforeTool,
+    contentAfterTool,
     onOpenArtifact,
     onCopy,
     onThumbsUp,
@@ -147,21 +151,31 @@ export const AssistantBubble = React.memo(
           </div>
         )}
 
-        {content && (
+        {contentBeforeTool ? (
+          <>
+            <div className="font-normal text-neutral-900">
+              <MarkdownMessage content={contentBeforeTool} />
+            </div>
+            {hasWriteArtifact && (
+              <div className="flex items-center gap-2 text-neutral-500">
+                {toolInvocations?.filter((ti) => ti.toolName === 'writeArtifact').map((ti) => (
+                  <WritingToolShimmer
+                    key={ti.toolCallId}
+                    title={ti.args?.title || ti.args?.identifier || ''}
+                    done={ti.state === 'result'}
+                  />
+                ))}
+              </div>
+            )}
+            {contentAfterTool && (
+              <div className="font-normal text-neutral-900">
+                <MarkdownMessage content={contentAfterTool} />
+              </div>
+            )}
+          </>
+        ) : content && (
           <div className="font-normal text-neutral-900">
             <MarkdownMessage content={content} />
-          </div>
-        )}
-
-        {hasWriteArtifact && (
-          <div className="flex items-center gap-2 text-neutral-500">
-            {toolInvocations?.filter((ti) => ti.toolName === 'writeArtifact').map((ti) => (
-              <WritingToolShimmer
-                key={ti.toolCallId}
-                title={ti.args?.title || ti.args?.identifier || ''}
-                done={ti.state === 'result'}
-              />
-            ))}
           </div>
         )}
       </div>

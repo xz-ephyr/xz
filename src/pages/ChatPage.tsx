@@ -372,6 +372,8 @@ export const ChatPage = () => {
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
                       artifacts={m.artifacts}
+                      contentBeforeTool={m.contentBeforeTool}
+                      contentAfterTool={m.contentAfterTool}
                        onOpenArtifact={
                          m.artifacts?.length > 0
                            ? () => handleOpenArtifact(m.artifacts[0])
