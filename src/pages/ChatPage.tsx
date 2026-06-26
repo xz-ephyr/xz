@@ -210,12 +210,21 @@ export const ChatPage = () => {
 
   useEffect(() => {
     const el = scrollContainerRef.current;
-    if (el && isNearBottomRef.current) {
-      requestAnimationFrame(() => {
+    if (!el) return;
+
+    const scrollToBottom = () => {
+      if (isNearBottomRef.current) {
         el.scrollTop = el.scrollHeight;
-      });
-    }
-  }, [messages]);
+      }
+    };
+
+    scrollToBottom();
+
+    const observer = new ResizeObserver(scrollToBottom);
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [messages.length]);
 
   useEffect(() => {
     const handleResetChat = () => {
@@ -345,7 +354,7 @@ export const ChatPage = () => {
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className={`flex-1 overflow-y-auto ${messages.length === 0 ? 'flex flex-col items-center justify-start pt-[15vh] p-4' : ''}`}
+            className={`flex-1 overflow-y-auto thin-scrollbar ${messages.length === 0 ? 'flex flex-col items-center justify-start pt-[15vh] p-4' : ''}`}
           >
             {messages.length > 0 && <div className="h-[8px] bg-white dark:bg-[#111110] w-full shrink-0" />}
             <div className="w-full mx-auto px-4 pb-24" style={{ maxWidth: 'min(880px, 100%)' }}>

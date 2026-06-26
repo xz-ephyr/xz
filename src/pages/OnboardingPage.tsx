@@ -125,7 +125,7 @@ export const OnboardingPage = () => {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-white overflow-y-auto">
+    <div className="h-screen w-full flex flex-col bg-white overflow-y-auto thin-scrollbar">
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-2xl flex flex-col items-center gap-8">
           {showProgress && (

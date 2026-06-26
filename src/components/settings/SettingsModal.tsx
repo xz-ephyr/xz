@@ -100,7 +100,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* Two-pane body */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left nav */}
-          <nav className="w-64 border-r border-neutral-100 p-3 space-y-1 shrink-0 overflow-y-auto">
+          <nav className="w-64 border-r border-neutral-100 p-3 space-y-1 shrink-0 overflow-y-auto thin-scrollbar">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTab;
               return (
@@ -121,7 +121,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </nav>
 
           {/* Right content */}
-          <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 p-6 overflow-y-auto thin-scrollbar">
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div className="flex flex-col gap-2">
@@ -247,7 +247,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </div>
                       {isModelDropdownOpen && (
                         <div className="absolute z-10 mt-1 w-full bg-white border border-neutral-200 rounded-[10px] shadow-lg overflow-hidden">
-                          <div className="overflow-y-auto" style={{ maxHeight: 155 }}>
+                          <div className="overflow-y-auto thin-scrollbar" style={{ maxHeight: 155 }}>
                             {MODELS.map((model) => (
                               <button
                                 key={model.id}

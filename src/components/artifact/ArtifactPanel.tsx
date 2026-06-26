@@ -200,10 +200,10 @@ export function ArtifactPanel({
 
       <div className="flex-1 overflow-hidden">
         {activeTab === 'preview' && (
-          <div className="h-full overflow-auto">{renderPreview()}</div>
+          <div className="h-full overflow-auto thin-scrollbar">{renderPreview()}</div>
         )}
         {activeTab === 'code' && (
-          <div className="h-full overflow-auto">
+          <div className="h-full overflow-auto thin-scrollbar">
             <CodePreview content={activeArtifact.content} language={activeArtifact.language} />
           </div>
         )}
