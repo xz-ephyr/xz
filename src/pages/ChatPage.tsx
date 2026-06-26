@@ -21,6 +21,12 @@ import TitleBar from '../components/layout/TitleBar';
 
 const MOBILE_BREAKPOINT = 768;
 
+const PANEL_MIN_WIDTH = 320;
+const PANEL_MAX_WIDTH = 960;
+const CHAT_MIN_WIDTH = 320;
+const DEFAULT_PANEL_WIDTH = 480;
+const PANEL_STORAGE_KEY = 'artifact-panel-width';
+
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
@@ -36,7 +42,15 @@ export const ChatPage = () => {
   const { uuid } = useParams();
   const navigate = useNavigate();
   const [isThinkingEnabled, setIsThinkingEnabled] = useState(false);
-  const [panelWidth, setPanelWidth] = useState<number | null>(null);
+  const [panelWidth, setPanelWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(PANEL_STORAGE_KEY);
+      if (saved) {
+        return Math.max(PANEL_MIN_WIDTH, Math.min(PANEL_MAX_WIDTH, parseInt(saved, 10)));
+      }
+    } catch {}
+    return DEFAULT_PANEL_WIDTH;
+  });
   const previousModelRef = useRef<string | null>(null);
   const isThinkingEnabledRef = useRef(false);
   const currentModelRef = useRef<string | null>(null);
@@ -316,29 +330,89 @@ export const ChatPage = () => {
   const isResizing = useRef(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  const startResize = useCallback(() => {
     isResizing.current = true;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
 
-    const onMouseMove = (moveEvent: MouseEvent) => {
+    const onMove = (clientX: number) => {
       if (!isResizing.current) return;
-      const newWidth = window.innerWidth - moveEvent.clientX;
-      setPanelWidth(Math.max(320, Math.min(960, newWidth)));
+      const newWidth = window.innerWidth - clientX;
+      const clamped = Math.max(
+        PANEL_MIN_WIDTH,
+        Math.min(
+          PANEL_MAX_WIDTH,
+          window.innerWidth - CHAT_MIN_WIDTH,
+          newWidth
+        )
+      );
+      setPanelWidth(clamped);
     };
 
-    const onMouseUp = () => {
+    const onUp = () => {
+      if (!isResizing.current) return;
       isResizing.current = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+      setPanelWidth((prev) => {
+        localStorage.setItem(PANEL_STORAGE_KEY, String(prev));
+        return prev;
+      });
     };
+
+    const onMouseMove = (e: MouseEvent) => onMove(e.clientX);
+    const onMouseUp = () => onUp();
+    const onTouchMove = (e: TouchEvent) => onMove(e.touches[0].clientX);
+    const onTouchEnd = () => onUp();
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
   }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    startResize();
+  }, [startResize]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    startResize();
+  }, [startResize]);
+
+  const handleDividerKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const step = e.shiftKey ? 50 : 20;
+    let newWidth = panelWidth;
+    let handled = true;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        newWidth = Math.max(PANEL_MIN_WIDTH, panelWidth - step);
+        break;
+      case 'ArrowRight':
+        newWidth = Math.min(PANEL_MAX_WIDTH, panelWidth + step);
+        break;
+      case 'Home':
+        newWidth = PANEL_MIN_WIDTH;
+        break;
+      case 'End':
+        newWidth = PANEL_MAX_WIDTH;
+        break;
+      default:
+        handled = false;
+    }
+
+    if (handled) {
+      e.preventDefault();
+      setPanelWidth(newWidth);
+      localStorage.setItem(PANEL_STORAGE_KEY, String(newWidth));
+    }
+  }, [panelWidth]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#111110] relative">
@@ -439,13 +513,23 @@ export const ChatPage = () => {
         {isPanelOpen && artifacts.length > 0 && (
           <div
             ref={panelRef}
-            className="flex border-l border-neutral-200 dark:border-neutral-700 overflow-hidden min-w-0"
-            style={{ width: panelWidth ?? undefined, flex: panelWidth ? 'none' : '1 1 0%' }}
+            className="flex overflow-hidden min-w-0"
+            style={{ width: panelWidth, flex: 'none' }}
           >
             <div
               onMouseDown={handleMouseDown}
-              className="w-px shrink-0 cursor-col-resize bg-neutral-200 dark:bg-neutral-700 relative hover:bg-neutral-300 dark:hover:bg-neutral-600"
-            />
+              onTouchStart={handleTouchStart}
+              onKeyDown={handleDividerKeyDown}
+              tabIndex={0}
+              role="separator"
+              aria-orientation="vertical"
+              aria-valuenow={panelWidth}
+              aria-valuemin={PANEL_MIN_WIDTH}
+              aria-valuemax={PANEL_MAX_WIDTH}
+              className="w-[5px] shrink-0 cursor-col-resize bg-transparent relative flex items-center justify-center group/divider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-inset"
+            >
+              <div className="w-px h-full bg-neutral-200 dark:bg-neutral-700 group-hover/divider:bg-neutral-400 dark:group-hover/divider:bg-neutral-500 group-active/divider:bg-neutral-500 dark:group-active/divider:bg-neutral-400 transition-colors" />
+            </div>
             {isMobile && (
               <div className="absolute inset-0 z-50 bg-black/30" onClick={closePanel} />
             )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { MarkdownMessage } from './MarkdownMessage';
 import {
   ThumbsUpIcon,
@@ -48,6 +48,68 @@ export const AssistantBubble = React.memo(
   }: AssistantBubbleProps) => {
     const [isReasoningOpen, setIsReasoningOpen] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    // ── Simulated streaming sequence ──
+    const [phase, setPhase] = useState<'idle' | 'intention' | 'shimmer' | 'explanation' | 'done'>('idle');
+    const [intentionLen, setIntentionLen] = useState(0);
+    const [explanationLen, setExplanationLen] = useState(0);
+    const prevIntentionRef = useRef('');
+    const prevExplanationRef = useRef('');
+
+    // Advance phase state machine
+    useEffect(() => {
+      if (!hasWriteArtifact || !contentBeforeTool) return;
+      if (phase === 'idle') setPhase('intention');
+    }, [hasWriteArtifact, contentBeforeTool, phase]);
+
+    useEffect(() => {
+      if (phase !== 'intention' || !contentBeforeTool) return;
+      const total = contentBeforeTool.length;
+      if (total === 0) { setPhase('shimmer'); return; }
+      if (intentionLen >= total) { setPhase('shimmer'); return; }
+      // Detect buffered arrival: text jumped from empty to full
+      const isBuffered = prevIntentionRef.current === '' && total > 30;
+      prevIntentionRef.current = contentBeforeTool;
+
+      if (!isBuffered) {
+        // Already streaming naturally — show all immediately
+        setIntentionLen(total);
+        return;
+      }
+
+      const step = Math.max(1, Math.floor(total / 60));
+      const t = setTimeout(() => setIntentionLen(l => Math.min(l + step, total)), 25);
+      return () => clearTimeout(t);
+    }, [phase, contentBeforeTool, intentionLen]);
+
+    useEffect(() => {
+      if (phase !== 'shimmer') return;
+      setExplanationLen(0);
+      const t = setTimeout(() => setPhase('explanation'), 600);
+      return () => clearTimeout(t);
+    }, [phase]);
+
+    useEffect(() => {
+      if (phase !== 'explanation' || !contentAfterTool) return;
+      const total = contentAfterTool.length;
+      if (total === 0) { setPhase('done'); return; }
+      if (explanationLen >= total) { setPhase('done'); return; }
+
+      const isBuffered = prevExplanationRef.current === '' && total > 30;
+      prevExplanationRef.current = contentAfterTool;
+
+      if (!isBuffered) {
+        setExplanationLen(total);
+        return;
+      }
+
+      const step = Math.max(1, Math.floor(total / 60));
+      const t = setTimeout(() => setExplanationLen(l => Math.min(l + step, total)), 25);
+      return () => clearTimeout(t);
+    }, [phase, contentAfterTool, explanationLen]);
+
+    const streamedIntention = contentBeforeTool?.slice(0, intentionLen) || '';
+    const streamedExplanation = contentAfterTool?.slice(0, explanationLen) || '';
 
     const handleCopy = () => {
       onCopy();
@@ -151,13 +213,15 @@ export const AssistantBubble = React.memo(
           </div>
         )}
 
-        {contentBeforeTool ? (
+        {phase !== 'idle' ? (
           <>
-            <div className="font-normal text-neutral-900">
-              <MarkdownMessage content={contentBeforeTool} />
-            </div>
-            {hasWriteArtifact && (
-              <div className="flex items-center gap-2 text-neutral-500">
+            {streamedIntention && (
+              <div className="font-normal text-neutral-900 stagger-item stagger-0">
+                <MarkdownMessage content={streamedIntention} />
+              </div>
+            )}
+            {(phase === 'shimmer' || phase === 'explanation' || phase === 'done') && hasWriteArtifact && (
+              <div className="flex items-center gap-2 text-neutral-500 stagger-item stagger-1">
                 {toolInvocations?.filter((ti) => ti.toolName === 'writeArtifact').map((ti) => (
                   <WritingToolShimmer
                     key={ti.toolCallId}
@@ -167,9 +231,9 @@ export const AssistantBubble = React.memo(
                 ))}
               </div>
             )}
-            {contentAfterTool && (
-              <div className="font-normal text-neutral-900">
-                <MarkdownMessage content={contentAfterTool} />
+            {(phase === 'explanation' || phase === 'done') && streamedExplanation && (
+              <div className="font-normal text-neutral-900 stagger-item stagger-2">
+                <MarkdownMessage content={streamedExplanation} />
               </div>
             )}
           </>
