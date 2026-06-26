@@ -6,7 +6,6 @@ export function useArtifacts() {
   const [activeArtifactId, setActiveArtifactId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const versionCounterRef = useRef<Record<string, number>>({});
-
   const processedIdentifiersRef = useRef<Set<string>>(new Set());
 
   const addArtifacts = useCallback((newArtifacts: Artifact[]) => {

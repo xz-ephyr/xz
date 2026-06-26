@@ -1,11 +1,12 @@
 import { parseArtifacts } from './artifactParser';
 
 const artifactMetadataRegex = /^\s*\*\s*(?:Type|Identifier|Title):\s*`[^`]+`\s*$/gim;
+const artifactInlineRegex = /^\s*`identifier`:\s*`[^`]+`\s*\*\s*`type`:\s*`[^`]+`\s*\*\s*`title`:\s*`[^`]+`/i;
 
 export function cleanReasoning(reasoning: string): string {
   return reasoning
     .split('\n')
-    .filter((line) => !artifactMetadataRegex.test(line))
+    .filter((line) => !artifactMetadataRegex.test(line) && !artifactInlineRegex.test(line))
     .join('\n')
     .trim();
 }

@@ -14,6 +14,7 @@ import { mapUIMessageToLegacyMessage } from '../lib/chatUtils';
 import { HugeiconRenderer } from '../components/ui/HugeiconRenderer';
 import { ArrowDown02Icon } from '@hugeicons/core-free-icons';
 import { ArtifactPanel } from '../components/artifact/ArtifactPanel';
+import type { Artifact } from '../types/artifact';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { useSessionTitle } from '../hooks/useSessionTitle';
 import TitleBar from '../components/layout/TitleBar';
@@ -35,6 +36,7 @@ export const ChatPage = () => {
   const { uuid } = useParams();
   const navigate = useNavigate();
   const [isThinkingEnabled, setIsThinkingEnabled] = useState(false);
+  const [panelWidth, setPanelWidth] = useState<number | null>(null);
   const previousModelRef = useRef<string | null>(null);
   const isThinkingEnabledRef = useRef(false);
   const currentModelRef = useRef<string | null>(null);
@@ -294,24 +296,50 @@ export const ChatPage = () => {
   }, []);
 
   const handleOpenArtifact = useCallback(
-    (artifactId: string) => {
-      selectArtifact(artifactId);
+    (artifact: Artifact) => {
+      addArtifacts([artifact]);
+      selectArtifact(artifact.identifier);
       openPanel();
     },
-    [selectArtifact, openPanel]
+    [addArtifacts, selectArtifact, openPanel]
   );
+
+  const isResizing = useRef(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizing.current) return;
+      const newWidth = window.innerWidth - moveEvent.clientX;
+      setPanelWidth(Math.max(320, Math.min(960, newWidth)));
+    };
+
+    const onMouseUp = () => {
+      isResizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#111110] relative">
       {uuid !== 'new' && messages.length > 0 && <TitleBar />}
       <div className="flex flex-1 min-h-0">
         <div
-          className={`flex flex-col min-w-0 bg-white dark:bg-[#111110] transition-all duration-300 relative ${
+          className={`flex flex-col min-w-0 bg-white dark:bg-[#111110] relative ${
             isMobile && isPanelOpen
               ? 'hidden'
-              : isPanelOpen && !isMobile
-                ? 'flex-1'
-                : 'flex-1'
+              : 'flex-1'
           }`}
         >
           <div
@@ -335,11 +363,11 @@ export const ChatPage = () => {
                       toolInvocations={m.toolInvocations}
                       reasoning={m.reasoning}
                       artifacts={m.artifacts}
-                      onOpenArtifact={
-                        m.artifacts?.length > 0
-                          ? () => handleOpenArtifact(m.artifacts[0].identifier)
-                          : undefined
-                      }
+                       onOpenArtifact={
+                         m.artifacts?.length > 0
+                           ? () => handleOpenArtifact(m.artifacts[0])
+                           : undefined
+                       }
                       onCopy={() => navigator.clipboard.writeText(m.content)}
                       onThumbsUp={() => console.log('Thumbs up')}
                       onThumbsDown={() => console.log('Thumbs down')}
@@ -398,7 +426,15 @@ export const ChatPage = () => {
         </div>
 
         {isPanelOpen && artifacts.length > 0 && (
-          <div className="flex-1 border-l border-neutral-200 dark:border-neutral-700 overflow-hidden min-w-0">
+          <div
+            ref={panelRef}
+            className="flex border-l border-neutral-200 dark:border-neutral-700 overflow-hidden min-w-0"
+            style={{ width: panelWidth ?? undefined, flex: panelWidth ? 'none' : '1 1 0%' }}
+          >
+            <div
+              onMouseDown={handleMouseDown}
+              className="w-px shrink-0 cursor-col-resize bg-neutral-200 dark:bg-neutral-700 relative hover:bg-neutral-300 dark:hover:bg-neutral-600"
+            />
             {isMobile && (
               <div className="absolute inset-0 z-50 bg-black/30" onClick={closePanel} />
             )}

@@ -21,7 +21,7 @@ interface AssistantBubbleProps {
   toolInvocations?: any[];
   reasoning?: string;
   artifacts?: any[];
-  onOpenArtifact?: () => void;
+  onOpenArtifact?: (artifact: any) => void;
   onCopy: () => void;
   onThumbsUp: () => void;
   onThumbsDown: () => void;
@@ -164,7 +164,7 @@ export const AssistantBubble = React.memo(
           <div className="px-4 pb-2">
             <ArtifactsPreviewCard
               artifact={artifacts[0]}
-              onClick={onOpenArtifact}
+              onClick={() => onOpenArtifact(artifacts[0])}
             />
           </div>
         )}

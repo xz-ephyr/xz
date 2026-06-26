@@ -9,8 +9,7 @@ import { MermaidPreview } from './MermaidPreview';
 import { SvgPreview } from './SvgPreview';
 import { HtmlPreview } from './HtmlPreview';
 import { ReactPreview } from './ReactPreview';
-import { HistoryTab } from './HistoryTab';
-import { CloseIcon, CopyIcon, DownloadIcon, ShareIcon } from './icons';
+import { CloseIcon, CopyIcon, DownloadIcon } from './icons';
 
 interface ArtifactPanelProps {
   artifacts: Artifact[];
@@ -83,18 +82,6 @@ export function ArtifactPanel({
     URL.revokeObjectURL(url);
   }, [activeArtifact]);
 
-  const handleShare = useCallback(async () => {
-    if (!activeArtifact) return;
-    if (navigator.share) {
-      await navigator.share({
-        title: activeArtifact.title,
-        text: activeArtifact.content,
-      });
-    } else {
-      await handleCopy();
-    }
-  }, [activeArtifact, handleCopy]);
-
   const handleFixWithClaude = useCallback((error: string) => {
     if (activeArtifact) {
       onRegenerate(`Fix this ${ARTIFACT_TYPE_LABELS[activeArtifact.type].toLowerCase()} artifact (error: ${error}):\n\n${activeArtifact.content}`);
@@ -144,6 +131,28 @@ export function ArtifactPanel({
           )}
         </div>
         <div className="flex items-center gap-1">
+          <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 mr-2">
+            <button
+              onClick={() => setActiveTab('preview')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                activeTab === 'preview'
+                  ? 'bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 shadow-sm'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+              }`}
+            >
+              Preview
+            </button>
+            <button
+              onClick={() => setActiveTab('code')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                activeTab === 'code'
+                  ? 'bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 shadow-sm'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+              }`}
+            >
+              Code
+            </button>
+          </div>
           <button
             onClick={handleCopy}
             className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
@@ -157,13 +166,6 @@ export function ArtifactPanel({
             title="Download artifact"
           >
             <DownloadIcon />
-          </button>
-          <button
-            onClick={handleShare}
-            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
-            title="Share artifact"
-          >
-            <ShareIcon />
           </button>
           <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
           {artifacts.length > 1 && (
@@ -196,8 +198,6 @@ export function ArtifactPanel({
         </div>
       </div>
 
-      <ArtifactTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
       <div className="flex-1 overflow-hidden">
         {activeTab === 'preview' && (
           <div className="h-full overflow-auto">{renderPreview()}</div>
@@ -205,21 +205,6 @@ export function ArtifactPanel({
         {activeTab === 'code' && (
           <div className="h-full overflow-auto">
             <CodePreview content={activeArtifact.content} language={activeArtifact.language} />
-          </div>
-        )}
-        {activeTab === 'split' && (
-          <div className="flex h-full">
-            <div className="flex-1 overflow-auto border-r border-neutral-200 dark:border-neutral-700">
-              {renderPreview()}
-            </div>
-            <div className="flex-1 overflow-auto">
-              <CodePreview content={activeArtifact.content} language={activeArtifact.language} />
-            </div>
-          </div>
-        )}
-        {activeTab === 'history' && (
-          <div className="h-full overflow-auto">
-            <HistoryTab artifact={activeArtifact} onRollback={onRollback} />
           </div>
         )}
       </div>

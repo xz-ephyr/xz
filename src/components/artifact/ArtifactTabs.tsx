@@ -1,6 +1,6 @@
-import { CodeIcon, EyeIcon, SplitIcon, HistoryIcon } from './icons';
+import { CodeIcon, EyeIcon } from './icons';
 
-export type TabId = 'preview' | 'code' | 'split' | 'history';
+export type TabId = 'preview' | 'code';
 
 interface ArtifactTabsProps {
   activeTab: TabId;
@@ -10,8 +10,6 @@ interface ArtifactTabsProps {
 const tabs: { id: TabId; label: string; icon: typeof EyeIcon }[] = [
   { id: 'preview', label: 'Preview', icon: EyeIcon },
   { id: 'code', label: 'Code', icon: CodeIcon },
-  { id: 'split', label: 'Split', icon: SplitIcon },
-  { id: 'history', label: 'History', icon: HistoryIcon },
 ];
 
 export function ArtifactTabs({ activeTab, onTabChange }: ArtifactTabsProps) {
