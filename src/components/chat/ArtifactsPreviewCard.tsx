@@ -27,8 +27,8 @@ export function ArtifactsPreviewCard({ artifact, onClick }: ArtifactsPreviewCard
       onClick={onClick}
       className="flex items-center gap-3 w-full h-[75px] px-4 rounded-lg border border-neutral-200 dark:border-neutral-700 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 focus-visible:bg-neutral-100 dark:focus-visible:bg-neutral-800 active:bg-neutral-200 dark:active:bg-neutral-700 active:scale-[0.98] active:shadow-inner transition-all text-left"
     >
-      <div className="flex items-center justify-center w-8 h-8 rounded-md text-neutral-500 dark:text-neutral-400 shrink-0">
-        <HugeiconsIcon icon={GoogleDocIcon} size={18} />
+      <div className="flex items-center justify-center w-10 h-10 rounded-md text-neutral-500 dark:text-neutral-400 shrink-0">
+        <HugeiconsIcon icon={GoogleDocIcon} size={24} className="-rotate-[15deg]" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
