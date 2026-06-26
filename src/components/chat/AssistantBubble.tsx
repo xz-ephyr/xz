@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MarkdownMessage } from './MarkdownMessage';
 import {
   ThumbsUpIcon,
@@ -59,24 +59,34 @@ export const AssistantBubble = React.memo(
     // Advance phase state machine
     useEffect(() => {
       if (!hasWriteArtifact || !contentBeforeTool) return;
-      if (phase === 'idle') setPhase('intention');
-    }, [hasWriteArtifact, contentBeforeTool, phase]);
+      if (phase === 'idle') {
+        if (content && content.startsWith(contentBeforeTool)) {
+          setIntentionLen(contentBeforeTool.length);
+          if (contentAfterTool && content.includes(contentAfterTool)) {
+            setExplanationLen(contentAfterTool.length);
+            setPhase('done');
+            return;
+          }
+          setPhase('shimmer');
+          return;
+        }
+        setPhase('intention');
+      }
+    }, [hasWriteArtifact, contentBeforeTool, phase, content, contentAfterTool]);
 
     useEffect(() => {
       if (phase !== 'intention' || !contentBeforeTool) return;
       const total = contentBeforeTool.length;
       if (total === 0) { setPhase('shimmer'); return; }
       if (intentionLen >= total) { setPhase('shimmer'); return; }
-      // Detect buffered arrival: text jumped from empty to full
-      const isBuffered = prevIntentionRef.current === '' && total > 30;
-      prevIntentionRef.current = contentBeforeTool;
-
-      if (!isBuffered) {
-        // Already streaming naturally — show all immediately
+      // Text grew (natural streaming) → show all immediately
+      if (contentBeforeTool !== prevIntentionRef.current && prevIntentionRef.current !== '') {
+        prevIntentionRef.current = contentBeforeTool;
         setIntentionLen(total);
         return;
       }
-
+      prevIntentionRef.current = contentBeforeTool;
+      // First arrival with no prior content → buffered, simulate streaming
       const step = Math.max(1, Math.floor(total / 60));
       const t = setTimeout(() => setIntentionLen(l => Math.min(l + step, total)), 25);
       return () => clearTimeout(t);
@@ -94,15 +104,12 @@ export const AssistantBubble = React.memo(
       const total = contentAfterTool.length;
       if (total === 0) { setPhase('done'); return; }
       if (explanationLen >= total) { setPhase('done'); return; }
-
-      const isBuffered = prevExplanationRef.current === '' && total > 30;
-      prevExplanationRef.current = contentAfterTool;
-
-      if (!isBuffered) {
+      if (contentAfterTool !== prevExplanationRef.current && prevExplanationRef.current !== '') {
+        prevExplanationRef.current = contentAfterTool;
         setExplanationLen(total);
         return;
       }
-
+      prevExplanationRef.current = contentAfterTool;
       const step = Math.max(1, Math.floor(total / 60));
       const t = setTimeout(() => setExplanationLen(l => Math.min(l + step, total)), 25);
       return () => clearTimeout(t);
