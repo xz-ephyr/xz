@@ -230,7 +230,7 @@ export function ReactPreview({ content, onError }: ReactPreviewProps) {
   if (!srcdoc) {
     return (
       <div className="p-6 flex items-center justify-center">
-        <div className="text-sm text-muted-foreground py-8">Preparing preview...</div>
+        <div className="text-sm text-neutral-400 dark:text-neutral-500 py-8">Preparing preview...</div>
       </div>
     );
   }
