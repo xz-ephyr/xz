@@ -99,9 +99,9 @@ import { tool } from 'ai';
 import { z } from 'zod';
 
 export const webSearchTool = tool({
-  description: 'Search the web for current information. Use when you need up-to-date data, recent news, documentation, or facts beyond your training cutoff.',
+  description: 'Search the web for current information. Use when you need up-to-date data, recent news, documentation, or facts beyond your training cutoff. ONE domain per search.',
   parameters: z.object({
-    query: z.string().describe('The search query. Be specific and concise. Supports site:example.com to limit to a domain.'),
+    query: z.string().describe('The search query. Be specific and concise. Supports site:example.com to limit to ONE domain. Do NOT include multiple site: operators.'),
     maxResults: z.number().optional().default(5).describe('Maximum number of search results (1–10).'),
   }),
   execute: async ({ query, maxResults }) => {
@@ -382,7 +382,7 @@ Also support an optional `site` parameter in `webSearchTool`:
 ```ts
 parameters: z.object({
   query: z.string(),
-  site: z.string().optional().describe('Limit search to a specific domain (e.g. "react.dev").'),
+    site: z.string().optional().describe('Limit search to a single domain only (e.g. "react.dev"). ONE domain per search call — do not pass multiple domains.'),
   maxResults: z.number().optional().default(5),
 }),
 ```
@@ -433,8 +433,10 @@ You have access to four web tools:
 #### 1. `webSearch` — General web search
 Search the web for current information. Use for recent events, documentation lookups,
 fact-checking, and any query that needs up-to-date data.
-- Supports `site:domain.com` syntax to limit results to a specific site.
+- Supports `site:domain.com` syntax to limit results to ONE domain only.
+- ONE domain per search call. Need multiple sites? Make separate calls — they run in parallel.
 - Returns snippets and links. Use `fetchPage` for full content.
+- Recent identical searches are cached (no extra API cost).
 
 #### 2. `fetchPage` — Fetch full webpage content
 After getting a URL from `webSearch` (or from the user), call this to read the full
@@ -458,6 +460,9 @@ Guidelines:
 - Summarize the relevant information — do not dump raw results.
 - If a search returns no results, try a different query.
 - Do NOT search for things you confidently know from training data.
+- ONE domain per `webSearch` call. For multiple domains, issue parallel calls.
+- Parallel calls are allowed and efficient — the system runs them concurrently.
+- Identical searches within minutes hit cache — no extra cost.
 ```
 
 ---
@@ -493,6 +498,108 @@ All values fetched and stored via `DatabaseService.getConfig` / `setConfig` (SQL
 
 ---
 
+## Search History (Cache)
+
+To avoid redundant API calls and save credits, every search result is cached in the SQLite database.
+
+### Cache Table
+
+Add a new table via `server/src/db.ts` migration:
+
+```sql
+CREATE TABLE IF NOT EXISTS search_cache (
+  cache_key TEXT PRIMARY KEY,
+  provider TEXT NOT NULL,
+  tool TEXT NOT NULL,          -- 'webSearch' | 'imageSearch' | 'newsSearch'
+  results TEXT NOT NULL,       -- JSON string of the full response
+  created_at INTEGER NOT NULL
+);
+```
+
+### Cache Key
+
+The cache key is a hash of `provider + tool + JSON.stringify(params)`:
+
+```ts
+const cacheKey = await crypto.subtle.digest(
+  'SHA-256',
+  new TextEncoder().encode(`${provider}:${tool}:${JSON.stringify(params)}`)
+).then(h => Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join(''));
+```
+
+### TTL
+
+| Tool | TTL |
+|------|-----|
+| `webSearch` | 5 minutes |
+| `imageSearch` | 10 minutes |
+| `newsSearch` | 2 minutes (news is time-sensitive) |
+| `fetchPage` | 30 minutes (page content changes slowly) |
+
+### Behavior
+
+- Before making an API call, the service checks the cache.
+- If a fresh entry exists (within TTL), return it immediately — no API call.
+- If expired or missing, make the API call, store the result, return it.
+- Cache is stored in SQLite so it persists across app restarts.
+
+### Service API
+
+```ts
+// WebSearchService automatically handles caching:
+const results = await WebSearchService.search({ query: "react hooks", maxResults: 5 });
+// First call → API. Second call within 5 min → cached.
+```
+
+No changes needed in the tool definitions — caching is transparent in the service layer.
+
+---
+
+## Batch Mode / Parallel Searches
+
+The AI can issue multiple independent search calls in a single turn. The Vercel AI SDK supports parallel tool calls natively — when the model decides multiple searches are useful, all tool invocations fire concurrently.
+
+### How it Works
+
+1. AI decides it needs multiple pieces of information
+2. AI emits multiple tool calls in one response (e.g., `webSearch` + `webSearch` + `newsSearch`)
+3. The Vercel AI SDK runs all tool `execute` handlers concurrently
+4. All results come back to the AI in a single turn
+5. AI synthesizes everything into one response
+
+### Example
+
+```
+User: "What are the latest TypeScript features and who created the language?"
+
+AI calls in parallel:
+  webSearch({ query: "TypeScript latest features 2026", maxResults: 3 })
+  webSearch({ query: "TypeScript creator history", maxResults: 3 })
+
+AI waits for both, then responds with a combined answer.
+```
+
+### Constraint: ONE domain per search call
+
+Each `webSearch` call can target at most ONE site via the `site` parameter or `site:` operator. If the AI needs information from multiple domains, it must issue separate search calls:
+
+```
+✅ Correct:
+  webSearch({ query: "hooks tutorial", site: "react.dev" })
+  webSearch({ query: "hooks tutorial", site: "angular.io" })
+
+❌ Wrong — do NOT do this:
+  webSearch({ query: "hooks tutorial site:react.dev site:angular.io" })
+```
+
+This is enforced in the tool's Zod schema and system prompt instructions.
+
+### Rate Limiting
+
+The WebSearchService tracks API usage per provider. If multiple parallel searches would exceed rate limits, they are queued and executed sequentially with a small delay. This is handled transparently in the service layer.
+
+---
+
 ## Error Handling
 
 | Scenario | Behavior |
@@ -524,6 +631,4 @@ The AI reads these error messages and explains to the user.
 
 - **Plugins integration** — once the Plugins tab is built, web tools become toggleable built-in plugins
 - **Local LLM web search** — use `fetch` directly from Ollama if running locally
-- **Search history** — cache recent searches to avoid redundant API calls
 - **Custom search engines** — let users define custom search endpoints
-- **Batch mode** — allow AI to run multiple searches in parallel
