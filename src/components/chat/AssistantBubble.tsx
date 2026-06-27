@@ -157,15 +157,15 @@ export const AssistantBubble = React.memo(
     <div className="mb-6 w-full group/bubble">
       <div className="text-base px-4 py-4 break-words flex flex-col gap-2">
         {hasOtherPendingTool && (
-          <div className="flex items-center gap-2 text-neutral-500">
+          <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
             {pendingTools.filter((ti) => ti.toolName !== 'writeArtifact').map((ti) => {
               const fileName = ti.args?.file_path || ti.args?.path || ti.args?.title || ti.args?.filename || '';
               return (
-                <div key={ti.toolCallId} className="flex items-center gap-1.5 px-2 py-1 bg-neutral-50 rounded-[6px] text-xs font-medium text-neutral-500 border border-neutral-200">
+                <div key={ti.toolCallId} className="flex items-center gap-1.5 px-2 py-1 bg-neutral-50 dark:bg-neutral-900 rounded-[6px] text-xs font-medium text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
                   <span className="thinking-shimmer-text capitalize">
                     {ti.state === 'result' ? 'done' : 'running'}
                   </span>
-                  {fileName && <span className="text-neutral-400 font-mono truncate max-w-[160px]">{fileName}</span>}
+                  {fileName && <span className="text-neutral-400 dark:text-neutral-500 font-mono truncate max-w-[160px]">{fileName}</span>}
                 </div>
               );
             })}
@@ -173,7 +173,7 @@ export const AssistantBubble = React.memo(
         )}
 
         {isStreaming && !reasoning && !hasPendingTool && !hasWriteArtifact && !content && (
-          <div className="flex items-center gap-2 text-neutral-400">
+          <div className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500">
             <span className="text-sm">Thinking...</span>
           </div>
         )}
@@ -190,9 +190,9 @@ export const AssistantBubble = React.memo(
               {isReasoningOpen && (
                 <div className="flex flex-col items-center shrink-0">
                   <div className="flex items-center justify-center w-5 h-5">
-                    <HugeiconsIcon icon={Clock01Icon} size={14} className="text-neutral-400" />
+                    <HugeiconsIcon icon={Clock01Icon} size={14} className="text-neutral-400 dark:text-neutral-500" />
                   </div>
-                  <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />
+                  <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 dark:bg-neutral-700 mt-1" />
                 </div>
               )}
 
@@ -206,10 +206,10 @@ export const AssistantBubble = React.memo(
                       className="overflow-y-auto no-scrollbar flex flex-col gap-2 pt-1"
                     >
                       {sentences.map((s, idx) => (
-                        <div
-                          key={idx}
-                          className="text-[15px] leading-relaxed text-neutral-500"
-                        >
+                          <div
+                            key={idx}
+                            className="text-[15px] leading-relaxed text-neutral-500 dark:text-neutral-400"
+                          >
                           {s}
                         </div>
                       ))}
@@ -224,12 +224,12 @@ export const AssistantBubble = React.memo(
         {phase !== 'idle' ? (
           <>
             {streamedIntention && (
-              <div className="font-normal text-neutral-900 stagger-item stagger-0">
+              <div className="font-normal text-neutral-900 dark:text-neutral-100 stagger-item stagger-0">
                 <MarkdownMessage content={streamedIntention} />
               </div>
             )}
             {(phase === 'shimmer' || phase === 'explanation' || phase === 'done') && hasWriteArtifact && (
-              <div className="flex items-center gap-2 text-neutral-500 stagger-item stagger-1">
+              <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 stagger-item stagger-1">
                 {toolInvocations?.filter((ti) => ti.toolName === 'writeArtifact').map((ti) => (
                   <WritingToolShimmer
                     key={ti.toolCallId}
@@ -240,13 +240,13 @@ export const AssistantBubble = React.memo(
               </div>
             )}
             {(phase === 'explanation' || phase === 'done') && streamedExplanation && (
-              <div className="font-normal text-neutral-900 stagger-item stagger-2">
+              <div className="font-normal text-neutral-900 dark:text-neutral-100 stagger-item stagger-2">
                 <MarkdownMessage content={streamedExplanation} />
               </div>
             )}
           </>
         ) : content && (
-          <div className="font-normal text-neutral-900">
+          <div className="font-normal text-neutral-900 dark:text-neutral-100">
             <MarkdownMessage content={content} />
           </div>
         )}
