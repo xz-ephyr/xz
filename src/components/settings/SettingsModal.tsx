@@ -127,7 +127,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center px-3 py-2.5 rounded-[8px] cursor-pointer active:scale-[0.99] transition-transform w-full gap-3 ${
-                    isActive ? 'bg-[#e5e5e5]' : 'hover:bg-[#f2f3f6]'
+                    isActive ? 'bg-accent' : 'hover:bg-muted'
                   }`}
                 >
                   <div className="shrink-0 flex items-center justify-center w-[18px] h-[18px]">
@@ -636,7 +636,7 @@ function ThemeToggle() {
       >
         <div
           className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
-            isDark ? 'translate-x-8 bg-neutral-700' : 'translate-x-0 bg-amber-400'
+            isDark ? 'translate-x-8 bg-accent' : 'translate-x-0 bg-amber-400'
           }`}
         >
           {isDark ? (
