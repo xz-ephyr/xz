@@ -146,7 +146,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-semibold text-foreground">Default Page</label>
                   <select
-                    className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-border focus:border-black transition-all appearance-none cursor-pointer"
+                    className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
                     defaultValue={localStorage.getItem('default_page') || 'chats'}
                     onChange={(e) => localStorage.setItem('default_page', e.target.value)}
                   >
@@ -195,7 +195,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             {activeTab === 'api-keys' && (
               <div className="space-y-5">
-                <div className="bg-info/10 p-3 rounded-lg border border-info/20">
+                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                   <p className="text-xs text-info leading-relaxed">
                     Enter your API keys for the providers you wish to use. The system will use these keys for routing and fallbacks.
                   </p>
@@ -211,7 +211,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         </div>
                         <input
                           type={showKeys[providerId] ? 'text' : 'password'}
-                          className="h-9 bg-muted rounded-[8px] pl-8 pr-9 outline-none text-sm w-full border border-border focus:border-neutral-400 transition-colors"
+                          className="h-9 bg-muted rounded-[8px] pl-8 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                           placeholder={`Enter ${PROVIDER_LABELS[providerId]} Key`}
                           value={keys[providerId]}
                           onChange={(e) => setKeys({ ...keys, [providerId]: e.target.value })}
@@ -235,7 +235,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       Model Mode
                     </label>
                     <select
-                      className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-border focus:border-black transition-all appearance-none cursor-pointer"
+                      className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
                       value={modelMode}
                       onChange={(e) => setModelMode(e.target.value as typeof modelMode)}
                     >
@@ -254,7 +254,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </label>
                     <div className="relative">
                       <div
-                        className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-border flex items-center cursor-pointer"
+                        className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 flex items-center cursor-pointer"
                         onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
                       >
                         <span className="flex-1 truncate">
@@ -267,7 +267,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         </svg>
                       </div>
                       {isModelDropdownOpen && (
-                        <div className="absolute z-10 mt-1 w-full bg-background border border-border rounded-[10px] shadow-lg overflow-hidden">
+                        <div className="absolute z-10 mt-1 w-full bg-background border border-neutral-200 rounded-[10px] shadow-lg overflow-hidden">
                           <div className="overflow-y-auto thin-scrollbar" style={{ maxHeight: 155 }}>
                             {MODELS.map((model) => (
                               <button
@@ -312,7 +312,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="flex items-center justify-center py-12 text-muted-foreground/70 text-sm">Loading...</div>
                 ) : (
                   <>
-                    <div className="bg-info/10 p-3 rounded-lg border border-info/20">
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                       <p className="text-xs text-info leading-relaxed">
                         Configure web search providers. API keys are stored securely in the local database.
                         At minimum, set a <strong>Search Provider</strong> (Tavily recommended) for web search.
@@ -324,7 +324,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <div className="flex flex-col gap-2">
                       <label className="text-sm font-semibold text-foreground">Search Provider</label>
                       <select
-                        className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-border focus:border-black transition-all appearance-none cursor-pointer"
+                        className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
                         value={searchConfig['search-provider'] || 'tavily'}
                         onChange={(e) => setSearchConfig(p => ({ ...p, 'search-provider': e.target.value }))}
                       >
@@ -342,7 +342,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <div className="relative">
                           <input
                           type={showSearchKeys['tavily'] ? 'text' : 'password'}
-                             className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-border focus:border-neutral-400 transition-colors"
+                             className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                              placeholder={searchConfig['search-api-key'] ? '••••••••••••••••' : 'Enter Tavily API Key'}
                              value={searchConfig['search-api-key'] || ''}
                              onChange={(e) => setSearchConfig(p => ({ ...p, 'search-api-key': e.target.value }))}
@@ -363,7 +363,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <div className="relative">
                           <input
                             type={showSearchKeys['exa'] ? 'text' : 'password'}
-                            className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-border focus:border-neutral-400 transition-colors"
+                            className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                             placeholder={searchConfig['search-exa-api-key'] ? '••••••••••••••••' : 'Enter Exa API Key'}
                             value={searchConfig['search-exa-api-key'] || ''}
                             onChange={(e) => setSearchConfig(p => ({ ...p, 'search-exa-api-key': e.target.value }))}
@@ -384,7 +384,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <div className="relative">
                           <input
                             type={showSearchKeys['firecrawl'] ? 'text' : 'password'}
-                             className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-border focus:border-neutral-400 transition-colors"
+                             className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                              placeholder={searchConfig['search-firecrawl-api-key'] ? '••••••••••••••••' : 'Enter Firecrawl API Key'}
                              value={searchConfig['search-firecrawl-api-key'] || ''}
                              onChange={(e) => setSearchConfig(p => ({ ...p, 'search-firecrawl-api-key': e.target.value }))}
@@ -416,7 +416,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                               <div className="relative">
                                 <input
                                   type={showSearchKeys['google'] ? 'text' : 'password'}
-                                   className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-border focus:border-neutral-400 transition-colors"
+                                   className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                                    placeholder={searchConfig['search-google-api-key'] ? '••••••••••••••••' : 'Enter Google API Key'}
                                    value={searchConfig['search-google-api-key'] || ''}
                                    onChange={(e) => setSearchConfig(p => ({ ...p, 'search-google-api-key': e.target.value }))}
@@ -434,7 +434,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                               <label className="text-[12px] font-medium text-muted-foreground ml-1">CX (Engine ID)</label>
                               <input
                                 type="text"
-                                className="h-9 bg-muted rounded-[8px] pl-3 pr-3 outline-none text-sm w-full border border-border focus:border-neutral-400 transition-colors"
+                                className="h-9 bg-muted rounded-[8px] pl-3 pr-3 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                                 placeholder={searchConfig['search-google-cx'] ? '••••••••••••••••' : 'Enter CX (Engine ID)'}
                                 value={searchConfig['search-google-cx'] || ''}
                                 onChange={(e) => setSearchConfig(p => ({ ...p, 'search-google-cx': e.target.value }))}
@@ -476,7 +476,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-semibold text-foreground">Sidebar on Startup</label>
                   <select
-                    className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-border focus:border-black transition-all appearance-none cursor-pointer"
+                    className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
                     defaultValue={localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true' ? 'collapsed' : 'expanded'}
                     onChange={(e) => {
                       localStorage.setItem(SIDEBAR_STORAGE_KEY, String(e.target.value === 'collapsed'));
@@ -577,7 +577,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         }
                       }
                     }}
-                    className="w-full px-4 py-2.5 text-sm font-semibold text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-[14px] transition-colors text-left"
+                    className="w-full px-4 py-2.5 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-[14px] transition-colors text-left"
                   >
                     Clear Chat History
                   </button>
@@ -632,7 +632,7 @@ function ThemeToggle() {
       </div>
       <button
         onClick={toggle}
-        className="relative w-16 h-8 rounded-full border border-border bg-muted hover:bg-muted transition-colors flex items-center px-1"
+        className="relative w-16 h-8 rounded-full border border-neutral-200 bg-muted hover:bg-muted transition-colors flex items-center px-1"
       >
         <div
           className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
@@ -678,7 +678,7 @@ function ZoomControl() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-[10px] text-sm border border-border bg-muted hover:bg-muted transition-colors"
+        className="flex items-center gap-2 px-3 py-2 rounded-[10px] text-sm border border-neutral-200 bg-muted hover:bg-muted transition-colors"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-muted-foreground">
           <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.2" />
@@ -689,7 +689,7 @@ function ZoomControl() {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-1 w-44 bg-background border border-border rounded-xl shadow-xl py-2 z-50">
+        <div className="absolute left-0 top-full mt-1 w-44 bg-background border border-neutral-200 rounded-xl shadow-xl py-2 z-50">
           <div className="px-4 py-1.5 text-[11px] font-bold text-muted-foreground/70 uppercase tracking-widest">
             Zoom
           </div>
