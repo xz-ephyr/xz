@@ -97,7 +97,7 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500 hover:underline font-medium"
+                className="text-info hover:text-info/80 hover:underline font-medium"
               >
                 {children}
               </a>

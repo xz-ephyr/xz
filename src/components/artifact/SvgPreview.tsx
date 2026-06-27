@@ -24,8 +24,8 @@ export function SvgPreview({ content }: SvgPreviewProps) {
   if (error || !svgContent) {
     return (
       <div className="p-6">
-        <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-4">
-          <p className="text-sm font-medium text-red-800 dark:text-red-300">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+          <p className="text-sm font-medium text-destructive">
             {error ? 'Failed to render SVG' : 'No valid SVG found in content'}
           </p>
         </div>
