@@ -145,12 +145,12 @@ export default function Sidebar() {
   return (
     <>
       <div
-        className={`bg-sidebar border-r border-sidebar-border h-screen transition-[width] duration-300 ease-in-out flex flex-col shrink-0 ${isCollapsed ? 'w-[48px]' : 'w-[320px]'}`}
+        className={`bg-white dark:bg-[#111110] border-r border-[#e5e5e5] dark:border-[#2a2a28] h-screen transition-[width] duration-300 ease-in-out flex flex-col shrink-0 ${isCollapsed ? 'w-[48px]' : 'w-[320px]'}`}
       >
         <div className={`flex p-2 shrink-0 ${isCollapsed ? 'justify-center' : 'justify-end'}`}>
           <button
             onClick={toggleCollapse}
-            className="p-1 hover:bg-sidebar-accent rounded-[8px]"
+            className="p-1 hover:bg-[#e5e5e5] dark:hover:bg-[#2a2a28] rounded-[8px]"
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-expanded={!isCollapsed}
           >
@@ -210,10 +210,10 @@ export default function Sidebar() {
             {!isCollapsed && (
               <>
                 <div className="mt-6 flex justify-between items-center mb-2 px-2">
-                  <h2 className="text-sm font-bold text-sidebar-foreground/60 whitespace-nowrap">Projects</h2>
+                  <h2 className="text-sm font-bold text-neutral-500 dark:text-neutral-400 whitespace-nowrap">Projects</h2>
                   <button
                     onClick={handleAddProject}
-                    className="            text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent active:bg-sidebar-accent/80 p-1 rounded-[6px] transition-all active:scale-95"
+                    className="text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-[#e5e5e5] dark:hover:bg-[#2a2a28] active:bg-[#d4d4d4] dark:active:bg-[#3a3a38] p-1 rounded-[6px] transition-all active:scale-95"
                     aria-label="Add project"
                     title="Add project"
                   >
@@ -230,7 +230,7 @@ export default function Sidebar() {
                     />
                   ))}
                   {projects.length === 0 && (
-                    <p className="text-[11px] text-sidebar-foreground/40 px-2 italic">
+                    <p className="text-[11px] text-neutral-400 dark:text-neutral-500 px-2 italic">
                       Click + to add a project
                     </p>
                   )}
@@ -241,7 +241,7 @@ export default function Sidebar() {
         </div>
 
         {/* Bottom section */}
-        <div className="p-4 border-t border-sidebar-border shrink-0 flex flex-col gap-1">
+        <div className="p-4 border-t border-[#e5e5e5] dark:border-[#2a2a28] shrink-0 flex flex-col gap-1">
           <SidebarTab
             icon={() => <HugeiconRenderer icon={Download01Icon} />}
             label="Download app"
