@@ -101,16 +101,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[4px] z-50">
-      <div className="bg-background rounded-[16px] w-[min(1100px,95vw)] h-[85vh] min-h-[500px] shadow-2xl border border-neutral-100 flex flex-col overflow-hidden">
+      <div className="bg-background rounded-[16px] w-[min(1100px,95vw)] h-[85vh] min-h-[500px] shadow-2xl border border-border/50 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-b border-border/50 flex items-center justify-between shrink-0">
           <h2 className="text-[18px] font-bold text-card-foreground flex items-center gap-2">
-            <HugeiconsIcon icon={Settings02Icon} size={20} className="text-neutral-500" />
+            <HugeiconsIcon icon={Settings02Icon} size={20} className="text-muted-foreground" />
             Settings
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-foreground hover:bg-neutral-100 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
           >
             <HugeiconsIcon icon={Cancel01Icon} size={18} />
           </button>
@@ -119,7 +119,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* Two-pane body */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left nav */}
-          <nav className="w-64 border-r border-neutral-100 p-3 space-y-1 shrink-0 overflow-y-auto thin-scrollbar">
+          <nav className="w-64 border-r border-border/50 p-3 space-y-1 shrink-0 overflow-y-auto thin-scrollbar">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTab;
               return (
@@ -146,7 +146,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-semibold text-foreground">Default Page</label>
                   <select
-                    className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+                    className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
                     defaultValue={localStorage.getItem('default_page') || 'chats'}
                     onChange={(e) => localStorage.setItem('default_page', e.target.value)}
                   >
@@ -154,13 +154,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <option value="thread">New thread</option>
                     <option value="last">Last open session</option>
                   </select>
-                  <p className="text-xs text-neutral-500">Which page to show on launch.</p>
+                  <p className="text-xs text-muted-foreground">Which page to show on launch.</p>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-sm font-semibold text-foreground">Message Timestamps</label>
-                    <p className="text-xs text-neutral-500 mt-0.5">Show time stamps below chat messages.</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Show time stamps below chat messages.</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -178,7 +178,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-sm font-semibold text-foreground">Auto-save Drafts</label>
-                    <p className="text-xs text-neutral-500 mt-0.5">Automatically save unsent messages as drafts.</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Automatically save unsent messages as drafts.</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -196,7 +196,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {activeTab === 'api-keys' && (
               <div className="space-y-5">
                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                  <p className="text-xs text-blue-700 leading-relaxed">
+                  <p className="text-xs text-info leading-relaxed">
                     Enter your API keys for the providers you wish to use. The system will use these keys for routing and fallbacks.
                   </p>
                 </div>
@@ -204,14 +204,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="grid gap-x-6 gap-y-4 grid-cols-1 sm:grid-cols-2">
                   {Object.keys(PROVIDER_LABELS).map((providerId) => (
                     <div key={providerId} className="flex flex-col gap-1.5">
-                      <label className="text-[12px] font-medium text-neutral-600 ml-1">{PROVIDER_LABELS[providerId]}</label>
+                      <label className="text-[12px] font-medium text-muted-foreground ml-1">{PROVIDER_LABELS[providerId]}</label>
                       <div className="relative">
-                        <div className="absolute left-3 top-2.5 text-neutral-400">
+                        <div className="absolute left-3 top-2.5 text-muted-foreground/70">
                           <HugeiconsIcon icon={Key01Icon} size={13} />
                         </div>
                         <input
                           type={showKeys[providerId] ? 'text' : 'password'}
-                          className="h-9 bg-neutral-50 rounded-[8px] pl-8 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                          className="h-9 bg-muted rounded-[8px] pl-8 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                           placeholder={`Enter ${PROVIDER_LABELS[providerId]} Key`}
                           value={keys[providerId]}
                           onChange={(e) => setKeys({ ...keys, [providerId]: e.target.value })}
@@ -219,7 +219,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <button
                           type="button"
                           onClick={() => toggleShowKey(providerId)}
-                          className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                          className="absolute right-2 top-2 text-muted-foreground/70 hover:text-muted-foreground p-0.5"
                         >
                           <HugeiconsIcon icon={showKeys[providerId] ? ViewOffSlashIcon : ViewIcon} size={15} />
                         </button>
@@ -228,21 +228,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   ))}
                 </div>
 
-                <div className="border-t border-neutral-100 pt-5 space-y-5">
+                <div className="border-t border-border/50 pt-5 space-y-5">
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <HugeiconsIcon icon={ZapIcon} size={16} />
                       Model Mode
                     </label>
                     <select
-                      className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+                      className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
                       value={modelMode}
                       onChange={(e) => setModelMode(e.target.value as typeof modelMode)}
                     >
                       <option value={MODEL_MODES.fixed}>Fixed selected model</option>
                       <option value={MODEL_MODES.rotate}>Auto rotate models</option>
                     </select>
-                    <p className="text-xs text-neutral-500">
+                    <p className="text-xs text-muted-foreground">
                       Auto rotate cycles through every available model in the active chat session.
                     </p>
                   </div>
@@ -254,7 +254,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </label>
                     <div className="relative">
                       <div
-                        className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 flex items-center cursor-pointer"
+                        className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 flex items-center cursor-pointer"
                         onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
                       >
                         <span className="flex-1 truncate">
@@ -262,7 +262,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             ? `${getModelDefinition(selectedModel)!.label} (${PROVIDER_LABELS[getModelDefinition(selectedModel)!.provider] || getModelDefinition(selectedModel)!.provider})`
                             : selectedModel}
                         </span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400 shrink-0">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground/70 shrink-0">
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
                       </div>
@@ -272,8 +272,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             {MODELS.map((model) => (
                               <button
                                 key={model.id}
-                                className={`w-full px-3 py-2 text-sm text-left hover:bg-neutral-50 transition-colors flex items-center gap-2 ${
-                                  selectedModel === model.id ? 'bg-neutral-100 font-medium' : ''
+                                className={`w-full px-3 py-2 text-sm text-left hover:bg-muted transition-colors flex items-center gap-2 ${
+                                  selectedModel === model.id ? 'bg-muted font-medium' : ''
                                 }`}
                                 onClick={() => {
                                   setSelectedModel(model.id as typeof selectedModel);
@@ -281,7 +281,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                 }}
                               >
                                 <span className="flex-1 truncate">{model.label}</span>
-                                <span className="text-[11px] text-neutral-400 shrink-0">{PROVIDER_LABELS[model.provider] || model.provider}</span>
+                                <span className="text-[11px] text-muted-foreground/70 shrink-0">{PROVIDER_LABELS[model.provider] || model.provider}</span>
                               </button>
                             ))}
                           </div>
@@ -309,11 +309,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {activeTab === 'web-search' && (
               <div className="space-y-5">
                 {!searchKeysLoaded ? (
-                  <div className="flex items-center justify-center py-12 text-neutral-400 text-sm">Loading...</div>
+                  <div className="flex items-center justify-center py-12 text-muted-foreground/70 text-sm">Loading...</div>
                 ) : (
                   <>
                     <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                      <p className="text-xs text-blue-700 leading-relaxed">
+                      <p className="text-xs text-info leading-relaxed">
                         Configure web search providers. API keys are stored securely in the local database.
                         At minimum, set a <strong>Search Provider</strong> (Tavily recommended) for web search.
                         <strong>Google Custom Search</strong> handles image search;
@@ -324,7 +324,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <div className="flex flex-col gap-2">
                       <label className="text-sm font-semibold text-foreground">Search Provider</label>
                       <select
-                        className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+                        className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
                         value={searchConfig['search-provider'] || 'tavily'}
                         onChange={(e) => setSearchConfig(p => ({ ...p, 'search-provider': e.target.value }))}
                       >
@@ -333,16 +333,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <option value="firecrawl">Firecrawl</option>
                         <option value="google">Google Custom Search</option>
                       </select>
-                      <p className="text-xs text-neutral-500">Provider used for general web search.</p>
+                      <p className="text-xs text-muted-foreground">Provider used for general web search.</p>
                     </div>
 
-                    <div className="border-t border-neutral-100 pt-4 space-y-4">
+                    <div className="border-t border-border/50 pt-4 space-y-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[12px] font-medium text-neutral-600 ml-1">Tavily API Key</label>
+                        <label className="text-[12px] font-medium text-muted-foreground ml-1">Tavily API Key</label>
                         <div className="relative">
                           <input
                           type={showSearchKeys['tavily'] ? 'text' : 'password'}
-                             className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                             className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                              placeholder={searchConfig['search-api-key'] ? '••••••••••••••••' : 'Enter Tavily API Key'}
                              value={searchConfig['search-api-key'] || ''}
                              onChange={(e) => setSearchConfig(p => ({ ...p, 'search-api-key': e.target.value }))}
@@ -350,20 +350,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                            <button
                              type="button"
                              onClick={() => setShowSearchKeys(p => ({ ...p, tavily: !p.tavily }))}
-                             className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                             className="absolute right-2 top-2 text-muted-foreground/70 hover:text-muted-foreground p-0.5"
                            >
                              <HugeiconsIcon icon={showSearchKeys['tavily'] ? ViewOffSlashIcon : ViewIcon} size={15} />
                           </button>
                         </div>
-                        <p className="text-xs text-neutral-400">Get a free key at <span className="font-mono">tavily.com</span></p>
+                        <p className="text-xs text-muted-foreground/70">Get a free key at <span className="font-mono">tavily.com</span></p>
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[12px] font-medium text-neutral-600 ml-1">Exa API Key <span className="text-neutral-400">(for news search)</span></label>
+                        <label className="text-[12px] font-medium text-muted-foreground ml-1">Exa API Key <span className="text-muted-foreground/70">(for news search)</span></label>
                         <div className="relative">
                           <input
                             type={showSearchKeys['exa'] ? 'text' : 'password'}
-                            className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                            className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                             placeholder={searchConfig['search-exa-api-key'] ? '••••••••••••••••' : 'Enter Exa API Key'}
                             value={searchConfig['search-exa-api-key'] || ''}
                             onChange={(e) => setSearchConfig(p => ({ ...p, 'search-exa-api-key': e.target.value }))}
@@ -371,20 +371,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           <button
                             type="button"
                             onClick={() => setShowSearchKeys(p => ({ ...p, exa: !p.exa }))}
-                            className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                            className="absolute right-2 top-2 text-muted-foreground/70 hover:text-muted-foreground p-0.5"
                           >
                             <HugeiconsIcon icon={showSearchKeys['exa'] ? ViewOffSlashIcon : ViewIcon} size={15} />
                           </button>
                         </div>
-                        <p className="text-xs text-neutral-400">1,000 free queries/mo at <span className="font-mono">exa.ai</span>. Used for news search (falls back to Tavily).</p>
+                        <p className="text-xs text-muted-foreground/70">1,000 free queries/mo at <span className="font-mono">exa.ai</span>. Used for news search (falls back to Tavily).</p>
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[12px] font-medium text-neutral-600 ml-1">Firecrawl API Key <span className="text-neutral-400">(for page scraping)</span></label>
+                        <label className="text-[12px] font-medium text-muted-foreground ml-1">Firecrawl API Key <span className="text-muted-foreground/70">(for page scraping)</span></label>
                         <div className="relative">
                           <input
                             type={showSearchKeys['firecrawl'] ? 'text' : 'password'}
-                             className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                             className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                              placeholder={searchConfig['search-firecrawl-api-key'] ? '••••••••••••••••' : 'Enter Firecrawl API Key'}
                              value={searchConfig['search-firecrawl-api-key'] || ''}
                              onChange={(e) => setSearchConfig(p => ({ ...p, 'search-firecrawl-api-key': e.target.value }))}
@@ -392,31 +392,31 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                            <button
                              type="button"
                              onClick={() => setShowSearchKeys(p => ({ ...p, firecrawl: !p.firecrawl }))}
-                             className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                             className="absolute right-2 top-2 text-muted-foreground/70 hover:text-muted-foreground p-0.5"
                            >
                              <HugeiconsIcon icon={showSearchKeys['firecrawl'] ? ViewOffSlashIcon : ViewIcon} size={15} />
                           </button>
                         </div>
-                        <p className="text-xs text-neutral-400">Best for fetching full page content. Get a key at <span className="font-mono">firecrawl.dev</span></p>
+                        <p className="text-xs text-muted-foreground/70">Best for fetching full page content. Get a key at <span className="font-mono">firecrawl.dev</span></p>
                       </div>
 
 
 
-                      <div className="border-t border-neutral-100 pt-4">
+                      <div className="border-t border-border/50 pt-4">
                         <details className="group">
-                          <summary className="text-sm font-medium text-neutral-600 cursor-pointer hover:text-card-foreground list-none flex items-center gap-2">
+                          <summary className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-card-foreground list-none flex items-center gap-2">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-90">
                               <polyline points="9 18 15 12 9 6" />
                             </svg>
-                            Google Custom Search <span className="text-neutral-400 font-normal">(fallback)</span>
+                            Google Custom Search <span className="text-muted-foreground/70 font-normal">(fallback)</span>
                           </summary>
                           <div className="mt-3 space-y-3 pl-4">
                             <div className="flex flex-col gap-1.5">
-                              <label className="text-[12px] font-medium text-neutral-600 ml-1">Google API Key</label>
+                              <label className="text-[12px] font-medium text-muted-foreground ml-1">Google API Key</label>
                               <div className="relative">
                                 <input
                                   type={showSearchKeys['google'] ? 'text' : 'password'}
-                                   className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                                   className="h-9 bg-muted rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                                    placeholder={searchConfig['search-google-api-key'] ? '••••••••••••••••' : 'Enter Google API Key'}
                                    value={searchConfig['search-google-api-key'] || ''}
                                    onChange={(e) => setSearchConfig(p => ({ ...p, 'search-google-api-key': e.target.value }))}
@@ -424,17 +424,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                  <button
                                    type="button"
                                    onClick={() => setShowSearchKeys(p => ({ ...p, google: !p.google }))}
-                                   className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                                   className="absolute right-2 top-2 text-muted-foreground/70 hover:text-muted-foreground p-0.5"
                                  >
                                    <HugeiconsIcon icon={showSearchKeys['google'] ? ViewOffSlashIcon : ViewIcon} size={15} />
                                 </button>
                               </div>
                             </div>
                             <div className="flex flex-col gap-1.5">
-                              <label className="text-[12px] font-medium text-neutral-600 ml-1">CX (Engine ID)</label>
+                              <label className="text-[12px] font-medium text-muted-foreground ml-1">CX (Engine ID)</label>
                               <input
                                 type="text"
-                                className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-3 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                                className="h-9 bg-muted rounded-[8px] pl-3 pr-3 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                                 placeholder={searchConfig['search-google-cx'] ? '••••••••••••••••' : 'Enter CX (Engine ID)'}
                                 value={searchConfig['search-google-cx'] || ''}
                                 onChange={(e) => setSearchConfig(p => ({ ...p, 'search-google-cx': e.target.value }))}
@@ -445,7 +445,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-2 border-t border-neutral-100">
+                    <div className="flex justify-end pt-2 border-t border-border/50">
                       <button
                         onClick={async () => {
                           setIsSaving(true);
@@ -476,7 +476,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-semibold text-foreground">Sidebar on Startup</label>
                   <select
-                    className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+                    className="h-10 bg-muted rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
                     defaultValue={localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true' ? 'collapsed' : 'expanded'}
                     onChange={(e) => {
                       localStorage.setItem(SIDEBAR_STORAGE_KEY, String(e.target.value === 'collapsed'));
@@ -485,7 +485,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <option value="expanded">Expanded</option>
                     <option value="collapsed">Collapsed</option>
                   </select>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     Changes apply immediately on next load.
                   </p>
                 </div>
@@ -502,7 +502,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-sm font-semibold text-foreground">Enable Thinking by Default</label>
-                    <p className="text-xs text-neutral-500 mt-0.5">Show reasoning traces on supported models.</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Show reasoning traces on supported models.</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -520,7 +520,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-sm font-semibold text-foreground">Auto-create Artifacts</label>
-                    <p className="text-xs text-neutral-500 mt-0.5">Automatically preview UI code as artifacts.</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Automatically preview UI code as artifacts.</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -539,9 +539,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             {activeTab === 'storage' && (
               <div className="space-y-6">
-                <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100">
+                <div className="bg-muted p-4 rounded-xl border border-border/50">
                   <h4 className="text-sm font-semibold text-foreground mb-2">Local Database</h4>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     Your projects, chats, and messages are stored locally in SQLite. This data never leaves your machine.
                   </p>
                 </div>
@@ -563,7 +563,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       a.click();
                       URL.revokeObjectURL(url);
                     }}
-                    className="w-full px-4 py-2.5 text-sm font-semibold text-foreground bg-neutral-100 hover:bg-neutral-200 rounded-[10px] transition-colors text-left"
+                    className="w-full px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-neutral-200 rounded-[10px] transition-colors text-left"
                   >
                     Export All Data
                   </button>
@@ -588,7 +588,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         localStorage.removeItem('onboarding_completed');
                       }
                     }}
-                    className="w-full px-4 py-2.5 text-sm font-semibold text-foreground bg-neutral-100 hover:bg-neutral-200 rounded-[10px] transition-colors text-left"
+                    className="w-full px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-neutral-200 rounded-[10px] transition-colors text-left"
                   >
                     Reset Onboarding
                   </button>
@@ -628,11 +628,11 @@ function ThemeToggle() {
     <div className="flex items-center justify-between">
       <div>
         <label className="text-sm font-semibold text-foreground">Appearance</label>
-        <p className="text-xs text-neutral-500 mt-0.5">Switch between light and dark theme.</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Switch between light and dark theme.</p>
       </div>
       <button
         onClick={toggle}
-        className="relative w-16 h-8 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors flex items-center px-1"
+        className="relative w-16 h-8 rounded-full border border-neutral-200 bg-muted hover:bg-muted transition-colors flex items-center px-1"
       >
         <div
           className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
@@ -678,9 +678,9 @@ function ZoomControl() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-[10px] text-sm border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 rounded-[10px] text-sm border border-neutral-200 bg-muted hover:bg-muted transition-colors"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-neutral-500">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-muted-foreground">
           <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.2" />
           <path d="M9 9L12.5 12.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           <path d="M6 4V8M4 6H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -690,7 +690,7 @@ function ZoomControl() {
 
       {isOpen && (
         <div className="absolute left-0 top-full mt-1 w-44 bg-background border border-neutral-200 rounded-xl shadow-xl py-2 z-50">
-          <div className="px-4 py-1.5 text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
+          <div className="px-4 py-1.5 text-[11px] font-bold text-muted-foreground/70 uppercase tracking-widest">
             Zoom
           </div>
           <div className="px-2 py-1 flex flex-col gap-0.5">
@@ -703,21 +703,21 @@ function ZoomControl() {
                 }}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                   zoom === level
-                    ? 'bg-neutral-100 text-foreground font-medium'
-                    : 'text-neutral-600 hover:bg-neutral-50 hover:text-foreground'
+                    ? 'bg-muted text-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
                 {Math.round(level * 100)}%
               </button>
             ))}
           </div>
-          <div className="border-t border-neutral-100 mt-1 pt-1 px-2">
+          <div className="border-t border-border/50 mt-1 pt-1 px-2">
             <button
               onClick={() => {
                 resetZoom();
                 setIsOpen(false);
               }}
-              className="w-full text-left px-3 py-2 rounded-lg text-xs text-neutral-500 hover:bg-neutral-50 hover:text-foreground transition-colors"
+              className="w-full text-left px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
               Reset to 100%
             </button>

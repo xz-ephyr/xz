@@ -22,7 +22,7 @@ export default function ChatsList({ collapsed }: { collapsed: boolean }) {
         <Link
           key={chat.id}
           to={`/chat/${chat.id}`}
-          className="block px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-[#f2f3f6] dark:hover:bg-[#1a1a18] rounded-[6px] truncate"
+          className="block px-4 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent rounded-[6px] truncate"
         >
           {chat.title}
         </Link>

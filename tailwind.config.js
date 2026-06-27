@@ -36,6 +36,11 @@ module.exports = {
         },
         destructive: {
           DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        info: {
+          DEFAULT: "var(--info)",
+          foreground: "var(--info-foreground)",
         },
         border: "var(--border)",
         input: "var(--input)",
