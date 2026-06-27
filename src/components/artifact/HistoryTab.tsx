@@ -38,7 +38,7 @@ export function HistoryTab({ artifact, onRollback }: HistoryTabProps) {
           className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 border border-transparent hover:border-border transition-all"
         >
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">v{version.version}</span>
+            <span className="text-sm font-medium text-muted-foreground">v{version.version}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">
@@ -46,7 +46,7 @@ export function HistoryTab({ artifact, onRollback }: HistoryTabProps) {
             </span>
             <button
               onClick={() => onRollback(artifact.identifier, version.version)}
-              className="px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors"
+              className="px-2.5 py-1 text-xs font-medium text-muted-foreground bg-muted rounded-md hover:bg-accent transition-colors"
             >
               Restore
             </button>
