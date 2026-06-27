@@ -113,33 +113,33 @@ export function ArtifactPanel({
 
   return (
     <div
-      className="flex flex-col h-full bg-white dark:bg-[#1a1a1a] border-l border-neutral-200 dark:border-neutral-700"
+      className="flex flex-col h-full bg-card border-l border-border"
       style={{ width: '100%', minWidth: 0 }}
       onKeyDown={handleKeyDown}
       tabIndex={-1}
     >
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider shrink-0">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider shrink-0">
             {ARTIFACT_TYPE_LABELS[activeArtifact.type]}
           </span>
-          <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
+          <span className="text-sm font-medium text-foreground truncate">
             {activeArtifact.title}
           </span>
           {artifacts.length > 1 && (
-            <span className="text-xs text-neutral-400 dark:text-neutral-500 shrink-0">
+            <span className="text-xs text-muted-foreground shrink-0">
               {currentIndex + 1}/{artifacts.length}
             </span>
           )}
         </div>
         <div className="flex items-center gap-1">
-          <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 mr-2">
+          <div className="flex items-center bg-muted rounded-lg p-0.5 mr-2">
             <button
               onClick={() => setActiveTab('preview')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 activeTab === 'preview'
-                  ? 'bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 shadow-sm'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+                  ? 'bg-background dark:bg-accent text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Preview
@@ -148,8 +148,8 @@ export function ArtifactPanel({
               onClick={() => setActiveTab('code')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 activeTab === 'code'
-                  ? 'bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 shadow-sm'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+                  ? 'bg-background dark:bg-accent text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Code
@@ -157,25 +157,25 @@ export function ArtifactPanel({
           </div>
           <button
             onClick={handleCopy}
-            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             title="Copy artifact content"
           >
             <HugeiconsIcon icon={Copy01Icon} size={16} />
           </button>
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             title="Download artifact"
           >
             <DownloadIcon />
           </button>
-          <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
+          <div className="w-px h-4 bg-border mx-1" />
           {artifacts.length > 1 && (
             <div className="flex items-center gap-1 mr-1">
               <button
                 onClick={handlePrevious}
                 disabled={currentIndex <= 0}
-                className="p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed text-neutral-500 dark:text-neutral-400"
+                className="p-1 rounded-md hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed text-muted-foreground"
                 title="Previous artifact"
               >
                 <ChevronLeftIcon />
@@ -183,7 +183,7 @@ export function ArtifactPanel({
               <button
                 onClick={handleNext}
                 disabled={currentIndex >= artifacts.length - 1}
-                className="p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed text-neutral-500 dark:text-neutral-400"
+                className="p-1 rounded-md hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed text-muted-foreground"
                 title="Next artifact"
               >
                 <ChevronRightIcon />
@@ -192,7 +192,7 @@ export function ArtifactPanel({
           )}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             title="Close artifact panel (Esc)"
           >
             <CloseIcon />

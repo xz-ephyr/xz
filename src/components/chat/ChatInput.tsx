@@ -30,7 +30,7 @@ function PlusDropdown({
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-neutral-200/60 dark:hover:bg-neutral-700/60 transition-colors text-black dark:text-white"
+        className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-accent/60 transition-colors text-foreground"
         aria-label="Add content or toggle settings"
         title="Add content or toggle settings"
       >
@@ -39,12 +39,12 @@ function PlusDropdown({
 
       {isOpen && (
         <div
-          className={`absolute ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 w-48 bg-white dark:bg-[#111110] border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg dark:shadow-black/20 py-1 z-50`}
+          className={`absolute ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 w-48 bg-background border border-border rounded-lg shadow-lg py-1 z-50`}
         >
           <button
             type="button"
             onClick={() => { onToggleThinking(); onToggle(); }}
-            className="w-full text-left px-4 py-2 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 flex items-center justify-between"
+            className="w-full text-left px-4 py-2 text-xs hover:bg-muted text-foreground flex items-center justify-between"
             aria-label="Toggle thinking mode"
           >
             <span className="flex items-center gap-2"><HugeiconsIcon icon={Idea01Icon} size={14} /> Thinking Mode</span>
@@ -141,12 +141,12 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
         /* ── IDLE STATE ── */
         <div className="relative">
           <div
-            className="absolute inset-x-0 top-0 rounded-[12px] bg-[#d1d2d6] dark:bg-[#3a3a38] border border-neutral-200/60 dark:border-neutral-700/60 shadow-sm"
+            className="absolute inset-x-0 top-0 rounded-[12px] bg-accent border border-border/60 shadow-sm"
             style={{ bottom: '-43px' }}
             aria-hidden="true"
           />
 
-          <div className="bg-[#fafafa] dark:bg-[#1a1a18] rounded-[12px] transition-all relative z-10 border border-neutral-200/60 dark:border-neutral-700/60">
+          <div className="bg-card rounded-[12px] transition-all relative z-10 border border-border/60">
             <ThinScrollbar className="max-h-[145px]">
               <textarea
                 ref={textareaRef}
@@ -176,7 +176,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
         </div>
       ) : (
         /* ── ACTIVE STATE ── */
-        <div className="bg-[#f2f3f6] dark:bg-[#1a1a18] rounded-[12px] transition-all relative z-10 border border-neutral-200/60 dark:border-neutral-700/60 shadow-sm">
+        <div className="bg-muted rounded-[12px] transition-all relative z-10 border border-border/60 shadow-sm">
           <ThinScrollbar className="max-h-[145px]">
             <textarea
               ref={textareaRef}

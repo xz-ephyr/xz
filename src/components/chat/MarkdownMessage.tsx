@@ -10,7 +10,7 @@ interface MarkdownMessageProps {
 export function MarkdownMessage({ content }: MarkdownMessageProps) {
   const sanitized = content.replace(/<br\s*\/?>/gi, '\n');
   return (
-    <div className="text-[15px] leading-relaxed break-words text-neutral-900 dark:text-neutral-100">
+    <div className="text-[15px] leading-relaxed break-words text-foreground">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -31,7 +31,7 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
             }
             return (
               <code
-                className="rounded bg-neutral-100/80 dark:bg-neutral-800/80 border border-neutral-200/50 dark:border-neutral-700/50 px-1.5 py-0.5 text-[0.85em] text-neutral-800 dark:text-neutral-200 font-mono"
+                className="rounded bg-muted/80 border border-border/50 px-1.5 py-0.5 text-[0.85em] text-foreground font-mono"
                 {...props}
               >
                 {children}
@@ -52,18 +52,18 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
           },
           h1({ children }) {
             return (
-              <h1 className="text-2xl font-semibold mb-4 mt-6 text-neutral-900 dark:text-neutral-100">{children}</h1>
+              <h1 className="text-2xl font-semibold mb-4 mt-6 text-foreground">{children}</h1>
             );
           },
           h2({ children }) {
-            return <h2 className="text-xl font-semibold mb-3 mt-5 text-neutral-900 dark:text-neutral-100">{children}</h2>;
+            return <h2 className="text-xl font-semibold mb-3 mt-5 text-foreground">{children}</h2>;
           },
           h3({ children }) {
-            return <h3 className="text-lg font-semibold mb-3 mt-4 text-neutral-900 dark:text-neutral-100">{children}</h3>;
+            return <h3 className="text-lg font-semibold mb-3 mt-4 text-foreground">{children}</h3>;
           },
           h4({ children }) {
             return (
-              <h4 className="text-base font-semibold mb-2 mt-4 text-neutral-900 dark:text-neutral-100">{children}</h4>
+              <h4 className="text-base font-semibold mb-2 mt-4 text-foreground">{children}</h4>
             );
           },
           table({ children, ...props }) {
@@ -86,7 +86,7 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
           },
           blockquote({ children }) {
             return (
-              <blockquote className="border-l-4 border-neutral-300 dark:border-neutral-600 pl-4 py-1 italic text-neutral-600 dark:text-neutral-400 mb-4 bg-neutral-50/50 dark:bg-neutral-900/50 rounded-r-lg">
+              <blockquote className="border-l-4 border-border pl-4 py-1 italic text-muted-foreground mb-4 bg-muted/50 rounded-r-lg">
                 {children}
               </blockquote>
             );
@@ -104,7 +104,7 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
             );
           },
           hr() {
-            return <hr className="my-6 border-neutral-200 dark:border-neutral-700" />;
+            return <hr className="my-6 border-border" />;
           },
         }}
       >
