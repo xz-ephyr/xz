@@ -71,6 +71,14 @@ export async function migrate() {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS search_cache (
+      cache_key TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      tool TEXT NOT NULL,
+      results TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
   `);
   console.log('Migration complete');
 }

@@ -62,24 +62,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [searchConfig, setSearchConfig] = useState<Record<string, string>>({});
-  const [searchConfigLoading, setSearchConfigLoading] = useState(true);
+  const [searchKeysLoaded, setSearchKeysLoaded] = useState(false);
   const [showSearchKeys, setShowSearchKeys] = useState<Record<string, boolean>>({});
   const { confirmAsync } = useToast();
 
   useEffect(() => {
-    if (activeTab === 'web-search') {
-      setSearchConfigLoading(true);
-      const keys = ['search-provider', 'search-api-key', 'search-firecrawl-api-key', 'search-brave-api-key', 'search-google-api-key', 'search-google-cx'];
-      Promise.all(keys.map(k => DatabaseService.getConfig(k).then(v => ({ key: k, value: v || '' }))))
-        .then((entries) => {
-          const map: Record<string, string> = {};
-          entries.forEach(e => { map[e.key] = e.value; });
-          setSearchConfig(map);
-          setSearchConfigLoading(false);
-        })
-        .catch(() => setSearchConfigLoading(false));
-    }
-  }, [activeTab]);
+    if (activeTab !== 'web-search') return;
+    if (searchKeysLoaded) return;
+    const keys = ['search-provider', 'search-api-key', 'search-firecrawl-api-key', 'search-brave-api-key', 'search-google-api-key', 'search-google-cx'];
+    Promise.all(keys.map(k => DatabaseService.getConfig(k).then(v => ({ key: k, value: v || '' }))))
+      .then((entries) => {
+        const map: Record<string, string> = {};
+        entries.forEach(e => { map[e.key] = e.value; });
+        setSearchConfig(map);
+        setSearchKeysLoaded(true);
+      })
+      .catch(() => setSearchKeysLoaded(true));
+  }, [activeTab, searchKeysLoaded]);
 
   const toggleShowKey = (provider: string) => {
     setShowKeys(prev => ({ ...prev, [provider]: !prev[provider] }));
@@ -309,7 +308,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             {activeTab === 'web-search' && (
               <div className="space-y-5">
-                {searchConfigLoading ? (
+                {!searchKeysLoaded ? (
                   <div className="flex items-center justify-center py-12 text-neutral-400 text-sm">Loading...</div>
                 ) : (
                   <>

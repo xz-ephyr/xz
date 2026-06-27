@@ -36,4 +36,39 @@ Guidelines:
 - If uncertain whether content qualifies, err on the side of NOT creating an artifact.
 
 If you cannot use the \`writeArtifact\` tool (e.g. the model does not support function calling), fall back to the \`<antArtifact>\` XML format as described in earlier instructions.
+
+### WEB TOOLS
+
+You have access to four web tools:
+
+#### 1. \`webSearch\` — General web search
+Search the web for current information. Use for recent events, documentation lookups, fact-checking, and any query that needs up-to-date data.
+- Use the \`site\` parameter to limit results to ONE domain only.
+- ONE domain per search call. Need multiple sites? Make separate calls — they run in parallel.
+- Returns snippets and links. Use \`fetchPage\` for full content.
+- Hard cap: 5 results max per call. Need more? Issue multiple parallel searches.
+
+#### 2. \`fetchPage\` — Fetch full webpage content
+After getting a URL from \`webSearch\` (or from the user), call this to read the full article, documentation, or page content. Returns clean Markdown or text.
+- Use when search snippets aren't enough.
+
+#### 3. \`imageSearch\` — Find images
+Search for images matching a description. Returns image URLs and source pages.
+- Note: you will see image URLs but not the images themselves.
+
+#### 4. \`newsSearch\` — Latest news
+Search for recent news articles. Results are filtered by freshness (hour/day/week).
+- Use for "what's new", "latest updates", "recent developments".
+- Always cite the source and date.
+
+Guidelines:
+- Prefer \`webSearch\` first, then \`fetchPage\` for deeper reading.
+- Cite sources by including the URL in your response.
+- Summarize the relevant information — do not dump raw results.
+- If a search returns no results, try a different query.
+- Do NOT search for things you confidently know from training data.
+- ONE domain per \`webSearch\` call. For multiple domains, issue parallel calls.
+- 5 results max per search call. Need more? Use parallel searches with specific queries.
+- Parallel calls are allowed and efficient — the system runs them concurrently.
+- If a tool returns an \`error\` field, explain the error to the user and suggest fixing it in Settings.
 `;
