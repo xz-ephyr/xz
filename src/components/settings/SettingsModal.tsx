@@ -315,7 +315,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                       <p className="text-xs text-blue-700 leading-relaxed">
                         Configure web search providers. API keys are stored securely in the local database.
-                        At minimum, configure a Search Provider to enable web search, or <strong>Brave Search</strong> for image and news search.
+                        At minimum, set a <strong>Search Provider</strong> (Tavily recommended) for web search.
+                        <strong>Google Custom Search</strong> handles image search; <strong>Tavily</strong> handles news search.
+                        Brave is a fallback if neither is configured.
                       </p>
                     </div>
 
@@ -378,7 +380,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[12px] font-medium text-neutral-600 ml-1">Brave Search API Key <span className="text-neutral-400">(for images + news)</span></label>
+                        <label className="text-[12px] font-medium text-neutral-600 ml-1">Brave Search API Key <span className="text-neutral-400">(fallback for images + news)</span></label>
                         <div className="relative">
                           <input
                             type={showSearchKeys['brave'] ? 'text' : 'password'}
@@ -395,7 +397,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                              <HugeiconsIcon icon={showSearchKeys['brave'] ? ViewOffSlashIcon : ViewIcon} size={15} />
                           </button>
                         </div>
-                        <p className="text-xs text-neutral-400">Required for image and news search. Free tier: 2,000 queries/mo at <span className="font-mono">brave.com/search</span></p>
+                        <p className="text-xs text-neutral-400">Fallback if Google/Tavily not configured. Get a key at <span className="font-mono">brave.com/search</span></p>
                       </div>
 
                       <div className="border-t border-neutral-100 pt-4">
