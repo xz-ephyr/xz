@@ -9,7 +9,9 @@ import { MermaidPreview } from './MermaidPreview';
 import { SvgPreview } from './SvgPreview';
 import { HtmlPreview } from './HtmlPreview';
 import { ReactPreview } from './ReactPreview';
-import { CloseIcon, CopyIcon, DownloadIcon } from './icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Copy01Icon } from '@hugeicons/core-free-icons';
+import { CloseIcon, DownloadIcon } from './icons';
 
 interface ArtifactPanelProps {
   artifacts: Artifact[];
@@ -158,7 +160,7 @@ export function ArtifactPanel({
             className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
             title="Copy artifact content"
           >
-            <CopyIcon />
+            <HugeiconsIcon icon={Copy01Icon} size={16} />
           </button>
           <button
             onClick={handleDownload}

@@ -24,7 +24,7 @@ export const ThoughtLabel = ({
         className={
           isActivelyThinking
             ? 'thinking-shimmer-text text-base font-medium cursor-pointer'
-            : 'text-base font-medium text-neutral-400 cursor-pointer'
+            : 'text-base font-medium text-neutral-400 dark:text-neutral-500 cursor-pointer'
         }
       >
         {label}
