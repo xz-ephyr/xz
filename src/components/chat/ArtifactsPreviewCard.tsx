@@ -46,7 +46,7 @@ export function ArtifactsPreviewCard({ artifact, onClick }: ArtifactsPreviewCard
           e.stopPropagation();
           handleDownload();
         }}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-muted text-muted-foreground hover:bg-accent active:bg-accent active:scale-95 transition-all"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-muted text-muted-foreground hover:bg-accent active:bg-neutral-300 dark:active:bg-neutral-600 active:scale-95 transition-all"
       >
         <HugeiconsIcon icon={Download01Icon} size={16} />
         Download

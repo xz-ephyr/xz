@@ -67,7 +67,7 @@ function ThinkingPill({
     <button
       type="button"
       onClick={onToggleThinking}
-      className={`group flex items-center gap-2 bg-info/20 text-info-foreground ${size === 'normal' ? 'px-4 py-1.5 text-sm' : 'px-3 py-1 text-xs'} rounded-full font-medium cursor-pointer transition-all active:scale-95`}
+      className={`group flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 ${size === 'normal' ? 'px-4 py-1.5 text-sm' : 'px-3 py-1 text-xs'} rounded-full font-medium cursor-pointer transition-all active:scale-95`}
       aria-label="Disable thinking mode"
       title="Disable thinking mode"
     >
@@ -97,7 +97,7 @@ function SendButton({
       type="button"
       onClick={isLoading ? onStop : onSend}
       disabled={!hasValue && !isLoading}
-      className="p-1.5 text-background rounded-full bg-foreground disabled:opacity-50 transition-opacity hover:opacity-90 active:scale-95"
+      className="p-1.5 text-white dark:text-black rounded-full bg-black dark:bg-white disabled:opacity-50 transition-opacity hover:opacity-90 active:scale-95"
       aria-label={label}
       title={label}
     >
