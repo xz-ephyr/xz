@@ -102,10 +102,11 @@ export const webSearchTool = tool({
   description: 'Search the web for current information. Use when you need up-to-date data, recent news, documentation, or facts beyond your training cutoff. ONE domain per search.',
   parameters: z.object({
     query: z.string().describe('The search query. Be specific and concise. Supports site:example.com to limit to ONE domain. Do NOT include multiple site: operators.'),
-    maxResults: z.number().optional().default(5).describe('Maximum number of search results (1–10).'),
+    maxResults: z.number().optional().default(5).describe('Number of results (1–5). Hard cap: 5 per search.'),
   }),
   execute: async ({ query, maxResults }) => {
-    // Calls WebSearchService.search(query, maxResults)
+    const capped = Math.min(maxResults ?? 5, 5);
+    // Calls WebSearchService.search(query, capped)
   },
 });
 ```
@@ -132,7 +133,7 @@ export const imageSearchTool = tool({
   description: 'Search the web for images. Returns image URLs, titles, and source pages. Use when the user wants to find pictures, screenshots, diagrams, logos, or visual references.',
   parameters: z.object({
     query: z.string().describe('The image search query. Descriptive terms work best.'),
-    maxResults: z.number().optional().default(5).describe('Maximum number of image results (1–10).'),
+    maxResults: z.number().optional().default(5).describe('Number of image results (1–5). Hard cap: 5 per search.'),
     safeSearch: z.boolean().optional().default(true).describe('Filter out explicit content.'),
   }),
   execute: async ({ query, maxResults, safeSearch }) => {
@@ -148,7 +149,7 @@ export const newsSearchTool = tool({
   description: 'Search for recent news articles. Use when the user asks about current events, recent developments, or time-sensitive topics.',
   parameters: z.object({
     query: z.string().describe('The news search query.'),
-    maxResults: z.number().optional().default(5).describe('Maximum number of news results (1–10).'),
+    maxResults: z.number().optional().default(5).describe('Number of news results (1–5). Hard cap: 5 per search.'),
     freshness: z.enum(['hour', 'day', 'week', 'month']).optional().default('week').describe('How recent the news should be.'),
   }),
   execute: async ({ query, maxResults, freshness }) => {
@@ -436,6 +437,7 @@ fact-checking, and any query that needs up-to-date data.
 - Supports `site:domain.com` syntax to limit results to ONE domain only.
 - ONE domain per search call. Need multiple sites? Make separate calls — they run in parallel.
 - Returns snippets and links. Use `fetchPage` for full content.
+- Hard cap: 5 results max per call. Need more? Issue multiple parallel searches.
 - Recent identical searches are cached (no extra API cost).
 
 #### 2. `fetchPage` — Fetch full webpage content
@@ -461,6 +463,7 @@ Guidelines:
 - If a search returns no results, try a different query.
 - Do NOT search for things you confidently know from training data.
 - ONE domain per `webSearch` call. For multiple domains, issue parallel calls.
+- 5 results max per search call. Need more? Use parallel searches with specific queries.
 - Parallel calls are allowed and efficient — the system runs them concurrently.
 - Identical searches within minutes hit cache — no extra cost.
 ```
@@ -582,6 +585,15 @@ AI waits for both, then responds with a combined answer.
 ### Constraint: ONE domain per search call
 
 Each `webSearch` call can target at most ONE site via the `site` parameter or `site:` operator. If the AI needs information from multiple domains, it must issue separate search calls:
+
+### Constraint: 5 results max per search
+
+Every search tool caps results at **5 per call**. This is enforced at two levels:
+
+1. **Zod schema** — the `maxResults` field accepts 1–5 only
+2. **Service layer** — `Math.min(maxResults, 5)` clamps any out-of-range value
+
+The system prompt instructs the AI accordingly. If the AI needs more than 5 results, it should issue multiple parallel searches with more specific queries.
 
 ```
 ✅ Correct:
