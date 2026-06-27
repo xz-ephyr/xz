@@ -205,17 +205,17 @@ export const ChatsPage = () => {
 
   const handleDelete = useCallback(async (id: string) => {
     await ChatSessionManager.delete(id);
-    refreshChats();
+    await refreshChats();
   }, [refreshChats]);
 
   const handleArchive = useCallback(async (id: string) => {
     await ChatSessionManager.archive(id);
-    refreshChats();
+    await refreshChats();
   }, [refreshChats]);
 
   const handleRename = useCallback(async (id: string, newTitle: string) => {
     await ChatSessionManager.rename(id, newTitle);
-    refreshChats();
+    await refreshChats();
   }, [refreshChats]);
 
   return (
