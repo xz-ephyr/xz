@@ -21,24 +21,24 @@ export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) 
   }, [reasoning]);
 
   return (
-    <div className="py-2 text-sm text-foreground" role="status" aria-live="polite">
+    <div className="py-2 text-sm text-neutral-700 dark:text-neutral-300" role="status" aria-live="polite">
       <button
         type="button"
         onClick={() => setIsExpanded((current) => !current)}
         aria-expanded={isExpanded}
-        className="group flex items-center gap-2.5 rounded-md bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring w-fit transition-opacity hover:opacity-80"
+        className="group flex items-center gap-2.5 rounded-md bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 w-fit transition-opacity hover:opacity-80"
         aria-label={isExpanded ? 'Hide reasoning process' : 'Show reasoning process'}
       >
         <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
            <HugeiconsIcon icon={Idea01Icon} size={14} className="text-blue-600 dark:text-blue-400 animate-pulse" />
         </div>
-        <span className="text-[15px] font-medium text-muted-foreground">
+        <span className="text-[15px] font-medium text-neutral-600 dark:text-neutral-400">
            {label}
         </span>
         <HugeiconsIcon
           icon={ArrowDown01Icon}
           size={14}
-          className={`text-muted-foreground/70 transition-transform duration-300 ${
+          className={`text-neutral-400 dark:text-neutral-500 transition-transform duration-300 ${
             isExpanded ? 'rotate-180' : 'rotate-0'
           }`}
         />
@@ -50,7 +50,7 @@ export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) 
         }`}
       >
         <div className="overflow-hidden">
-          <div className="max-w-[720px] rounded-lg border border-border/60 bg-card px-5 py-4 text-[15px] leading-relaxed text-muted-foreground shadow-sm relative">
+          <div className="max-w-[720px] rounded-lg border border-neutral-200/60 dark:border-neutral-700/60 bg-[#fafafa] dark:bg-[#1a1a18] px-5 py-4 text-[15px] leading-relaxed text-neutral-600 dark:text-neutral-400 shadow-sm dark:shadow-black/10 relative">
             <div className="absolute left-0 top-3 bottom-3 w-0.5 bg-blue-500 rounded-r-full" />
             <div className="h-[45px] overflow-y-auto no-scrollbar thinking-pad-mask relative flex flex-col gap-2 pt-1">
               {reasoning ? (
@@ -62,7 +62,7 @@ export function ThinkingIndicator({ model, reasoning }: ThinkingIndicatorProps) 
               )}
             </div>
             {model && (
-              <p className="mt-3 pt-3 border-t border-border/60 text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider">
+              <p className="mt-3 pt-3 border-t border-neutral-200/60 dark:border-neutral-700/60 text-[11px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
                 Model: {model}
               </p>
             )}
