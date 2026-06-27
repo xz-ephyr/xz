@@ -7,6 +7,7 @@ export default function ChatsList({ collapsed }: { collapsed: boolean }) {
   const [chats, setChats] = useState<ChatSession[]>([]);
 
   useEffect(() => {
+    // This will need to be reactive in a real app
     const loadChats = async () => {
       const allChats = await ChatSessionManager.getAll();
       setChats(allChats);
@@ -22,7 +23,7 @@ export default function ChatsList({ collapsed }: { collapsed: boolean }) {
         <Link
           key={chat.id}
           to={`/chat/${chat.id}`}
-          className="block px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-[#f2f3f6] dark:hover:bg-[#1a1a18] rounded-[6px] truncate"
+          className="block px-4 py-2 text-sm text-gray-600 hover:bg-[#f2f3f6] rounded-[6px] truncate"
         >
           {chat.title}
         </Link>

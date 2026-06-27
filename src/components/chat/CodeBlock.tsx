@@ -64,9 +64,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ content, language }) => {
   };
 
   return (
-    <div className="relative w-full rounded-[6px] overflow-hidden my-4 bg-neutral-50 dark:bg-neutral-900">
+    <div className="relative w-full rounded-[6px] overflow-hidden my-4 bg-neutral-50">
       {language && (
-        <div className="px-4 py-1.5 text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-900">
+        <div className="px-4 py-1.5 text-[11px] uppercase tracking-wide text-neutral-500 bg-neutral-50">
           {language}
         </div>
       )}
@@ -74,8 +74,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ content, language }) => {
         onClick={handleCopy}
         className={`absolute top-1 right-1 p-1.5 rounded-[6px] transition-colors z-10 ${
           copied
-            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-            : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100'
+            ? 'bg-green-100 text-green-700'
+            : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
         }`}
         title="Copy code"
       >

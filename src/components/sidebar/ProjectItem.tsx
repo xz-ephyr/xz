@@ -62,16 +62,16 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
   return (
     <div className="mb-1" onMouseLeave={() => setShowMenu(false)}>
       <div
-        className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] dark:hover:bg-[#1a1a18] rounded-[8px] cursor-pointer group relative"
+        className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer group relative"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <HugeiconRenderer icon={Folder02Icon} />
-        <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 flex-1 truncate">{project.name}</span>
+        <span className="text-sm font-semibold text-gray-700 flex-1 truncate">{project.name}</span>
 
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleNewChat}
-            className="p-1 hover:bg-[#e5e5e5] dark:hover:bg-[#2a2a28] rounded-[6px]"
+            className="p-1 hover:bg-[#e5e5e5] rounded-[6px]"
             title="New Chat"
             aria-label="New Chat"
           >
@@ -82,7 +82,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 hover:bg-[#e5e5e5] dark:hover:bg-[#2a2a28] rounded-[6px]"
+            className="p-1 hover:bg-[#e5e5e5] rounded-[6px]"
             title="Project options"
             aria-label="Project options"
           >
@@ -96,14 +96,14 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
         </div>
 
         {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-[#111110] border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-lg dark:shadow-black/20 py-1 z-50">
+            <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-neutral-200 rounded-xl shadow-lg py-1 z-50">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(project.id);
                   setShowMenu(false);
                 }}
-                className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-[8px] mx-1 flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-[8px] mx-1 flex items-center gap-2"
               >
               <HugeiconRenderer icon={Delete02Icon} size={14} />
               Delete Project
@@ -113,7 +113,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
       </div>
 
       {isExpanded && (
-        <div className="ml-4 border-l border-neutral-200 dark:border-neutral-700 pl-2 mt-1 space-y-1">
+        <div className="ml-4 border-l border-neutral-200 pl-2 mt-1 space-y-1">
           {sessions.map((session) => (
             <div
               key={session.id}
@@ -121,7 +121,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
                 const slug = project.name.toLowerCase().replace(/\s+/g, '-');
                 navigate(`/project/${slug}/${session.id}`);
               }}
-              className={`text-sm p-2 hover:bg-[#f2f3f6] dark:hover:bg-[#1a1a18] rounded-[8px] flex items-center gap-3 group cursor-pointer active:scale-[0.99] transition-transform ${uuid === session.id ? 'bg-[#f2f3f6] dark:bg-[#1a1a18] text-black dark:text-white font-medium' : 'text-neutral-600 dark:text-neutral-400'}`}
+              className={`text-sm p-2 hover:bg-[#f2f3f6] rounded-[8px] flex items-center gap-3 group cursor-pointer active:scale-[0.99] transition-transform ${uuid === session.id ? 'bg-[#f2f3f6] text-black font-medium' : 'text-gray-600'}`}
             >
               <span className="flex-1 truncate">{session.title}</span>
             </div>
