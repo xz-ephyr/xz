@@ -73,8 +73,8 @@ export function HtmlPreview({ content, onError }: HtmlPreviewProps) {
           </button>
         </div>
         <details className="mt-4">
-          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">Show source code</summary>
-          <pre className="mt-2 p-4 bg-muted rounded-lg border border-border text-xs font-mono whitespace-pre-wrap overflow-auto max-h-96 text-foreground">
+          <summary className="text-xs text-neutral-500 dark:text-neutral-400 cursor-pointer hover:text-neutral-700 dark:hover:text-neutral-300">Show source code</summary>
+          <pre className="mt-2 p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs font-mono whitespace-pre-wrap overflow-auto max-h-96 dark:text-neutral-300">
             {content}
           </pre>
         </details>
