@@ -10,7 +10,7 @@ interface MarkdownPreviewProps {
 
 export const MarkdownPreview = memo(function MarkdownPreview({ content }: MarkdownPreviewProps) {
   return (
-    <div className="p-6 text-[15px] leading-relaxed break-words text-neutral-900 dark:text-neutral-300">
+    <div className="p-6 text-[15px] leading-relaxed break-words text-foreground">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
