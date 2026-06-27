@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ViewIcon, ViewOffSlashIcon, Settings02Icon, Key01Icon, ZapIcon, Cancel01Icon,
-  FolderLibraryIcon, GlobeIcon,
+  FolderLibraryIcon, GlobeIcon, AiSearch02Icon,
 } from '@hugeicons/core-free-icons';
+import { DatabaseService } from '../../services/DatabaseService';
 import {
   MODEL_MODE_STORAGE_KEY,
   MODEL_MODES,
@@ -40,6 +41,7 @@ const tabs = [
   { id: 'appearance', label: 'Appearance', icon: ViewIcon },
   { id: 'behavior', label: 'Behavior', icon: ZapIcon },
   { id: 'storage', label: 'Storage', icon: FolderLibraryIcon },
+  { id: 'web-search', label: 'Web & Search', icon: AiSearch02Icon },
 ] as const;
 
 type TabId = (typeof tabs)[number]['id'];
@@ -59,7 +61,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [searchConfig, setSearchConfig] = useState<Record<string, string>>({});
+  const [searchConfigLoading, setSearchConfigLoading] = useState(true);
+  const [showSearchKeys, setShowSearchKeys] = useState<Record<string, boolean>>({});
   const { confirmAsync } = useToast();
+
+  useEffect(() => {
+    if (activeTab === 'web-search') {
+      setSearchConfigLoading(true);
+      const keys = ['search-provider', 'search-api-key', 'search-firecrawl-api-key', 'search-brave-api-key', 'search-google-api-key', 'search-google-cx'];
+      Promise.all(keys.map(k => DatabaseService.getConfig(k).then(v => ({ key: k, value: v || '' }))))
+        .then((entries) => {
+          const map: Record<string, string> = {};
+          entries.forEach(e => { map[e.key] = e.value; });
+          setSearchConfig(map);
+          setSearchConfigLoading(false);
+        })
+        .catch(() => setSearchConfigLoading(false));
+    }
+  }, [activeTab]);
 
   const toggleShowKey = (provider: string) => {
     setShowKeys(prev => ({ ...prev, [provider]: !prev[provider] }));
@@ -153,6 +173,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
                   </label>
                 </div>
+
+                <ThemeToggle />
 
                 <div className="flex items-center justify-between">
                   <div>
@@ -285,6 +307,167 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
 
+            {activeTab === 'web-search' && (
+              <div className="space-y-5">
+                {searchConfigLoading ? (
+                  <div className="flex items-center justify-center py-12 text-neutral-400 text-sm">Loading...</div>
+                ) : (
+                  <>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                      <p className="text-xs text-blue-700 leading-relaxed">
+                        Configure web search providers. API keys are stored securely in the local database.
+                        At minimum, configure a Search Provider to enable web search, or <strong>Brave Search</strong> for image and news search.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-semibold text-neutral-700">Search Provider</label>
+                      <select
+                        className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+                        value={searchConfig['search-provider'] || 'tavily'}
+                        onChange={(e) => setSearchConfig(p => ({ ...p, 'search-provider': e.target.value }))}
+                      >
+                        <option value="tavily">Tavily (Recommended)</option>
+                        <option value="firecrawl">Firecrawl</option>
+                        <option value="brave">Brave Search</option>
+                        <option value="google">Google Custom Search</option>
+                      </select>
+                      <p className="text-xs text-neutral-500">Provider used for general web search.</p>
+                    </div>
+
+                    <div className="border-t border-neutral-100 pt-4 space-y-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[12px] font-medium text-neutral-600 ml-1">Tavily API Key</label>
+                        <div className="relative">
+                          <input
+                          type={showSearchKeys['tavily'] ? 'text' : 'password'}
+                             className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                             placeholder={searchConfig['search-api-key'] ? '••••••••••••••••' : 'Enter Tavily API Key'}
+                             value={searchConfig['search-api-key'] || ''}
+                             onChange={(e) => setSearchConfig(p => ({ ...p, 'search-api-key': e.target.value }))}
+                           />
+                           <button
+                             type="button"
+                             onClick={() => setShowSearchKeys(p => ({ ...p, tavily: !p.tavily }))}
+                             className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                           >
+                             <HugeiconsIcon icon={showSearchKeys['tavily'] ? ViewOffSlashIcon : ViewIcon} size={15} />
+                          </button>
+                        </div>
+                        <p className="text-xs text-neutral-400">Get a free key at <span className="font-mono">tavily.com</span></p>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[12px] font-medium text-neutral-600 ml-1">Firecrawl API Key <span className="text-neutral-400">(for page scraping)</span></label>
+                        <div className="relative">
+                          <input
+                            type={showSearchKeys['firecrawl'] ? 'text' : 'password'}
+                             className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                             placeholder={searchConfig['search-firecrawl-api-key'] ? '••••••••••••••••' : 'Enter Firecrawl API Key'}
+                             value={searchConfig['search-firecrawl-api-key'] || ''}
+                             onChange={(e) => setSearchConfig(p => ({ ...p, 'search-firecrawl-api-key': e.target.value }))}
+                           />
+                           <button
+                             type="button"
+                             onClick={() => setShowSearchKeys(p => ({ ...p, firecrawl: !p.firecrawl }))}
+                             className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                           >
+                             <HugeiconsIcon icon={showSearchKeys['firecrawl'] ? ViewOffSlashIcon : ViewIcon} size={15} />
+                          </button>
+                        </div>
+                        <p className="text-xs text-neutral-400">Best for fetching full page content. Get a key at <span className="font-mono">firecrawl.dev</span></p>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[12px] font-medium text-neutral-600 ml-1">Brave Search API Key <span className="text-neutral-400">(for images + news)</span></label>
+                        <div className="relative">
+                          <input
+                            type={showSearchKeys['brave'] ? 'text' : 'password'}
+                             className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                             placeholder={searchConfig['search-brave-api-key'] ? '••••••••••••••••' : 'Enter Brave API Key'}
+                             value={searchConfig['search-brave-api-key'] || ''}
+                             onChange={(e) => setSearchConfig(p => ({ ...p, 'search-brave-api-key': e.target.value }))}
+                           />
+                           <button
+                             type="button"
+                             onClick={() => setShowSearchKeys(p => ({ ...p, brave: !p.brave }))}
+                             className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                           >
+                             <HugeiconsIcon icon={showSearchKeys['brave'] ? ViewOffSlashIcon : ViewIcon} size={15} />
+                          </button>
+                        </div>
+                        <p className="text-xs text-neutral-400">Required for image and news search. Free tier: 2,000 queries/mo at <span className="font-mono">brave.com/search</span></p>
+                      </div>
+
+                      <div className="border-t border-neutral-100 pt-4">
+                        <details className="group">
+                          <summary className="text-sm font-medium text-neutral-600 cursor-pointer hover:text-neutral-800 list-none flex items-center gap-2">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-90">
+                              <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                            Google Custom Search <span className="text-neutral-400 font-normal">(fallback)</span>
+                          </summary>
+                          <div className="mt-3 space-y-3 pl-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[12px] font-medium text-neutral-600 ml-1">Google API Key</label>
+                              <div className="relative">
+                                <input
+                                  type={showSearchKeys['google'] ? 'text' : 'password'}
+                                   className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                                   placeholder={searchConfig['search-google-api-key'] ? '••••••••••••••••' : 'Enter Google API Key'}
+                                   value={searchConfig['search-google-api-key'] || ''}
+                                   onChange={(e) => setSearchConfig(p => ({ ...p, 'search-google-api-key': e.target.value }))}
+                                 />
+                                 <button
+                                   type="button"
+                                   onClick={() => setShowSearchKeys(p => ({ ...p, google: !p.google }))}
+                                   className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-600 p-0.5"
+                                 >
+                                   <HugeiconsIcon icon={showSearchKeys['google'] ? ViewOffSlashIcon : ViewIcon} size={15} />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[12px] font-medium text-neutral-600 ml-1">CX (Engine ID)</label>
+                              <input
+                                type="text"
+                                className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-3 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                                placeholder={searchConfig['search-google-cx'] ? '••••••••••••••••' : 'Enter CX (Engine ID)'}
+                                value={searchConfig['search-google-cx'] || ''}
+                                onChange={(e) => setSearchConfig(p => ({ ...p, 'search-google-cx': e.target.value }))}
+                              />
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2 border-t border-neutral-100">
+                      <button
+                        onClick={async () => {
+                          setIsSaving(true);
+                          await Promise.all(
+                            Object.entries(searchConfig).map(([key, value]) =>
+                              DatabaseService.setConfig(key, value)
+                            )
+                          );
+                          await new Promise((r) => setTimeout(r, 200));
+                          setIsSaving(false);
+                        }}
+                        disabled={isSaving}
+                        className="mt-4 px-6 py-2 text-sm font-bold text-white bg-black hover:bg-neutral-800 rounded-[10px] transition-all flex items-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98] disabled:opacity-50"
+                      >
+                        {isSaving ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : null}
+                        Save Search Settings
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {activeTab === 'appearance' && (
               <div className="space-y-6">
                 <div className="flex flex-col gap-2">
@@ -412,6 +595,59 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+const THEME_KEY = 'theme';
+
+function ThemeToggle() {
+  const [isDark, setIsDark] = useState(() => {
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored === 'dark') return true;
+    if (stored === 'light') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  const toggle = () => {
+    const next = !isDark;
+    setIsDark(next);
+    if (next) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem(THEME_KEY, 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem(THEME_KEY, 'light');
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <label className="text-sm font-semibold text-neutral-700">Appearance</label>
+        <p className="text-xs text-neutral-500 mt-0.5">Switch between light and dark theme.</p>
+      </div>
+      <button
+        onClick={toggle}
+        className="relative w-16 h-8 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors flex items-center px-1"
+      >
+        <div
+          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
+            isDark ? 'translate-x-8 bg-neutral-700' : 'translate-x-0 bg-amber-400'
+          }`}
+        >
+          {isDark ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5" />
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+          )}
+        </div>
+      </button>
     </div>
   );
 }
