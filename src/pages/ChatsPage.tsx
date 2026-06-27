@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search01Icon,
@@ -16,7 +16,7 @@ import { cn } from '../lib/utils';
 import { useToast } from '../components/ui/Toast';
 import { HugeiconRenderer } from '../components/ui/HugeiconRenderer';
 
-const ChatListItem = ({
+const ChatListItem = React.memo(({
   chat,
   onDelete,
   onArchive,
@@ -155,7 +155,7 @@ const ChatListItem = ({
       </div>
     </div>
   );
-};
+});
 
 export const ChatsPage = () => {
   const [chats, setChats] = useState<ChatSession[]>([]);
@@ -165,12 +165,12 @@ export const ChatsPage = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  const refreshChats = async () => {
+  const refreshChats = useCallback(async () => {
     const allChats = await ChatSessionManager.getAll(sessionType === 'normal' ? null : undefined);
     setChats(allChats.filter(s =>
       sessionType === 'normal' ? !s.projectId : !!s.projectId
     ));
-  };
+  }, [sessionType]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -203,20 +203,20 @@ export const ChatsPage = () => {
       .sort((a, b) => b.createdAt - a.createdAt);
   }, [chats, searchQuery, filter]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     await ChatSessionManager.delete(id);
     refreshChats();
-  };
+  }, [refreshChats]);
 
-  const handleArchive = async (id: string) => {
+  const handleArchive = useCallback(async (id: string) => {
     await ChatSessionManager.archive(id);
     refreshChats();
-  };
+  }, [refreshChats]);
 
-  const handleRename = async (id: string, newTitle: string) => {
+  const handleRename = useCallback(async (id: string, newTitle: string) => {
     await ChatSessionManager.rename(id, newTitle);
     refreshChats();
-  };
+  }, [refreshChats]);
 
   return (
     <div className="flex-1 bg-white overflow-y-auto thin-scrollbar">

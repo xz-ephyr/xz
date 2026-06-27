@@ -1,0 +1,3 @@
+## 2025-05-14 - [Memoization of high-frequency list items]
+**Learning:** In pages like `ChatsPage` where users frequently interact with search inputs and filters, rendering large lists of items (like `ChatListItem`) without memoization leads to significant performance degradation. Even small items can add up when hundreds are present, and recreating function handlers on every render breaks `React.memo` unless `useCallback` is used.
+**Action:** Always wrap list items in `React.memo` and ensure all passed callback props are stabilized with `useCallback` or moved out of the component if possible.
