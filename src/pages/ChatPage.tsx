@@ -682,6 +682,7 @@ export const ChatPage = () => {
                     onToggleThinking={toggleThinking}
                     onCreateProject={handleAddProject}
                     currentProjectName={currentProjectName}
+                    currentModel={currentModel}
                   />
                 </div>
               )}
@@ -710,6 +711,7 @@ export const ChatPage = () => {
                 onToggleThinking={toggleThinking}
                 onCreateProject={handleAddProject}
                 currentProjectName={currentProjectName}
+                currentModel={currentModel}
               />
             </div>
           )}

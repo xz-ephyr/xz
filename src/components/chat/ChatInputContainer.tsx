@@ -14,6 +14,7 @@ interface ChatInputContainerProps {
   onToggleThinking: () => void;
   onCreateProject?: () => void;
   currentProjectName?: string;
+  currentModel?: string;
   children?: ReactNode;
 }
 
@@ -25,6 +26,7 @@ export default function ChatInputContainer({
   onToggleThinking,
   onCreateProject,
   currentProjectName,
+  currentModel,
   children,
 }: ChatInputContainerProps) {
   const [isProjectOpen, setIsProjectOpen] = useState(false);
@@ -126,6 +128,7 @@ export default function ChatInputContainer({
           isLoading={isLoading}
           isThinkingEnabled={isThinkingEnabled}
           onToggleThinking={onToggleThinking}
+          currentModel={currentModel}
         />
       </div>
       {children}

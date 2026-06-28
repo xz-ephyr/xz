@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowUp02Icon, PlusSignIcon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon } from '@hugeicons/core-free-icons';
 import { ThinScrollbar } from '../ui/ThinScrollbar';
+import ModelList from './ModelList';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -10,6 +11,7 @@ interface ChatInputProps {
   isIdle?: boolean;
   isThinkingEnabled: boolean;
   onToggleThinking: () => void;
+  currentModel?: string;
 }
 
 function ToolbarDropdown() {
@@ -103,7 +105,7 @@ function SendButton({
   );
 }
 
-export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled, onToggleThinking }: ChatInputProps) {
+export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled, onToggleThinking, currentModel }: ChatInputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -152,11 +154,14 @@ export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled
         </ThinScrollbar>
 
         <div className="flex flex-col px-3 py-1.5 bg-transparent gap-1">
-          <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-0.5">
               <ToolbarDropdown />
             </div>
-            <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
+            <div className="flex items-center gap-1">
+              {currentModel && <ModelList currentModel={currentModel} />}
+              <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
+            </div>
           </div>
           {isThinkingEnabled && (
             <div className="flex justify-end">
