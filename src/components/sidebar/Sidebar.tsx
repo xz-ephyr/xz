@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   PencilEdit02Icon,
@@ -22,10 +22,17 @@ import { isTauri } from '../../lib/tauri';
 import { useToast } from '../ui/Toast';
 
 
-// Helper component to render Hugeicons in SidebarTabs
 const HugeiconRenderer = ({ icon: Icon, size = 18 }: { icon: any; size?: number }) => (
   <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} />
 );
+
+const newThreadIcon = <HugeiconRenderer icon={PencilEdit02Icon} />;
+const chatsIcon = <HugeiconRenderer icon={FolderLibraryIcon} />;
+const scheduleIcon = <HugeiconRenderer icon={AlarmClockIcon} />;
+const pluginsIcon = <HugeiconRenderer icon={ResourcesAddIcon} />;
+const wikiIcon = <HugeiconRenderer icon={TreePalmIcon} />;
+const downloadIcon = <HugeiconRenderer icon={Download01Icon} />;
+const settingsIcon = <HugeiconRenderer icon={Settings02Icon} />;
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -173,7 +180,7 @@ export default function Sidebar() {
         >
           <>
             <SidebarTab
-              icon={() => <HugeiconRenderer icon={PencilEdit02Icon} />}
+              iconElement={newThreadIcon}
               label="New thread"
               path="/thread/new"
               active={location.pathname === '/thread/new'}
@@ -185,28 +192,28 @@ export default function Sidebar() {
               }}
             />
             <SidebarTab
-              icon={() => <HugeiconRenderer icon={FolderLibraryIcon} />}
+              iconElement={chatsIcon}
               label="Chats"
               path="/chats"
               active={location.pathname === '/chats'}
               collapsed={isCollapsed}
             />
             <SidebarTab
-              icon={() => <HugeiconRenderer icon={AlarmClockIcon} />}
+              iconElement={scheduleIcon}
               label="Schedule"
               path="/schedule"
               active={location.pathname === '/schedule'}
               collapsed={isCollapsed}
             />
             <SidebarTab
-              icon={() => <HugeiconRenderer icon={ResourcesAddIcon} />}
+              iconElement={pluginsIcon}
               label="Plugins"
               path="/plugins"
               active={location.pathname === '/plugins'}
               collapsed={isCollapsed}
             />
             <SidebarTab
-              icon={() => <HugeiconRenderer icon={TreePalmIcon} />}
+              iconElement={wikiIcon}
               label="Wiki"
               path="/wiki"
               active={location.pathname === '/wiki'}
@@ -249,14 +256,14 @@ export default function Sidebar() {
         {/* Bottom section */}
         <div className="p-4 border-t border-[#e5e5e5] shrink-0 flex flex-col gap-1">
           <SidebarTab
-            icon={() => <HugeiconRenderer icon={Download01Icon} />}
+            iconElement={downloadIcon}
             label="Download app"
             path="#"
             onClick={handleDownloadApp}
             collapsed={isCollapsed}
           />
           <SidebarTab
-            icon={() => <HugeiconRenderer icon={Settings02Icon} />}
+            iconElement={settingsIcon}
             label="Settings"
             path="#"
             onClick={() => setIsSettingsOpen(true)}

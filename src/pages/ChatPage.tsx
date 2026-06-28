@@ -327,6 +327,14 @@ export const ChatPage = () => {
     [rawMessages]
   );
 
+  const lastAssistantIndex = useMemo(() => {
+    if (!isLoading) return -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role !== 'user') return i;
+    }
+    return -1;
+  }, [messages, isLoading]);
+
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -538,10 +546,6 @@ export const ChatPage = () => {
             {messages.length > 0 && <div className="h-[8px] bg-white dark:bg-[#111110] w-full shrink-0" />}
             <div className="w-full mx-auto px-4 pb-24" style={{ maxWidth: 'min(880px, 100%)' }}>
               {messages.map((m: any, i: number) => {
-                const isLastAssistant =
-                  m.role !== 'user' &&
-                  isLoading &&
-                  messages.slice(i + 1).every((msg: any) => msg.role !== 'user');
                 const prevUserContent = i > 0 && messages[i - 1]?.role === 'user'
                   ? messages[i - 1]?.content
                   : undefined;
@@ -550,7 +554,7 @@ export const ChatPage = () => {
                     key={m.id || i}
                     message={m}
                     currentModel={currentModel}
-                    isStreaming={isLastAssistant}
+                    isStreaming={i === lastAssistantIndex}
                     prevUserContent={prevUserContent}
                     onOpenArtifact={handleOpenArtifact}
                     onCopy={handleCopyMessage}

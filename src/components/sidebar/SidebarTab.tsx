@@ -1,9 +1,9 @@
-import React, { type ElementType } from 'react';
+import React, { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 
 interface SidebarTabProps {
-  icon: ElementType;
+  iconElement: ReactNode;
   label: string;
   path: string;
   active?: boolean;
@@ -12,7 +12,7 @@ interface SidebarTabProps {
 }
 
 const SidebarTab = React.memo(
-  ({ icon: Icon, label, path, active, collapsed, onClick }: SidebarTabProps) => {
+  ({ iconElement, label, path, active, collapsed, onClick }: SidebarTabProps) => {
     return (
       <Link
         to={path}
@@ -25,7 +25,7 @@ const SidebarTab = React.memo(
         )}
       >
         <div className="shrink-0 flex items-center justify-center w-[18px] h-[18px]">
-          <Icon size={18} strokeWidth={1.5} />
+          {iconElement}
         </div>
         <span
           className={cn(
