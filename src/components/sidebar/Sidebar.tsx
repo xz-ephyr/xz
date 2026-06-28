@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   PencilEdit02Icon,
@@ -38,7 +38,11 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { addToast } = useToast();
 
+  const hasLoadedRef = useRef(false);
+
   useEffect(() => {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
     const loadProjects = async () => {
       const allProjects = await ChatSessionManager.getProjects();
       setProjects(allProjects);
@@ -51,7 +55,7 @@ export default function Sidebar() {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, [location.pathname]);
+  }, []);
 
   const handleDownloadApp = async () => {
     if (isTauri()) {

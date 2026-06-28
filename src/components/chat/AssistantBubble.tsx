@@ -24,6 +24,7 @@ interface AssistantBubbleProps {
   model?: string;
   toolInvocations?: any[];
   reasoning?: string;
+  parts?: any[];
   artifacts?: any[];
   contentBeforeTool?: string;
   contentAfterTool?: string;
@@ -44,33 +45,31 @@ function SourcesFooter({ sources }: { sources: TimelineSource[] }) {
   if (sources.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1.5" title="Sources used">
-      {visible.map((src, i) => (
-        <a
-          key={i}
-          href={src.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={src.title || src.url}
-          className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full 
-                     bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 
-                     text-[11px] font-medium text-neutral-500 hover:text-neutral-700 
-                     transition-colors no-underline"
-        >
-          {(() => {
-            try {
-              return new URL(src.url).hostname.replace(/^www\./, '');
-            } catch {
-              return new URL(src.url).hostname;
-            }
-          })()}
-        </a>
-      ))}
+    <div className="flex items-center" title="Sources used">
+      {visible.map((src, i) => {
+        let domain = '';
+        try { domain = new URL(src.url).hostname.replace(/^www\./, ''); } catch { domain = src.url; }
+        const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
+        return (
+          <a
+            key={i}
+            href={src.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={src.title || src.url}
+            className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white hover:bg-neutral-100 
+                       border border-neutral-200 transition-colors no-underline -ml-1 first:ml-0
+                       shadow-sm hover:shadow-md"
+          >
+            <img src={faviconUrl} alt={domain} width={12} height={12} className="rounded" loading="lazy" />
+          </a>
+        );
+      })}
       {remaining > 0 && (
         <span
-          className="inline-flex items-center justify-center w-7 h-7 rounded-full 
+          className="inline-flex items-center justify-center w-5 h-5 rounded-full -ml-1
                      bg-neutral-100 border border-neutral-200 
-                     text-[11px] font-medium text-neutral-500 shrink-0"
+                     text-[10px] font-medium text-neutral-500 shrink-0"
           title={`${remaining} more source${remaining > 1 ? 's' : ''}`}
         >
           +{remaining}
@@ -89,6 +88,7 @@ export const AssistantBubble = React.memo(
     model,
     toolInvocations,
     reasoning,
+    parts,
     artifacts,
     contentBeforeTool,
     contentAfterTool,
@@ -104,7 +104,7 @@ export const AssistantBubble = React.memo(
     const hasWriteArtifact = toolInvocations?.some((ti) => ti.toolName === 'writeArtifact');
 
     // ── Timeline steps (replaces old pill badges + reasoning panel) ──
-    const timelineSteps = useTimelineSteps(reasoning, toolInvocations, isStreaming);
+    const timelineSteps = useTimelineSteps(reasoning, toolInvocations, isStreaming, parts);
     const hasTimeline = timelineSteps.length > 0;
 
     // ── Aggregated sources for footer ──
@@ -323,7 +323,7 @@ export const AssistantBubble = React.memo(
           )}
 
           {model && (
-            <span className="text-xs text-gray-400 ml-auto">{model}</span>
+            <span className="text-xs text-gray-400">{model}</span>
           )}
         </div>
       )}

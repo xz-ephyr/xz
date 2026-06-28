@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useCallback, useState, useRef, useMemo, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
@@ -37,6 +37,80 @@ function useMediaQuery(query: string): boolean {
   }, [query]);
   return matches;
 }
+
+const ChatMessageRow = memo(function ChatMessageRow({
+  message,
+  index,
+  currentModel,
+  isLoading,
+  messages,
+  onOpenArtifact,
+  onCopy,
+  onThumbsUp,
+  onThumbsDown,
+  onRegenerate,
+  handleSend,
+}: {
+  message: any;
+  index: number;
+  currentModel: string | null;
+  isLoading: boolean;
+  messages: any[];
+  onOpenArtifact: (artifact: any) => void;
+  onCopy: (content: string) => void;
+  onThumbsUp: () => void;
+  onThumbsDown: () => void;
+  onRegenerate: (content: string) => void;
+  handleSend: (content: string) => void;
+}) {
+  const isLastAssistant =
+    message.role !== 'user' &&
+    isLoading &&
+    messages.slice(index + 1).every((msg: any) => msg.role !== 'user');
+
+  const handleMsgCopy = useCallback(() => onCopy(message.content), [message.content, onCopy]);
+  const handleThumbsUp = useCallback(() => onThumbsUp(), [onThumbsUp]);
+  const handleThumbsDown = useCallback(() => onThumbsDown(), [onThumbsDown]);
+  const handleMsgRegenerate = useCallback(() => {
+    const userMessage = messages[index - 1];
+    if (userMessage) {
+      handleSend(userMessage.content);
+    }
+  }, [messages, index, handleSend]);
+
+  const handleOpenMsgArtifact = useCallback(() => {
+    if (message.artifacts?.length > 0) {
+      onOpenArtifact(message.artifacts[0]);
+    }
+  }, [message.artifacts, onOpenArtifact]);
+
+  return (
+    <React.Fragment>
+      {message.role === 'user' ? (
+        <UserBubble content={message.content} />
+      ) : (
+        <AssistantBubble
+          content={message.content}
+          model={currentModel}
+          isStreaming={isLastAssistant}
+          toolInvocations={message.toolInvocations}
+          reasoning={message.reasoning}
+          parts={message.parts}
+          artifacts={message.artifacts}
+          contentBeforeTool={message.contentBeforeTool}
+          contentAfterTool={message.contentAfterTool}
+          onOpenArtifact={
+            message.artifacts?.length > 0 ? handleOpenMsgArtifact : undefined
+          }
+          onCopy={handleMsgCopy}
+          onThumbsUp={handleThumbsUp}
+          onThumbsDown={handleThumbsDown}
+          onRegenerate={handleMsgRegenerate}
+        />
+      )}
+    </React.Fragment>
+  );
+});
 
 export const ChatPage = () => {
   const { uuid } = useParams();
@@ -220,7 +294,10 @@ export const ChatPage = () => {
     currentModelRef.current = currentModel;
   }, [currentModel]);
 
-  const messages = rawMessages.map(mapUIMessageToLegacyMessage);
+  const messages = useMemo(
+    () => rawMessages.map(mapUIMessageToLegacyMessage),
+    [rawMessages]
+  );
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -433,38 +510,20 @@ export const ChatPage = () => {
             {messages.length > 0 && <div className="h-[8px] bg-white dark:bg-[#111110] w-full shrink-0" />}
             <div className="w-full mx-auto px-4 pb-24" style={{ maxWidth: 'min(880px, 100%)' }}>
               {messages.map((m: any, i: number) => (
-                <React.Fragment key={m.id || i}>
-                  {m.role === 'user' ? (
-                    <UserBubble content={m.content} />
-                  ) : (
-                    <AssistantBubble
-                      content={m.content}
-                      model={currentModel}
-                      isStreaming={
-                        isLoading && messages.slice(i + 1).every((msg: any) => msg.role !== 'user')
-                      }
-                      toolInvocations={m.toolInvocations}
-                      reasoning={m.reasoning}
-                      artifacts={m.artifacts}
-                      contentBeforeTool={m.contentBeforeTool}
-                      contentAfterTool={m.contentAfterTool}
-                       onOpenArtifact={
-                         m.artifacts?.length > 0
-                           ? () => handleOpenArtifact(m.artifacts[0])
-                           : undefined
-                       }
-                      onCopy={() => navigator.clipboard.writeText(m.content)}
-                      onThumbsUp={() => console.log('Thumbs up')}
-                      onThumbsDown={() => console.log('Thumbs down')}
-                      onRegenerate={() => {
-                        const userMessage = messages[i - 1];
-                        if (userMessage) {
-                          handleSend(userMessage.content);
-                        }
-                      }}
-                    />
-                  )}
-                </React.Fragment>
+                <ChatMessageRow
+                  key={m.id || i}
+                  message={m}
+                  index={i}
+                  currentModel={currentModel}
+                  isLoading={isLoading}
+                  messages={messages}
+                  onOpenArtifact={handleOpenArtifact}
+                  onCopy={(content) => navigator.clipboard.writeText(content)}
+                  onThumbsUp={() => console.log('Thumbs up')}
+                  onThumbsDown={() => console.log('Thumbs down')}
+                  onRegenerate={(content) => handleSend(content)}
+                  handleSend={handleSend}
+                />
               ))}
 
               {messages.length === 0 && (

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Clock01Icon, InternetIcon } from '@hugeicons/core-free-icons';
+import { ChevronsDownUpIcon, InternetIcon } from '@hugeicons/core-free-icons';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -40,18 +40,19 @@ function getDomain(url: string): string {
 }
 
 function SourcePill({ url, title }: { url: string; title?: string }) {
+  const domain = getDomain(url);
+  const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer"
       title={title || url}
-      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 
-                 border border-neutral-200 text-xs text-neutral-600 hover:text-neutral-800 
-                 transition-colors no-underline shrink-0 max-w-[160px]"
+      className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white hover:bg-neutral-100 
+                 border border-neutral-200 transition-colors no-underline shrink-0 -ml-1 first:ml-0
+                 shadow-sm hover:shadow-md"
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 shrink-0" />
-      <span className="truncate">{getDomain(url)}</span>
+      <img src={faviconUrl} alt={domain} width={12} height={12} className="rounded" loading="lazy" />
     </a>
   );
 }
@@ -61,12 +62,26 @@ function SourcePill({ url, title }: { url: string; title?: string }) {
 function SearchingHeader({
   query,
   isRunning,
+  onToggle,
 }: {
   query: string;
   isRunning: boolean;
+  onToggle?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className={`flex items-center gap-2 px-2 pr-3 -mx-2 py-0.5 rounded-lg cursor-pointer select-none transition-all active:scale-[0.98] group/searchheader ${
+        isRunning ? 'bg-blue-50 active:bg-blue-100' : 'hover:bg-neutral-50 active:bg-neutral-100'
+      }`}
+      onClick={onToggle}
+    >
+      <div className="flex items-center justify-center w-5 h-5 shrink-0">
+        <HugeiconsIcon
+          icon={InternetIcon}
+          size={12}
+          className={isRunning ? 'text-blue-500' : 'text-neutral-400'}
+        />
+      </div>
       <span
         className={
           isRunning
@@ -81,6 +96,11 @@ function SearchingHeader({
           &ldquo;{query}&rdquo;
         </span>
       )}
+      <HugeiconsIcon
+        icon={ChevronsDownUpIcon}
+        size={12}
+        className="text-neutral-400 ml-auto opacity-0 group-hover/searchheader:opacity-100 transition-opacity cursor-pointer"
+      />
     </div>
   );
 }
@@ -103,48 +123,26 @@ export function ThinkingTimeline({
 }: ThinkingTimelineProps) {
   const [expandedSearch, setExpandedSearch] = useState<Set<string>>(new Set());
 
-  // Split reasoning into sentences (same as original logic)
-  const sentences = useMemo(() => {
-    const thinkingStep = steps.find((s) => s.type === 'thinking');
-    if (!thinkingStep?.reasoning) return [];
-    return thinkingStep.reasoning
-      .split(/(?<=[.!?])\s+/)
-      .filter((s) => s.trim().length > 0)
-      .slice(0, 50);
-  }, [steps]);
-
   const hasAnyStep = steps.length > 0;
 
   if (!hasAnyStep) return null;
 
   return (
     <div className="flex flex-col gap-0">
-      {steps.map((step, idx) => {
-        const isLast = idx === steps.length - 1;
-
+      {steps.map((step) => {
         if (step.type === 'thinking') {
-          const displaySentences = step.sources && step.sources.length > 0
-            ? step.reasoning
-                ?.split(/(?<=[.!?])\s+/)
-                .filter((s) => s.trim().length > 0) || []
-            : sentences;
+          const stepSentences = (step.reasoning || '')
+            .split(/(?<=(?<!\d)[.!?])\s+/)
+            .filter((s) => s.trim().length > 0)
+            .slice(0, 50);
 
-          // Not actively streaming new reasoning if a search is running
           const showEllipsis = step.isActive && isStreaming;
 
           return (
-            <div key={step.id} className="flex gap-3">
-              {/* Left gutter: icon + line */}
-              <div className="flex flex-col items-center shrink-0">
-                <div className="flex items-center justify-center w-5 h-5">
-                  <HugeiconsIcon icon={Clock01Icon} size={12} className="text-neutral-400" />
-                </div>
-                <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />
-              </div>
-
-              {/* Right: reasoning text */}
+            <div key={step.id} className="flex">
+              {/* Reasoning text */}
               <div className="flex flex-col gap-1.5 flex-1 min-w-0 pb-3">
-                {displaySentences.map((s, sIdx) => (
+                {stepSentences.map((s, sIdx) => (
                   <div
                     key={sIdx}
                     className="text-[13px] leading-relaxed text-neutral-500"
@@ -181,22 +179,8 @@ export function ThinkingTimeline({
           const maxVisibleSources = 4;
 
           return (
-            <div key={step.id} className="flex gap-3">
-              {/* Left gutter: icon + line */}
-              <div className="flex flex-col items-center shrink-0">
-                <div className="flex items-center justify-center w-5 h-5">
-                  <HugeiconsIcon
-                    icon={InternetIcon}
-                    size={12}
-                    className={step.isRunning ? 'text-blue-500' : 'text-neutral-400'}
-                  />
-                </div>
-                {!isLast && <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />}
-              </div>
-
-              {/* Right: header + sources */}
-              <div className="flex flex-col gap-2 flex-1 min-w-0 pb-3">
-                <SearchingHeader query={step.query || ''} isRunning={!!step.isRunning} />
+            <div key={step.id} className="pb-3">
+              <SearchingHeader query={step.query || ''} isRunning={!!step.isRunning} onToggle={toggleExpand} />
 
                 {/* Sources row */}
                 {step.isRunning && (
@@ -246,7 +230,6 @@ export function ThinkingTimeline({
                     )}
                   </>
                 )}
-              </div>
             </div>
           );
         }
@@ -261,24 +244,122 @@ export function ThinkingTimeline({
 
 /**
  * Derives a chronologically-ordered array of TimelineSteps from the
- * reasoning text and tool invocations.
+ * `parts` array (preserves order of reasoning/tool phases).
  *
- * Simple approach:
- * - One "thinking" step at the beginning (all reasoning text)
- * - One "searching" step per search-related tool invocation
+ * Each reasoning part → separate "thinking" step (each gets its own
+ * timeline position, not all lumped into one).
+ * Each dynamic-tool part → separate "searching" step.
+ *
+ * Falls back to flat reasoning+tools when parts aren't available
+ * (e.g. saved messages from older versions).
  */
 export function useTimelineSteps(
   reasoning: string | undefined,
   toolInvocations: any[] | undefined,
   isStreaming: boolean,
+  parts?: any[],
 ): TimelineStep[] {
   return useMemo(() => {
     const steps: TimelineStep[] = [];
 
+    // ── Build from parts (preserves chronological order) ──
+    if (parts && Array.isArray(parts) && parts.length > 0) {
+      let reasoningBuf: string[] = [];
+      let stepId = 0;
+
+      function flushReasoning(isActive: boolean) {
+        if (reasoningBuf.length === 0) return;
+        steps.push({
+          id: `thinking-${stepId++}`,
+          type: 'thinking',
+          reasoning: reasoningBuf.join('\n'),
+          isActive,
+        });
+        reasoningBuf = [];
+      }
+
+      const pendingTools = new Map<string, boolean>();
+      for (const ti of toolInvocations || []) {
+        if (ti.toolName !== 'writeArtifact') {
+          pendingTools.set(ti.toolCallId, ti.state !== 'result');
+        }
+      }
+
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (!part || !part.type) continue;
+
+        if (part.type === 'reasoning') {
+          const text = part.reasoning || (part as any).text || '';
+          if (text) reasoningBuf.push(text);
+        } else if (part.type === 'dynamic-tool' || (part.type && part.type.startsWith('tool-'))) {
+          const toolName = part.toolName || part.type.replace(/^tool-/, '');
+          if (toolName === 'writeArtifact') continue;
+
+          // Flush accumulated reasoning as a thinking step
+          const isActivelyThinking = isStreaming && reasoningBuf.length > 0;
+          flushReasoning(isActivelyThinking);
+
+          // Build sources from result
+          const sources: TimelineSource[] = [];
+          const output = part.output || part.result;
+          if (output?.results) {
+            for (const r of output.results) {
+              if (r.url) {
+                sources.push({ url: r.url, title: r.title || r.snippet || '' });
+              }
+            }
+          }
+
+          const state = part.state === 'output-available' ? 'result' : 'call';
+          const query = part.input?.query || part.input?.url || '';
+          steps.push({
+            id: part.toolCallId || `search-${stepId++}`,
+            type: 'searching',
+            query,
+            isRunning: state !== 'result',
+            sources,
+            isActive: state !== 'result',
+          });
+        }
+      }
+
+      // Flush any remaining reasoning as a final thinking step
+      const hasRunningSearch = Array.from(pendingTools.values()).some(Boolean);
+      const isFinalActive = isStreaming && !hasRunningSearch;
+      flushReasoning(isFinalActive);
+
+      // Also check toolInvocations for search tools that don't have
+      // corresponding parts (e.g. completed results that arrived after parts)
+      if (toolInvocations) {
+        const existingIds = new Set(steps.map(s => s.id));
+        for (const ti of toolInvocations) {
+          if (ti.toolName === 'writeArtifact') continue;
+          if (existingIds.has(ti.toolCallId)) continue;
+          const sources: TimelineSource[] = [];
+          if (ti.state === 'result' && ti.result?.results) {
+            for (const r of ti.result.results) {
+              if (r.url) sources.push({ url: r.url, title: r.title || r.snippet || '' });
+            }
+          }
+          steps.push({
+            id: ti.toolCallId || `search-${stepId++}`,
+            type: 'searching',
+            query: ti.args?.query || ti.args?.url || '',
+            isRunning: ti.state !== 'result',
+            sources,
+            isActive: ti.state !== 'result',
+          });
+        }
+      }
+
+      return steps;
+    }
+
+    // ── Fallback: flat reasoning + tools (no parts available) ──
     const searchTools = (toolInvocations || []).filter(
       (ti) => ti.toolName !== 'writeArtifact',
     );
-
     const hasReasoning = !!reasoning;
     const hasSearchTools = searchTools.length > 0;
 
@@ -286,30 +367,23 @@ export function useTimelineSteps(
       return steps;
     }
 
-    // 1. Thinking step (all reasoning accumulated so far)
     if (hasReasoning) {
       const hasRunningSearch = searchTools.some((ti) => ti.state !== 'result');
-      const isActivelyThinking = isStreaming && !hasRunningSearch;
-
       steps.push({
         id: 'thinking',
         type: 'thinking',
         reasoning,
-        isActive: isActivelyThinking,
+        isActive: isStreaming && !hasRunningSearch,
       });
     }
 
-    // 2. Search steps (in order of appearance)
     searchTools.forEach((ti) => {
       const sources: TimelineSource[] = [];
       if (ti.state === 'result' && ti.result?.results) {
         for (const r of ti.result.results) {
-          if (r.url) {
-            sources.push({ url: r.url, title: r.title || r.snippet || '' });
-          }
+          if (r.url) sources.push({ url: r.url, title: r.title || r.snippet || '' });
         }
       }
-
       steps.push({
         id: ti.toolCallId || `search-${steps.length}`,
         type: 'searching',
@@ -321,7 +395,7 @@ export function useTimelineSteps(
     });
 
     return steps;
-  }, [reasoning, toolInvocations, isStreaming]);
+  }, [reasoning, toolInvocations, isStreaming, parts]);
 }
 
 // ── Hook to aggregate all sources from completed searches ──────────
