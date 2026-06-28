@@ -13,7 +13,7 @@ function getDomain(url: string): string {
 export function InlineSourcePill({ url, title, snippet }: InlineSourcePillProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const show = () => {
     clearTimeout(timeoutRef.current);

@@ -9,7 +9,6 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 import { ArtifactsPreviewCard } from './ArtifactsPreviewCard';
-import { WritingToolShimmer } from './WritingToolShimmer';
 import { ThoughtLabel } from './ThoughtLabel';
 import {
   ThinkingTimeline,
@@ -238,17 +237,6 @@ export const AssistantBubble = React.memo(
             {streamedIntention && (
               <div className="font-normal text-neutral-900 stagger-item stagger-0 leading-[1.2]">
                 <MarkdownMessage content={streamedIntention} sources={allSources} />
-              </div>
-            )}
-            {(phase === 'shimmer' || phase === 'explanation' || phase === 'done') && hasWriteArtifact && (
-              <div className="flex items-center gap-2 text-neutral-500 stagger-item stagger-1">
-                {toolInvocations?.filter((ti) => ti.toolName === 'writeArtifact').map((ti) => (
-                  <WritingToolShimmer
-                    key={ti.toolCallId}
-                    title={ti.args?.title || ti.args?.identifier || ''}
-                    done={ti.state === 'result'}
-                  />
-                ))}
               </div>
             )}
             {(phase === 'explanation' || phase === 'done') && streamedExplanation && (
