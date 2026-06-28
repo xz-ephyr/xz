@@ -200,10 +200,10 @@ export const AssistantBubble = React.memo(
 
   return (
     <div className="mb-6 w-full group/bubble">
-      <div className="text-base px-4 py-4 break-words flex flex-col gap-2">
+      <div className="text-base px-4 break-words flex flex-col gap-0">
         {/* ── Thinking label + timeline inside expandable panel ── */}
         {hasTimeline && (
-          <div className="flex flex-col gap-2">
+          <>
             <ThoughtLabel
               isActivelyThinking={isStreaming && !hasPendingSearch}
               isOpen={isReasoningOpen}
@@ -217,10 +217,10 @@ export const AssistantBubble = React.memo(
                   : 'grid-rows-[0fr] opacity-0'
               }`}
             >
-              <div className="overflow-hidden">
+              <div className="overflow-hidden min-h-0">
                 <div
                   ref={timelineScrollRef}
-                  className="overflow-y-auto no-scrollbar flex flex-col gap-2 pt-1 max-h-[45vh]"
+                  className="overflow-y-auto no-scrollbar flex flex-col gap-2"
                 >
                   <ThinkingTimeline
                     steps={timelineSteps}
@@ -229,14 +229,14 @@ export const AssistantBubble = React.memo(
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* ── Write artifact streaming sequence ── */}
         {phase !== 'idle' ? (
           <>
             {streamedIntention && (
-              <div className="font-normal text-neutral-900 stagger-item stagger-0">
+              <div className="font-normal text-neutral-900 stagger-item stagger-0 leading-[1.2]">
                 <MarkdownMessage content={streamedIntention} />
               </div>
             )}
@@ -252,13 +252,13 @@ export const AssistantBubble = React.memo(
               </div>
             )}
             {(phase === 'explanation' || phase === 'done') && streamedExplanation && (
-              <div className="font-normal text-neutral-900 stagger-item stagger-2">
+              <div className="font-normal text-neutral-900 stagger-item stagger-2 leading-[1.2]">
                 <MarkdownMessage content={streamedExplanation} />
               </div>
             )}
           </>
         ) : content && (
-          <div className="font-normal text-neutral-900">
+          <div className="font-normal text-neutral-900 leading-[1.2]">
             <MarkdownMessage content={content} />
           </div>
         )}

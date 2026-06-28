@@ -10,7 +10,7 @@ interface MarkdownMessageProps {
 export function MarkdownMessage({ content }: MarkdownMessageProps) {
   const sanitized = content.replace(/<br\s*\/?>/gi, '\n');
   return (
-    <div className="text-[15px] leading-relaxed break-words text-neutral-900">
+    <div className="text-[15px] leading-relaxed break-words text-neutral-900 [&>p]:my-0">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

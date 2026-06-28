@@ -39,24 +39,6 @@ function getDomain(url: string): string {
   }
 }
 
-function SourcePill({ url, title }: { url: string; title?: string }) {
-  const domain = getDomain(url);
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={title || url}
-      className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white hover:bg-neutral-100 
-                 border border-neutral-200 transition-colors no-underline shrink-0 -ml-1 first:ml-0
-                 shadow-sm hover:shadow-md"
-    >
-      <img src={faviconUrl} alt={domain} width={12} height={12} className="rounded" loading="lazy" />
-    </a>
-  );
-}
-
 // ── Sub-components ─────────────────────────────────────────────────
 
 function SearchingHeader({
@@ -70,7 +52,7 @@ function SearchingHeader({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 px-2 pr-3 -mx-2 py-0.5 rounded-lg cursor-pointer select-none transition-all active:scale-[0.98] group/searchheader ${
+      className={`flex items-center gap-2 px-2 pr-3 py-0.5 rounded-[6px] cursor-pointer select-none transition-all active:scale-[0.98] group/searchheader ${
         isRunning ? 'bg-blue-50 active:bg-blue-100' : 'hover:bg-neutral-50 active:bg-neutral-100'
       }`}
       onClick={onToggle}
@@ -141,7 +123,7 @@ export function ThinkingTimeline({
           return (
             <div key={step.id} className="flex">
               {/* Reasoning text */}
-              <div className="flex flex-col gap-1.5 flex-1 min-w-0 pb-3">
+              <div className="flex flex-col gap-1 flex-1 min-w-0 pb-3">
                 {stepSentences.map((s, sIdx) => (
                   <div
                     key={sIdx}
@@ -175,60 +157,49 @@ export function ThinkingTimeline({
 
           const isExpanded = expandedSearch.has(step.id);
           const sources = step.sources || [];
-          const showSources = !step.isRunning && sources.length > 0;
-          const maxVisibleSources = 4;
 
           return (
             <div key={step.id} className="pb-3">
               <SearchingHeader query={step.query || ''} isRunning={!!step.isRunning} onToggle={toggleExpand} />
 
-                {/* Sources row */}
+                {/* Running indicator */}
                 {step.isRunning && (
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-400 animate-pulse">
+                  <div className="flex items-center gap-1.5 px-2 text-xs text-neutral-400 animate-pulse">
                     <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
                     Fetching results...
                   </div>
                 )}
 
-                {showSources && (
-                  <>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {sources.slice(0, maxVisibleSources).map((src, sIdx) => (
-                        <SourcePill
-                          key={`${step.id}-${sIdx}`}
-                          url={src.url}
-                          title={src.title}
-                        />
-                      ))}
-                      {sources.length > maxVisibleSources && (
-                        <button
-                          type="button"
-                          onClick={toggleExpand}
-                          className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-neutral-100 
-                                   border border-neutral-200 text-xs font-medium text-neutral-500 
-                                   hover:bg-neutral-200 transition-colors shrink-0"
-                          title={isExpanded ? 'Show less' : `Show ${sources.length - maxVisibleSources} more sources`}
-                        >
-                          {isExpanded
-                            ? `-${sources.length - maxVisibleSources}`
-                            : `+${sources.length - maxVisibleSources}`}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Expanded sources */}
-                    {isExpanded && sources.length > maxVisibleSources && (
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                        {sources.slice(maxVisibleSources).map((src, sIdx) => (
-                          <SourcePill
-                            key={`${step.id}-exp-${sIdx}`}
-                            url={src.url}
-                            title={src.title}
-                          />
+                {/* Sources box - toggled by clicking the header */}
+                {!step.isRunning && sources.length > 0 && (
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    }`}
+                  >
+                    <div className="overflow-hidden min-h-0">
+                      <div className="border border-neutral-200 rounded-[6px] mx-2">
+                        {sources.map((src, sIdx) => (
+                          <a
+                            key={sIdx}
+                            href={src.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-3 px-3 h-[45px] border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50 transition-colors no-underline"
+                          >
+                            <img
+                              src={`https://www.google.com/s2/favicons?domain=${getDomain(src.url)}&sz=16`}
+                              alt=""
+                              width={16}
+                              height={16}
+                              className="rounded shrink-0"
+                            />
+                            <span className="text-sm text-neutral-700 truncate">{src.title || src.url}</span>
+                          </a>
                         ))}
                       </div>
-                    )}
-                  </>
+                    </div>
+                  </div>
                 )}
             </div>
           );
@@ -325,9 +296,7 @@ export function useTimelineSteps(
       }
 
       // Flush any remaining reasoning as a final thinking step
-      const hasRunningSearch = Array.from(pendingTools.values()).some(Boolean);
-      const isFinalActive = isStreaming && !hasRunningSearch;
-      flushReasoning(isFinalActive);
+      flushReasoning(isStreaming);
 
       // Also check toolInvocations for search tools that don't have
       // corresponding parts (e.g. completed results that arrived after parts)
@@ -368,12 +337,11 @@ export function useTimelineSteps(
     }
 
     if (hasReasoning) {
-      const hasRunningSearch = searchTools.some((ti) => ti.state !== 'result');
       steps.push({
         id: 'thinking',
         type: 'thinking',
         reasoning,
-        isActive: isStreaming && !hasRunningSearch,
+        isActive: isStreaming,
       });
     }
 

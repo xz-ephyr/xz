@@ -248,27 +248,53 @@ export async function webSearch(params: { query: string; maxResults: number; sit
   if (cached) return cached;
 
   const query = params.site ? `site:${params.site} ${params.query}` : params.query;
-  const provider = (await getConfig('search-provider')) || 'tavily';
-  let result;
 
-  switch (provider) {
-    case 'firecrawl':
-      result = await firecrawlSearch(query, params.maxResults);
-      break;
-    case 'google':
-      result = await googleSearch(query, params.maxResults);
-      break;
-    case 'exa':
-      result = await exaSearch(query, params.maxResults);
-      break;
-    case 'tavily':
-    default:
-      result = await tavilySearch(query, params.maxResults);
-      break;
+  // Gather all configured providers
+  const providerConfigs: Array<{ name: string; key: string; extra?: string }> = [];
+  const tavilyKey = await getConfig('search-api-key');
+  if (tavilyKey) providerConfigs.push({ name: 'tavily', key: tavilyKey });
+  const firecrawlKey = await getConfig('search-firecrawl-api-key');
+  if (firecrawlKey) providerConfigs.push({ name: 'firecrawl', key: firecrawlKey });
+  const exaKey = await getConfig('search-exa-api-key');
+  if (exaKey) providerConfigs.push({ name: 'exa', key: exaKey });
+  const googleKey = await getConfig('search-google-api-key');
+  const googleCx = await getConfig('search-google-cx');
+  if (googleKey && googleCx) providerConfigs.push({ name: 'google', key: googleKey, extra: googleCx });
+
+  // Shuffle for rotation
+  for (let i = providerConfigs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [providerConfigs[i], providerConfigs[j]] = [providerConfigs[j], providerConfigs[i]];
   }
 
-  await setCache('webSearch', params, provider, result);
-  return result;
+  let result: any;
+  let lastError: any;
+
+  for (const cfg of providerConfigs) {
+    try {
+      switch (cfg.name) {
+        case 'tavily':
+          result = await tavilySearch(query, params.maxResults);
+          break;
+        case 'firecrawl':
+          result = await firecrawlSearch(query, params.maxResults);
+          break;
+        case 'exa':
+          result = await exaSearch(query, params.maxResults);
+          break;
+        case 'google':
+          result = await googleSearch(query, params.maxResults);
+          break;
+      }
+      await setCache('webSearch', params, cfg.name, result);
+      return result;
+    } catch (e) {
+      lastError = e;
+      console.warn(`Search provider "${cfg.name}" failed, trying next: ${(e as any).message}`);
+    }
+  }
+
+  throw lastError || new Error('All search providers failed');
 }
 
 export async function fetchPage(params: { url: string; extractAs: string }) {
