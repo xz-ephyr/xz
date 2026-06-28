@@ -96,4 +96,4 @@ export const CodeBlock = React.memo(function CodeBlock({ content, language }: Co
       />
     </div>
   );
-};
+});

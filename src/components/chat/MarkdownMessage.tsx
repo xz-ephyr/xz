@@ -115,4 +115,4 @@ export const MarkdownMessage = memo(function MarkdownMessage({ content }: Markdo
       </ReactMarkdown>
     </div>
   );
-}
+});
