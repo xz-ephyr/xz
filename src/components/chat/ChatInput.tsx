@@ -106,7 +106,6 @@ function SendButton({
 export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled, onToggleThinking }: ChatInputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const isActive = !!value.trim() || isLoading;
 
   const adjustHeight = () => {
     const textarea = textareaRef.current;

@@ -398,6 +398,23 @@ export const ChatPage = () => {
         return;
       }
 
+      // If uuid is not a valid session, it's a project reference — create a session
+      if (uuid) {
+        const existingSession = await ChatSessionManager.getSession(uuid).catch(() => null);
+        if (!existingSession) {
+          const projects = await ChatSessionManager.getProjects();
+          const project = projects.find(p => uuid.includes(p.id));
+          if (project) {
+            const session = await ChatSessionManager.create('New conversation', undefined, project.id);
+            setSessionId(session.id);
+            sessionStorage.setItem('pending-first-message', content);
+            const slug = project.name.toLowerCase().replace(/\s+/g, '-');
+            navigate(`/project/${slug}/${session.id}`);
+            return;
+          }
+        }
+      }
+
       const userMsg = {
         id: crypto.randomUUID(),
         role: 'user' as const,

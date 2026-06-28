@@ -67,7 +67,8 @@ Guidelines:
 - **Vary your search terms every call.** Do not repeat the same query. After each search, identify what information is still missing and target that gap with different keywords. Never reuse the same search phrase.
 - **Circuit breaker**: If a tool call fails twice with the same error, STOP retrying. Proceed without it or use a different tool. Do not fixate on a failing call.
 - Prefer \`webSearch\` first, then \`fetchPage\` for deeper reading.
-- Cite sources by including the URL in your response.
+- Cite sources inline using 【number】 format (e.g. 【1】, 【2】) corresponding to the search result order. Place the citation right after the relevant claim or sentence.
+- Do NOT include "Sources" sections or source URLs in your response text. The UI displays sources automatically.
 - Summarize the relevant information — do not dump raw results.
 - If a search returns no results, try a different query **only once**.
 - Do NOT search for things you confidently know from training data.

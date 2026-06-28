@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm';
 export interface TimelineSource {
   url: string;
   title: string;
+  snippet?: string;
 }
 
 export interface TimelineStep {
@@ -272,7 +273,7 @@ export function useTimelineSteps(
           if (output?.results) {
             for (const r of output.results) {
               if (r.url) {
-                sources.push({ url: r.url, title: r.title || r.snippet || '' });
+                sources.push({ url: r.url, title: r.title || r.snippet || '', snippet: r.snippet });
               }
             }
           }
@@ -303,7 +304,7 @@ export function useTimelineSteps(
           const sources: TimelineSource[] = [];
           if (ti.state === 'result' && ti.result?.results) {
             for (const r of ti.result.results) {
-              if (r.url) sources.push({ url: r.url, title: r.title || r.snippet || '' });
+              if (r.url) sources.push({ url: r.url, title: r.title || r.snippet || '', snippet: r.snippet });
             }
           }
           steps.push({
@@ -344,7 +345,7 @@ export function useTimelineSteps(
       const sources: TimelineSource[] = [];
       if (ti.state === 'result' && ti.result?.results) {
         for (const r of ti.result.results) {
-          if (r.url) sources.push({ url: r.url, title: r.title || r.snippet || '' });
+          if (r.url) sources.push({ url: r.url, title: r.title || r.snippet || '', snippet: r.snippet });
         }
       }
       steps.push({
@@ -378,7 +379,7 @@ export function useAggregatedSources(
       for (const r of ti.result.results) {
         if (r.url && !seen.has(r.url)) {
           seen.add(r.url);
-          sources.push({ url: r.url, title: r.title || r.snippet || '' });
+          sources.push({ url: r.url, title: r.title || r.snippet || '', snippet: r.snippet });
         }
       }
     }

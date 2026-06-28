@@ -237,7 +237,7 @@ export const AssistantBubble = React.memo(
           <>
             {streamedIntention && (
               <div className="font-normal text-neutral-900 stagger-item stagger-0 leading-[1.2]">
-                <MarkdownMessage content={streamedIntention} />
+                <MarkdownMessage content={streamedIntention} sources={allSources} />
               </div>
             )}
             {(phase === 'shimmer' || phase === 'explanation' || phase === 'done') && hasWriteArtifact && (
@@ -253,13 +253,13 @@ export const AssistantBubble = React.memo(
             )}
             {(phase === 'explanation' || phase === 'done') && streamedExplanation && (
               <div className="font-normal text-neutral-900 stagger-item stagger-2 leading-[1.2]">
-                <MarkdownMessage content={streamedExplanation} />
+                <MarkdownMessage content={streamedExplanation} sources={allSources} />
               </div>
             )}
           </>
         ) : content && (
           <div className="font-normal text-neutral-900 leading-[1.2]">
-            <MarkdownMessage content={content} />
+            <MarkdownMessage content={content} sources={allSources} />
           </div>
         )}
       </div>
