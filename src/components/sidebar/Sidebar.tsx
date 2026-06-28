@@ -171,10 +171,16 @@ export default function Sidebar() {
       <div
         className={`bg-white border-r border-[#e5e5e5] h-screen transition-[width] duration-300 ease-in-out flex flex-col shrink-0 ${isCollapsed ? 'w-[48px]' : 'w-[320px]'}`}
       >
-        <div className={`flex p-2 shrink-0 ${isCollapsed ? 'justify-center' : 'justify-end'}`}>
+        <div className={`flex items-center p-2 shrink-0 ${isCollapsed ? 'justify-center' : ''}`}>
+          {!isCollapsed && (
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <img src="/favicon.png" alt="Logo" className="w-[18px] h-[18px] rounded-[4px] shrink-0" />
+              <span className="text-sm font-semibold text-gray-700 truncate">xz</span>
+            </div>
+          )}
           <button
             onClick={toggleCollapse}
-            className="p-1 hover:bg-[#e5e5e5] rounded-[8px]"
+            className="p-1 hover:bg-[#e5e5e5] rounded-[8px] shrink-0"
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-expanded={!isCollapsed}
           >
