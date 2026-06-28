@@ -114,7 +114,10 @@ function SendButton({
 export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkingEnabled, onToggleThinking }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const isExpanded = isFocused || !!value || !isIdle;
 
   const adjustHeight = () => {
     const textarea = textareaRef.current;
@@ -125,8 +128,14 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
   };
 
   useEffect(() => {
-    adjustHeight();
-  }, [value]);
+    if (isExpanded) adjustHeight();
+  }, [value, isExpanded]);
+
+  useEffect(() => {
+    if (isExpanded && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isExpanded]);
 
   const handleSend = () => {
     if (value.trim() && !isLoading) {
@@ -135,78 +144,53 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
     }
   };
 
+  const commonTextareaProps = {
+    ref: textareaRef,
+    value,
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value),
+    onFocus: () => setIsFocused(true),
+    onBlur: () => setIsFocused(false),
+    onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    },
+    placeholder: isLoading ? 'Generating...' : 'Ask anything...',
+    disabled: isLoading,
+  };
+
   return (
     <div className="relative w-full mx-auto transition-all duration-300" style={{ maxWidth: 'min(880px, 100%)' }}>
-      {isIdle ? (
-        /* ── IDLE STATE: Input sits inside a "shelf" holding box ── */
-        <div className="relative">
-          {/* Holding box — same radius as input, blends top/sides into page bg,
-              only the bottom strip shows as a distinct background.
-              Increased height from 28px to 43px (28 + 15). */}
-          <div
-            className="absolute inset-x-0 top-0 rounded-[12px] bg-[#d1d2d6] border border-neutral-200/60 shadow-sm"
-            style={{ bottom: '-43px' }}
-            aria-hidden="true"
-          />
-
-          {/* Inner Input Box — sits on top of the holding box */}
-          <div className="bg-[#fafafa] rounded-[12px] transition-all relative z-10 border border-neutral-200/60">
-            <ThinScrollbar className="max-h-[145px]">
-              <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder={isLoading ? 'Generating...' : 'Ask anything...'}
-                className="w-full py-3 px-4 resize-none outline-none text-base min-h-[48px] bg-transparent overflow-hidden"
-                rows={1}
-                disabled={isLoading}
-              />
-            </ThinScrollbar>
-            
-            <div className="flex items-center justify-between px-3 py-2 bg-transparent">
-              <div className="flex items-center gap-2">
-                <PlusDropdown isOpen={isDropdownOpen} onToggle={() => setIsDropdownOpen(!isDropdownOpen)} onToggleThinking={onToggleThinking} isThinkingEnabled={isThinkingEnabled} dropUp={false} />
-                {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} />}
-              </div>
-              <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* ── ACTIVE STATE: Plain input, no shelf ── */
+      {isExpanded ? (
+        /* ── EXPANDED STATE: Full auto-resizing input ── */
         <div className="bg-[#f2f3f6] rounded-[12px] transition-all relative z-10 border border-neutral-200/60 shadow-sm">
           <ThinScrollbar className="max-h-[145px]">
             <textarea
-              ref={textareaRef}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={isLoading ? 'Generating...' : 'Ask anything...'}
+              {...commonTextareaProps}
               className="w-full py-3 px-4 resize-none outline-none text-[15px] min-h-[48px] bg-transparent overflow-hidden"
               rows={1}
-              disabled={isLoading}
             />
           </ThinScrollbar>
-          
+
           <div className="flex items-center justify-between px-3 py-2 bg-transparent">
-             <div className="flex items-center gap-2">
-                <PlusDropdown isOpen={isDropdownOpen} onToggle={() => setIsDropdownOpen(!isDropdownOpen)} onToggleThinking={onToggleThinking} isThinkingEnabled={isThinkingEnabled} dropUp={true} />
-                {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
-             </div>
-             <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
+            <div className="flex items-center gap-2">
+              <PlusDropdown isOpen={isDropdownOpen} onToggle={() => setIsDropdownOpen(!isDropdownOpen)} onToggleThinking={onToggleThinking} isThinkingEnabled={isThinkingEnabled} dropUp={true} />
+              {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
+            </div>
+            <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
           </div>
         </div>
+      ) : (
+        /* ── COLLAPSED STATE: Compact pill ── */
+        <button
+          type="button"
+          onClick={() => setIsFocused(true)}
+          className="w-full flex items-center justify-between bg-[#f2f3f6] rounded-full border border-neutral-200/60 shadow-sm px-5 h-11 transition-all hover:bg-[#ececed] active:scale-[0.99] cursor-text"
+        >
+          <span className="text-sm text-neutral-400">Ask anything...</span>
+          <SendButton isLoading={false} onStop={onStop} onSend={() => {}} hasValue={false} />
+        </button>
       )}
     </div>
   );
