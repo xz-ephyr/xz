@@ -7,6 +7,20 @@ export interface FileEntry {
   children?: FileEntry[];
 }
 
+export interface FileContent {
+  path: string;
+  size: number;
+  text: string;
+}
+
+export interface ProjectContent {
+  tree: string;
+  contents: FileContent[];
+  truncated: boolean;
+  skippedBinary: number;
+  skippedSize: number;
+}
+
 const treeCache = new Map<string, { result: FileEntry[]; timestamp: number }>();
 const TREE_CACHE_TTL = 2_000;
 
@@ -164,6 +178,69 @@ export const FileSystemService = {
 
     // Web fallback: read from virtual FS
     return webVirtualFS[path] ?? '';
+  },
+
+  // Heuristic: check if content looks like binary (null bytes in first 4KB)
+  isLikelyBinary: (content: string): boolean => {
+    const sample = content.slice(0, 4096);
+    for (let i = 0; i < sample.length; i++) {
+      if (sample.charCodeAt(i) === 0) return true;
+    }
+    return false;
+  },
+
+  /** Walk the file tree recursively and read file contents with sensible limits. */
+  getProjectContent: async (basePath: string): Promise<ProjectContent> => {
+    const MAX_TOTAL_CHARS = 60_000;
+    const MAX_FILE_CHARS = 30_000;
+    const tree = await FileSystemService.getTree(basePath);
+
+    const lines: string[] = [];
+    const contents: FileContent[] = [];
+    let totalChars = 0;
+    let skippedBinary = 0;
+    let skippedSize = 0;
+    let truncated = false;
+
+    const walk = (entries: FileEntry[], indent = '') => {
+      for (const entry of entries) {
+        lines.push(`${indent}${entry.isDirectory ? '📁' : '📄'} ${entry.name}`);
+        if (entry.children) {
+          walk(entry.children, indent + '  ');
+        }
+      }
+    };
+    walk(tree);
+
+    const readFiles = async (entries: FileEntry[]) => {
+      const jobs: Promise<void>[] = [];
+      for (const entry of entries) {
+        if (entry.isDirectory && entry.children) {
+          jobs.push(readFiles(entry.children));
+        } else if (!entry.isDirectory) {
+          jobs.push((async () => {
+            if (totalChars >= MAX_TOTAL_CHARS) { truncated = true; return; }
+            const raw = await FileSystemService.getFileContent(entry.path);
+            if (!raw) return;
+            if (FileSystemService.isLikelyBinary(raw)) { skippedBinary++; return; }
+            if (raw.length > MAX_FILE_CHARS) { skippedSize++; return; }
+            totalChars += raw.length;
+            if (totalChars > MAX_TOTAL_CHARS) { truncated = true; return; }
+            contents.push({ path: entry.path, size: raw.length, text: raw });
+          })());
+        }
+      }
+      await Promise.all(jobs);
+    };
+    await readFiles(tree);
+
+    return {
+      tree: lines.join('\n'),
+      contents,
+      truncated,
+      skippedBinary,
+      skippedSize,
+    };
   },
 
   importDirectory: async (dirHandle: FileSystemDirectoryHandle): Promise<string> => {

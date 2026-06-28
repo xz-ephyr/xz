@@ -235,13 +235,20 @@ export const ChatPage = () => {
       const projects = await DatabaseService.getProjects();
       const project = projects.find(p => p.id === session.projectId);
       if (!project) return undefined;
-      const entries = await FileSystemService.getTree(project.path, 3);
-      const flatten = (items: typeof entries, indent = ''): string =>
-        items.map(e =>
-          `${indent}${e.isDirectory ? '📁' : '📄'} ${e.name}` +
-          (e.children ? '\n' + flatten(e.children, indent + '  ') : '')
-        ).join('\n');
-      return { name: project.name, path: project.path, files: flatten(entries) };
+      const pc = await FileSystemService.getProjectContent(project.path);
+      let files = pc.tree;
+      if (pc.contents.length > 0) {
+        files += '\n\n### File Contents\n\n';
+        files += pc.contents.map(f =>
+          `--- ${f.path} ---\n${f.text}`
+        ).join('\n\n');
+      }
+      const notes: string[] = [];
+      if (pc.truncated) notes.push('Some files were omitted because the total content exceeded the limit.');
+      if (pc.skippedBinary > 0) notes.push(`${pc.skippedBinary} binary file(s) excluded.`);
+      if (pc.skippedSize > 0) notes.push(`${pc.skippedSize} file(s) too large to include.`);
+      if (notes.length > 0) files += '\n\n_Notes: ' + notes.join(' ') + '_';
+      return { name: project.name, path: project.path, files };
     } catch {
       return undefined;
     }
@@ -632,7 +639,7 @@ export const ChatPage = () => {
             </div>
           </div>
 
-          {showScrollButton && (
+          {showScrollButton && messages.length > 0 && (
             <div className="shrink-0 flex justify-center w-full mx-auto bg-white dark:bg-[#111110] relative" style={{ height: 0 }}>
               <button
                 onClick={scrollToBottom}

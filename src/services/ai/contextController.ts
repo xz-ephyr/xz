@@ -11,11 +11,11 @@ export function getSmartSystemPrompt(basePrompt: string, projectContext?: Projec
 
 ## Rroject Context
 
-You are inside a project named "${projectContext.name}" located at \`${projectContext.path}\`.
+You are inside a folder named "${projectContext.name}" located at \`${projectContext.path}\`.
 
-The following files and directories exist in this project:
+Below is the full folder structure and the contents of all readable files:
 
 ${projectContext.files}
 
-Use this information to answer questions about the project's structure, codebase, and files. When the user asks about their project, refer to this context.`;
+Use this information to answer questions about the folder's structure and contents. When the user asks about files, data, or anything inside this folder, refer to the file tree and contents above.`;
 }
