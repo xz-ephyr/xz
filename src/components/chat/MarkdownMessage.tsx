@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
@@ -7,7 +8,7 @@ interface MarkdownMessageProps {
   content: string;
 }
 
-export function MarkdownMessage({ content }: MarkdownMessageProps) {
+export const MarkdownMessage = memo(function MarkdownMessage({ content }: MarkdownMessageProps) {
   const sanitized = content.replace(/<br\s*\/?>/gi, '\n');
   return (
     <div className="text-[15px] leading-relaxed break-words text-neutral-900 [&>p]:my-0">

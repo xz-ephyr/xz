@@ -54,7 +54,7 @@ const codeBlockTheme = EditorView.theme({
   '.cm-line': { padding: '0' },
 });
 
-export const CodeBlock: React.FC<CodeBlockProps> = ({ content, language }) => {
+export const CodeBlock = React.memo(function CodeBlock({ content, language }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
