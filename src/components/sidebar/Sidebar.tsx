@@ -171,7 +171,7 @@ export default function Sidebar() {
       <div
         className={`bg-white border-r border-[#e5e5e5] h-screen transition-[width] duration-300 ease-in-out flex flex-col shrink-0 ${isCollapsed ? 'w-[48px]' : 'w-[320px]'}`}
       >
-        <div className={`flex items-center shrink-0 ${isCollapsed ? 'p-2 justify-center' : 'pl-[24px] pr-2 py-2'}`}>
+        <div className={`flex items-center shrink-0 ${isCollapsed ? 'p-2 justify-center' : 'pl-4 pr-2 py-2'}`}>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
               <img src="/favicon.png?v=2" alt="Logo" className="w-10 h-10 shrink-0" />
@@ -258,7 +258,7 @@ export default function Sidebar() {
                 </button>
               </div>
 
-              <div className="space-y-1 overflow-y-auto min-h-0 thin-scrollbar">
+              <div className="space-y-1 overflow-y-auto min-h-0 thin-scrollbar pr-3">
                 {projects.map((project) => (
                   <ProjectItem
                     key={project.id}

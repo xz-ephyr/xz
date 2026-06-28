@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   MoreVerticalIcon,
@@ -40,7 +40,9 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showMenu, setShowMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [sessionMenuId, setSessionMenuId] = useState<string | null>(null);
+  const [sessionMenuPos, setSessionMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const navigate = useNavigate();
@@ -60,10 +62,20 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
         loadSessions();
       }
     };
+
+    const handleClickOutside = () => {
+      setShowMenu(false);
+      setMenuPos(null);
+      setSessionMenuId(null);
+      setSessionMenuPos(null);
+    };
+
     window.addEventListener('session-title-changed', handleTitleChanged);
+    document.addEventListener('click', handleClickOutside);
     return () => {
       cancelled = true;
       window.removeEventListener('session-title-changed', handleTitleChanged);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, [project.id]);
 
@@ -80,6 +92,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
     await ChatSessionManager.archive(sessionId);
     window.dispatchEvent(new CustomEvent('session-title-changed', { detail: { projectId: project.id } }));
     setSessionMenuId(null);
+    setSessionMenuPos(null);
   };
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
@@ -89,6 +102,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
       window.dispatchEvent(new CustomEvent('session-title-changed', { detail: { projectId: project.id } }));
     }
     setSessionMenuId(null);
+    setSessionMenuPos(null);
   };
 
   const handleNewChat = async (e: React.MouseEvent) => {
@@ -101,9 +115,9 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
   };
 
   return (
-    <div className="mb-1" onMouseLeave={() => setShowMenu(false)}>
+    <div className="mb-1">
       <div
-        className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer group relative"
+        className="flex items-center gap-3 p-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer group"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <HugeiconRenderer icon={Folder02Icon} />
@@ -121,6 +135,8 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
           <button
             onClick={(e) => {
               e.stopPropagation();
+              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+              setMenuPos({ top: rect.bottom + 4, left: rect.right - 128 });
               setShowMenu(!showMenu);
             }}
             className="p-1 hover:bg-[#e5e5e5] rounded-[6px]"
@@ -135,103 +151,113 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
             <HugeiconRenderer icon={ArrowUp01Icon} size={14} />
           )}
         </div>
-
-        {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-neutral-200 rounded-xl shadow-lg py-1 z-50">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(project.id);
-                  setShowMenu(false);
-                }}
-                className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-[8px] mx-1 flex items-center gap-2"
-              >
-              <HugeiconRenderer icon={Delete02Icon} size={14} />
-              Delete Project
-            </button>
-          </div>
-        )}
       </div>
+
+      {showMenu && menuPos && (
+          <div
+            className="fixed w-32 bg-white border border-neutral-200 rounded-xl shadow-lg py-1 z-[9999]"
+            style={{ top: menuPos.top, left: menuPos.left }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(project.id);
+                setShowMenu(false);
+                setMenuPos(null);
+              }}
+              className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-[8px] mx-1 flex items-center gap-2"
+            >
+            <HugeiconRenderer icon={Delete02Icon} size={14} />
+            Delete Project
+          </button>
+        </div>
+      )}
 
       {isExpanded && (
         <div className="mt-1 space-y-1">
           {sessions.filter(s => !s.archived).map((session) => (
-            <div
-              key={session.id}
-              className={`group relative flex items-center text-sm py-1 px-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer active:scale-[0.99] transition-transform ${uuid === session.id ? 'bg-[#f2f3f6] text-black font-medium' : 'text-gray-600'}`}
-              onClick={() => {
-                const slug = project.name.toLowerCase().replace(/\s+/g, '-');
-                navigate(`/project/${slug}/${session.id}`);
-              }}
-            >
-              {editingSessionId === session.id ? (
-                <form
-                  onSubmit={(e) => { e.preventDefault(); handleRenameSession(session.id); }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-1 flex"
-                >
-                  <input
-                    autoFocus
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onBlur={() => setEditingSessionId(null)}
-                    className="w-full bg-white border border-neutral-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-black"
-                  />
-                </form>
-              ) : (
-                <span className="flex-1 truncate">{session.title}</span>
-              )}
-              <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity relative">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSessionMenuId(sessionMenuId === session.id ? null : session.id);
-                  }}
-                  className="p-0.5 hover:bg-neutral-200/60 rounded-[4px] text-neutral-400"
-                  aria-label="Session actions"
-                >
-                  <HugeiconRenderer icon={MoreVerticalIcon} size={13} />
-                </button>
-                {sessionMenuId === session.id && (
-                  <div
-                    className="absolute right-0 top-full mt-0.5 w-32 bg-white border border-neutral-200 rounded-xl shadow-lg py-1 z-50"
+            <Fragment key={session.id}>
+              <div
+                className={`group flex items-center text-sm py-1 px-2 hover:bg-[#f2f3f6] rounded-[8px] cursor-pointer active:scale-[0.99] transition-transform ${uuid === session.id ? 'bg-[#f2f3f6] text-black' : 'text-gray-600'}`}
+                onClick={() => {
+                  const slug = project.name.toLowerCase().replace(/\s+/g, '-');
+                  navigate(`/project/${slug}/${session.id}`);
+                }}
+              >
+                {editingSessionId === session.id ? (
+                  <form
+                    onSubmit={(e) => { e.preventDefault(); handleRenameSession(session.id); }}
                     onClick={(e) => e.stopPropagation()}
+                    className="flex-1 flex"
                   >
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditTitle(session.title);
-                        setEditingSessionId(session.id);
-                        setSessionMenuId(null);
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50 flex items-center gap-2"
-                    >
-                      <HugeiconRenderer icon={PencilEdit02Icon} size={13} className="text-neutral-400" />
-                      Rename
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleArchiveSession(e, session.id)}
-                      className="w-full text-left px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50 flex items-center gap-2"
-                    >
-                      <HugeiconRenderer icon={ArchiveIcon} size={13} className="text-neutral-400" />
-                      Archive
-                    </button>
-                    <div className="h-px bg-neutral-100 my-1" />
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteSession(e, session.id)}
-                      className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
-                    >
-                      <HugeiconRenderer icon={Delete02Icon} size={13} className="text-red-400" />
-                      Delete
-                    </button>
-                  </div>
+                    <input
+                      autoFocus
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={() => setEditingSessionId(null)}
+                      className="w-full bg-white border border-neutral-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  </form>
+                ) : (
+                  <span className="flex-1 truncate">{session.title}</span>
                 )}
+                <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mr-3">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      setSessionMenuPos({ top: rect.bottom + 2, left: rect.right - 128 });
+                      setSessionMenuId(sessionMenuId === session.id ? null : session.id);
+                    }}
+                    className="p-1 hover:bg-neutral-200/60 rounded-[6px] text-neutral-500"
+                    aria-label="Session actions"
+                  >
+                    <HugeiconRenderer icon={MoreVerticalIcon} size={15} />
+                  </button>
+                </div>
               </div>
-            </div>
+              {sessionMenuId === session.id && sessionMenuPos && (
+                <div
+                  className="fixed w-32 bg-white border border-neutral-200 rounded-xl shadow-lg py-1 z-[9999]"
+                  style={{ top: sessionMenuPos.top, left: sessionMenuPos.left }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditTitle(session.title);
+                      setEditingSessionId(session.id);
+                      setSessionMenuId(null);
+                      setSessionMenuPos(null);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50 flex items-center gap-2"
+                  >
+                    <HugeiconRenderer icon={PencilEdit02Icon} size={13} className="text-neutral-400" />
+                    Rename
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleArchiveSession(e, session.id)}
+                    className="w-full text-left px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50 flex items-center gap-2"
+                  >
+                    <HugeiconRenderer icon={ArchiveIcon} size={13} className="text-neutral-400" />
+                    Archive
+                  </button>
+                  <div className="h-px bg-neutral-100 my-1" />
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteSession(e, session.id)}
+                    className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <HugeiconRenderer icon={Delete02Icon} size={13} className="text-red-400" />
+                    Delete
+                  </button>
+                </div>
+              )}
+            </Fragment>
           ))}
         </div>
       )}
