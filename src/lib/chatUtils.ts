@@ -4,10 +4,14 @@ import { parseArtifacts } from './artifactParser';
 const artifactMetadataRegex = /^\s*\*\s*(?:Type|Identifier|Title):\s*`[^`]+`\s*$/gim;
 const artifactInlineRegex = /^\s*`identifier`:\s*`[^`]+`\s*\*\s*`type`:\s*`[^`]+`\s*\*\s*`title`:\s*`[^`]+`/i;
 
-// Strip search result content that leaks into reasoning (URLs, result listings, etc.)
+// Strip search result content that leaks into reasoning
 const searchResultRegex = /(?:^|\n)(?:Results?|Search results?)(?:\s*\d*)?:.*(?:\n|$)/gi;
 const urlInReasoningRegex = /(?:^|\n)\s*[-•*]\s*https?:\/\/\S+/gm;
 const resultBlockRegex = /(?:^|\n)(?:\d+\.\s*\[.*?\]\(.*?\)|\[\d+\]:\s*https?:\/\/\S+)/gm;
+
+// Strip meta-cognition garbage: self-referential loops about failing tool calls
+const metaCognitionLineRegex = /^(?:I\s+(?:am|keep|will|must|should|need|can|have|was|had|shall)|I'm|Let\s+me|Wait[\s,]+I|Actually[\s,]+|Okay[\s,]+|Hmm[\s,]+|The\s+(?:error|previous|tool|call|API)\s|This\s+(?:is|suggests|means)|Looking\s+(?:at|back)|As\s+of\s+my\s+current|After\s+|I'll|I've|I'd).*/gim;
+const retryPhraseRegex = /(?:Try\s+(?:a|the|again|one)|Retry|Attempt\s+\d|Again,?|One more|Let me\s+(?:try|see|check|look|be|do|make)|I will\s+(?:now|try|attempt|call|remove|omit|use|just|simply|consciously|absolutely|be|not)|I keep\s+(?:including|making|doing|typing|getting|sending|adding|forgetting)|I am\s+(?:struggling|failing|having|experiencing|going|literally|typing|unable|in\s+a|somehow|clearly|repeating)|I must\s+(?:stop|try|remove|omit|not)|I should\s+(?:try|just|probably|really)|I cannot\s+(?:stop|seem|figure)|Wait,\s+I\s+(?:am|see|keep|will)|Actually,?\s+(?:looking|I|the|let)|Okay,?\s+(?:I|let|the|so|enough)|I'm\s+(?:going|having|struggling|failing|in|literally|an\s+AI))[\s\S]*?(?:\n|$)/gim;
 
 export function cleanReasoning(reasoning: string): string {
   let cleaned = reasoning
@@ -18,7 +22,9 @@ export function cleanReasoning(reasoning: string): string {
   cleaned = cleaned.replace(urlInReasoningRegex, '');
   cleaned = cleaned.replace(resultBlockRegex, '');
   cleaned = cleaned.replace(/https?:\/\/\S+/g, '');
-  return cleaned.trim();
+  cleaned = cleaned.replace(metaCognitionLineRegex, '');
+  cleaned = cleaned.replace(retryPhraseRegex, '');
+  return cleaned.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 export function hasPartialArtifact(content: string): boolean {

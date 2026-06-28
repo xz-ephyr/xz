@@ -95,7 +95,7 @@ async function firecrawlSearch(query: string, maxResults: number) {
     },
     body: JSON.stringify({
       query,
-      maxResults: Math.min(maxResults, 5),
+      limit: Math.min(maxResults, 5),
       scrapeOptions: { formats: ['markdown'] },
     }),
   });

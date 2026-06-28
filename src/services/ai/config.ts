@@ -63,6 +63,7 @@ Search for recent news articles. Results are filtered by freshness (hour/day/wee
 
 Guidelines:
 - **LIMIT searches to 1–2 calls max per response.** Do not search more than twice. If you need information, search once (or twice max if the first was insufficient). Never make 3+ searches.
+- **Circuit breaker**: If a tool call fails twice with the same error, STOP retrying. Proceed without it or use a different tool. Do not fixate on a failing call.
 - Prefer \`webSearch\` first, then \`fetchPage\` for deeper reading.
 - Cite sources by including the URL in your response.
 - Summarize the relevant information — do not dump raw results.
