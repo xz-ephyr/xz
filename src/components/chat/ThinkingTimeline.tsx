@@ -359,7 +359,7 @@ export function useTimelineSteps(
     });
 
     return steps;
-  }, [reasoning, toolInvocations, isStreaming, parts]);
+  }, [reasoning, toolInvocations, isStreaming, parts, hasContent]);
 }
 
 // ── Hook to aggregate all sources from completed searches ──────────

@@ -204,7 +204,7 @@ export const AssistantBubble = React.memo(
         {hasTimeline && (
           <>
             <ThoughtLabel
-              isActivelyThinking={isStreaming && !hasPendingSearch}
+              isActivelyThinking={isStreaming && !hasPendingSearch && !content}
               isOpen={isReasoningOpen}
               onClick={() => setIsReasoningOpen((p) => !p)}
             />

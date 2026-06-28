@@ -40,7 +40,7 @@ function normalizeCode(code: string): string {
 function transpile(code: string): string {
   try {
     const result = Babel.transform(code, {
-      presets: ['react', 'typescript'],
+      presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
       filename: 'artifact.tsx',
       compact: false,
       retainLines: true,
