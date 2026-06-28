@@ -7,7 +7,7 @@ import {
   PencilEdit02Icon,
   Folder01Icon,
   MoreVerticalIcon,
-  FilterIcon,
+  FilterMailIcon,
   CheckmarkCircle02Icon,
 } from '@hugeicons/core-free-icons';
 import { ChatSession } from '../types/chat';
@@ -30,26 +30,33 @@ const ChatListItem = React.memo(({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { confirmAsync } = useToast();
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+    setMenuPos(null);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
+        closeMenu();
       }
     };
     if (isMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMenuOpen]);
 
   const handleRename = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsEditing(true);
-    setIsMenuOpen(false);
+    closeMenu();
   };
 
   const submitRename = (e: React.FormEvent) => {
@@ -62,7 +69,7 @@ const ChatListItem = React.memo(({
     e.preventDefault();
     e.stopPropagation();
     onArchive(chat.id);
-    setIsMenuOpen(false);
+    closeMenu();
   };
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -71,12 +78,14 @@ const ChatListItem = React.memo(({
     if (await confirmAsync('Are you sure you want to delete this chat?')) {
       onDelete(chat.id);
     }
-    setIsMenuOpen(false);
+    closeMenu();
   };
 
   const toggleMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.right - 160 });
     setIsMenuOpen(!isMenuOpen);
   };
 
@@ -85,9 +94,9 @@ const ChatListItem = React.memo(({
   return (
     <div
       className={cn(
-        'group relative w-full rounded-[12px] transition-all duration-200',
+        'group relative w-full rounded-[6px] transition-all duration-200',
         'hover:bg-[#f5f5f5] active:bg-[#eeeeee]',
-        'flex items-center gap-4 px-4 py-3 h-[60px]',
+        'flex items-center gap-3 px-3 py-1.5',
         isMenuOpen ? 'z-20' : 'z-0 hover:z-10'
       )}
     >
@@ -114,7 +123,7 @@ const ChatListItem = React.memo(({
         </div>
       </Link>
 
-      <div className="shrink-0 relative" ref={menuRef}>
+      <div className="shrink-0" ref={menuRef}>
         <button
           onClick={toggleMenu}
           className={cn(
@@ -126,8 +135,11 @@ const ChatListItem = React.memo(({
           <HugeiconRenderer icon={MoreVerticalIcon} size={18} />
         </button>
 
-        {isMenuOpen && (
-          <div className="absolute right-0 mt-1 w-40 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in zoom-in duration-100 origin-top-right">
+        {isMenuOpen && menuPos && (
+          <div
+            className="fixed w-40 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 z-[9999]"
+            style={{ top: menuPos.top, left: menuPos.left }}
+          >
             <button
               onClick={handleRename}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
@@ -161,22 +173,17 @@ export const ChatsPage = () => {
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'active' | 'archived'>('active');
-  const [sessionType, setSessionType] = useState<'normal' | 'project'>('normal');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
   const refreshChats = useCallback(async () => {
-    const allChats = await ChatSessionManager.getAll(sessionType === 'normal' ? null : undefined);
-    setChats(allChats.filter(s =>
-      sessionType === 'normal' ? !s.projectId : !!s.projectId
-    ));
-  }, [sessionType]);
+    const allChats = await ChatSessionManager.getAll();
+    setChats(allChats);
+  }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshChats();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionType]);
+  }, [refreshChats]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -227,32 +234,6 @@ export const ChatsPage = () => {
             <h1 className="text-3xl font-semibold text-neutral-900 tracking-tight">Chats</h1>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex p-1 bg-neutral-100 rounded-[6px] w-fit">
-            <button
-              onClick={() => setSessionType('normal')}
-              className={cn(
-                'px-4 py-1.5 text-sm font-medium rounded-[6px] transition-all',
-                sessionType === 'normal'
-                  ? 'bg-neutral-50 text-neutral-900 shadow-sm'
-                  : 'text-neutral-500 hover:text-neutral-700'
-              )}
-            >
-              Normal Threads
-            </button>
-            <button
-              onClick={() => setSessionType('project')}
-              className={cn(
-                'px-4 py-1.5 text-sm font-medium rounded-[6px] transition-all',
-                sessionType === 'project'
-                  ? 'bg-neutral-50 text-neutral-900 shadow-sm'
-                  : 'text-neutral-500 hover:text-neutral-700'
-              )}
-            >
-              Project Sessions
-            </button>
-          </div>
-
           <div className="flex items-center gap-3">
             <div className="relative flex-1 group">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-neutral-900 transition-colors">
@@ -263,7 +244,7 @@ export const ChatsPage = () => {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-neutral-300 transition-all placeholder:text-neutral-400"
+                className="w-full bg-neutral-50 rounded-[8px] py-3 pl-12 pr-4 text-sm placeholder:text-neutral-400"
               />
             </div>
 
@@ -276,7 +257,7 @@ export const ChatsPage = () => {
                 )}
                 aria-label="Filter chats"
               >
-                <HugeiconRenderer icon={FilterIcon} size={20} />
+                <HugeiconRenderer icon={FilterMailIcon} size={20} />
               </button>
 
               {isFilterOpen && (
