@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ChevronsDownUpIcon, InternetIcon } from '@hugeicons/core-free-icons';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -74,7 +76,7 @@ function SearchingHeader({
         Searching
       </span>
       {query && (
-        <span className="text-sm text-neutral-400 truncate max-w-[320px]">
+        <span className="text-sm font-medium text-neutral-600 truncate max-w-[400px]">
           &ldquo;{query}&rdquo;
         </span>
       )}
@@ -113,25 +115,17 @@ export function ThinkingTimeline({
     <div className="flex flex-col gap-0">
       {steps.map((step) => {
         if (step.type === 'thinking') {
-          const stepSentences = (step.reasoning || '')
-            .split(/(?<=(?<!\d)[.!?])\s+/)
-            .filter((s) => s.trim().length > 0)
-            .slice(0, 50);
-
           const showEllipsis = step.isActive && isStreaming;
 
           return (
             <div key={step.id} className="flex">
               {/* Reasoning text */}
               <div className="flex flex-col gap-1 flex-1 min-w-0 pb-3">
-                {stepSentences.map((s, sIdx) => (
-                  <div
-                    key={sIdx}
-                    className="text-[13px] leading-relaxed text-neutral-500"
-                  >
-                    {s}
-                  </div>
-                ))}
+                <div className="text-[14px] leading-relaxed text-neutral-500 [&>p]:my-0">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {step.reasoning || ''}
+                  </ReactMarkdown>
+                </div>
                 {showEllipsis && (
                   <div className="text-[13px] leading-relaxed text-neutral-400 animate-pulse">
                     ...
@@ -178,14 +172,14 @@ export function ThinkingTimeline({
                     }`}
                   >
                     <div className="overflow-hidden min-h-0">
-                      <div className="border border-neutral-200 rounded-[6px] mx-2">
+                      <div className="border border-neutral-200 rounded-[6px] overflow-y-auto max-h-[240px] thin-scrollbar mx-[5px]">
                         {sources.map((src, sIdx) => (
                           <a
                             key={sIdx}
                             href={src.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-3 px-3 h-[45px] border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50 transition-colors no-underline"
+                            className="flex items-center gap-3 px-2 h-[36px] rounded-[6px] hover:bg-neutral-100 transition-colors no-underline"
                           >
                             <img
                               src={`https://www.google.com/s2/favicons?domain=${getDomain(src.url)}&sz=16`}
@@ -229,6 +223,7 @@ export function useTimelineSteps(
   toolInvocations: any[] | undefined,
   isStreaming: boolean,
   parts?: any[],
+  hasContent?: boolean,
 ): TimelineStep[] {
   return useMemo(() => {
     const steps: TimelineStep[] = [];
@@ -268,7 +263,7 @@ export function useTimelineSteps(
           if (toolName === 'writeArtifact') continue;
 
           // Flush accumulated reasoning as a thinking step
-          const isActivelyThinking = isStreaming && reasoningBuf.length > 0;
+          const isActivelyThinking = isStreaming && reasoningBuf.length > 0 && !hasContent;
           flushReasoning(isActivelyThinking);
 
           // Build sources from result
@@ -296,7 +291,7 @@ export function useTimelineSteps(
       }
 
       // Flush any remaining reasoning as a final thinking step
-      flushReasoning(isStreaming);
+      flushReasoning(isStreaming && !hasContent);
 
       // Also check toolInvocations for search tools that don't have
       // corresponding parts (e.g. completed results that arrived after parts)
@@ -341,7 +336,7 @@ export function useTimelineSteps(
         id: 'thinking',
         type: 'thinking',
         reasoning,
-        isActive: isStreaming,
+        isActive: isStreaming && !hasContent,
       });
     }
 

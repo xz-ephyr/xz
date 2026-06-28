@@ -104,7 +104,7 @@ export const AssistantBubble = React.memo(
     const hasWriteArtifact = toolInvocations?.some((ti) => ti.toolName === 'writeArtifact');
 
     // ── Timeline steps (replaces old pill badges + reasoning panel) ──
-    const timelineSteps = useTimelineSteps(reasoning, toolInvocations, isStreaming, parts);
+    const timelineSteps = useTimelineSteps(reasoning, toolInvocations, isStreaming, parts, !!content);
     const hasTimeline = timelineSteps.length > 0;
 
     // ── Aggregated sources for footer ──
@@ -220,7 +220,7 @@ export const AssistantBubble = React.memo(
               <div className="overflow-hidden min-h-0">
                 <div
                   ref={timelineScrollRef}
-                  className="overflow-y-auto no-scrollbar flex flex-col gap-2"
+                  className="overflow-y-auto no-scrollbar flex flex-col gap-2 max-h-[45vh]"
                 >
                   <ThinkingTimeline
                     steps={timelineSteps}
