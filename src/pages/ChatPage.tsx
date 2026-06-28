@@ -8,6 +8,8 @@ import { AssistantBubble } from '../components/chat/AssistantBubble';
 import { ChatSessionManager } from '../services/ChatSessionManager';
 import { getModelForChatRequest } from '../config/models';
 import { chatCompletion, getAIErrorMessage, generateSessionTitle } from '../services/aiService';
+import type { ProjectContext } from '../services/ai/contextController';
+import { FileSystemService } from '../services/FileSystemService';
 import { DatabaseService } from '../services/DatabaseService';
 import { useToast } from '../components/ui/Toast';
 import { mapUIMessageToLegacyMessage } from '../lib/chatUtils';
@@ -40,10 +42,9 @@ function useMediaQuery(query: string): boolean {
 
 const ChatMessageRow = memo(function ChatMessageRow({
   message,
-  index,
   currentModel,
-  isLoading,
-  messages,
+  isStreaming,
+  prevUserContent,
   onOpenArtifact,
   onCopy,
   onThumbsUp,
@@ -51,30 +52,23 @@ const ChatMessageRow = memo(function ChatMessageRow({
   handleSend,
 }: {
   message: any;
-  index: number;
   currentModel: string | undefined;
-  isLoading: boolean;
-  messages: any[];
+  isStreaming: boolean;
+  prevUserContent?: string;
   onOpenArtifact: (artifact: any) => void;
   onCopy: (content: string) => void;
   onThumbsUp: () => void;
   onThumbsDown: () => void;
   handleSend: (content: string) => void;
 }) {
-  const isLastAssistant =
-    message.role !== 'user' &&
-    isLoading &&
-    messages.slice(index + 1).every((msg: any) => msg.role !== 'user');
-
   const handleMsgCopy = useCallback(() => onCopy(message.content), [message.content, onCopy]);
   const handleThumbsUp = useCallback(() => onThumbsUp(), [onThumbsUp]);
   const handleThumbsDown = useCallback(() => onThumbsDown(), [onThumbsDown]);
   const handleMsgRegenerate = useCallback(() => {
-    const userMessage = messages[index - 1];
-    if (userMessage) {
-      handleSend(userMessage.content);
+    if (prevUserContent) {
+      handleSend(prevUserContent);
     }
-  }, [messages, index, handleSend]);
+  }, [prevUserContent, handleSend]);
 
   const handleOpenMsgArtifact = useCallback(() => {
     if (message.artifacts?.length > 0) {
@@ -90,7 +84,7 @@ const ChatMessageRow = memo(function ChatMessageRow({
         <AssistantBubble
           content={message.content}
           model={currentModel}
-          isStreaming={isLastAssistant}
+          isStreaming={isStreaming}
           toolInvocations={message.toolInvocations}
           reasoning={message.reasoning}
           parts={message.parts}
@@ -141,6 +135,7 @@ export const ChatPage = () => {
     selectArtifact,
     closePanel,
     openPanel,
+    clearArtifacts,
   } = useArtifacts();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -148,6 +143,18 @@ export const ChatPage = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   const SCROLL_THRESHOLD = 150;
+
+  const handleCopyMessage = useCallback((content: string) => {
+    navigator.clipboard.writeText(content);
+  }, []);
+
+  const handleThumbsUp = useCallback(() => {
+    console.log('Thumbs up');
+  }, []);
+
+  const handleThumbsDown = useCallback(() => {
+    console.log('Thumbs down');
+  }, []);
 
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -206,6 +213,26 @@ export const ChatPage = () => {
     return getModelForChatRequest(uuid);
   }, [uuid, modelRevision]);
 
+  const getProjectContext = useCallback(async (): Promise<ProjectContext | undefined> => {
+    if (!uuid || uuid === 'new') return undefined;
+    try {
+      const session = await ChatSessionManager.getSession(uuid);
+      if (!session?.projectId) return undefined;
+      const projects = await DatabaseService.getProjects();
+      const project = projects.find(p => p.id === session.projectId);
+      if (!project) return undefined;
+      const entries = await FileSystemService.getTree(project.path, 3);
+      const flatten = (items: typeof entries, indent = ''): string =>
+        items.map(e =>
+          `${indent}${e.isDirectory ? '📁' : '📄'} ${e.name}` +
+          (e.children ? '\n' + flatten(e.children, indent + '  ') : '')
+        ).join('\n');
+      return { name: project.name, path: project.path, files: flatten(entries) };
+    } catch {
+      return undefined;
+    }
+  }, [uuid]);
+
   // eslint-disable-next-line react-hooks/refs
   const transport = useMemo(() => new DefaultChatTransport({
     fetch: async (_url: any, options: any) => {
@@ -214,6 +241,7 @@ export const ChatPage = () => {
       }
       const body = JSON.parse(options.body as string);
       const effectiveModel = currentModelRef.current || body.model;
+      const projectContext = uuid && uuid !== 'new' ? await getProjectContext() : undefined;
       const result = await chatCompletion({
         messages: body.messages,
         modelName: effectiveModel,
@@ -221,6 +249,7 @@ export const ChatPage = () => {
         abortSignal: options?.signal,
         previousModelName: previousModelRef.current || undefined,
         sessionId: uuid,
+        projectContext,
       });
 
       previousModelRef.current = effectiveModel;
@@ -232,7 +261,7 @@ export const ChatPage = () => {
     body: {
       model: currentModel,
     },
-  }), [uuid, currentModel]);
+  }), [uuid, currentModel, getProjectContext]);
 
   const chat = useChat({
     transport,
@@ -262,6 +291,7 @@ export const ChatPage = () => {
   const isLoading = status === 'submitted' || status === 'streaming';
 
   useEffect(() => {
+    clearArtifacts();
     if (uuid) {
       const loadSession = async () => {
         if (!sessionStorage.getItem('pending-first-message') && uuid !== 'new') {
@@ -282,7 +312,7 @@ export const ChatPage = () => {
     } else {
       setSessionId(null);
     }
-  }, [uuid, setMessages, setSessionId, setSessionTitle]);
+  }, [uuid, setMessages, setSessionId, setSessionTitle, clearArtifacts]);
 
   useEffect(() => {
     isThinkingEnabledRef.current = isThinkingEnabled;
@@ -507,21 +537,29 @@ export const ChatPage = () => {
           >
             {messages.length > 0 && <div className="h-[8px] bg-white dark:bg-[#111110] w-full shrink-0" />}
             <div className="w-full mx-auto px-4 pb-24" style={{ maxWidth: 'min(880px, 100%)' }}>
-              {messages.map((m: any, i: number) => (
-                <ChatMessageRow
-                  key={m.id || i}
-                  message={m}
-                  index={i}
-                  currentModel={currentModel}
-                  isLoading={isLoading}
-                  messages={messages}
-                  onOpenArtifact={handleOpenArtifact}
-                  onCopy={(content) => navigator.clipboard.writeText(content)}
-                  onThumbsUp={() => console.log('Thumbs up')}
-                  onThumbsDown={() => console.log('Thumbs down')}
-                  handleSend={handleSend}
-                />
-              ))}
+              {messages.map((m: any, i: number) => {
+                const isLastAssistant =
+                  m.role !== 'user' &&
+                  isLoading &&
+                  messages.slice(i + 1).every((msg: any) => msg.role !== 'user');
+                const prevUserContent = i > 0 && messages[i - 1]?.role === 'user'
+                  ? messages[i - 1]?.content
+                  : undefined;
+                return (
+                  <ChatMessageRow
+                    key={m.id || i}
+                    message={m}
+                    currentModel={currentModel}
+                    isStreaming={isLastAssistant}
+                    prevUserContent={prevUserContent}
+                    onOpenArtifact={handleOpenArtifact}
+                    onCopy={handleCopyMessage}
+                    onThumbsUp={handleThumbsUp}
+                    onThumbsDown={handleThumbsDown}
+                    handleSend={handleSend}
+                  />
+                );
+              })}
 
               {messages.length === 0 && (
                 <div className="w-full mt-4 flex flex-col items-center overflow-visible pb-10">

@@ -14,7 +14,7 @@ import {
   newsSearchTool,
 } from './ai/tools/webSearchTool';
 import { API_KEYS, getModelDefinition, getUsedModels, markModelUsed, AI_MODELS, type Provider } from '../config/models';
-import { getSmartSystemPrompt } from './ai/contextController';
+import { getSmartSystemPrompt, type ProjectContext } from './ai/contextController';
 import { contractContext } from './ai/contextContractor';
 
 let cachedProviders: {
@@ -123,6 +123,7 @@ export async function chatCompletion({
   abortSignal,
   previousModelName,
   sessionId,
+  projectContext,
 }: {
   messages: any[];
   modelName: string;
@@ -130,6 +131,7 @@ export async function chatCompletion({
   abortSignal?: AbortSignal;
   previousModelName?: string;
   sessionId?: string;
+  projectContext?: ProjectContext;
 }) {
   const providers = getProviders();
 
@@ -146,7 +148,7 @@ export async function chatCompletion({
     return providers.google('gemini-3.5-flash');
   };
 
-  const fullSystemPrompt = getSmartSystemPrompt(SYSTEM_PROMPT);
+  const fullSystemPrompt = getSmartSystemPrompt(SYSTEM_PROMPT, projectContext);
 
   const errors: string[] = [];
   const chain = buildFallbackChain(modelName, sessionId);

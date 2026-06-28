@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowUp02Icon, PlusSignIcon, Idea01Icon, Cancel01Icon, StopIcon } from '@hugeicons/core-free-icons';
+import { ArrowUp02Icon, PlusSignIcon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon } from '@hugeicons/core-free-icons';
 import { ThinScrollbar } from '../ui/ThinScrollbar';
 
 interface ChatInputProps {
@@ -12,44 +12,36 @@ interface ChatInputProps {
   onToggleThinking: () => void;
 }
 
-function PlusDropdown({
-  isOpen,
-  onToggle,
-  onToggleThinking,
-  isThinkingEnabled,
-  dropUp,
-}: {
-  isOpen: boolean;
-  onToggle: () => void;
-  onToggleThinking: () => void;
-  isThinkingEnabled: boolean;
-  dropUp?: boolean;
-}) {
+function ToolbarDropdown() {
+  const [isOpen, setIsOpen] = useState(false);
+  const items = [
+    { icon: Attachment01Icon, label: 'File or Photos', title: 'Upload file or photos' },
+    { icon: CameraAdd01Icon, label: 'Take a Screenshots', title: 'Take a screenshot' },
+  ];
   return (
     <div className="relative">
       <button
         type="button"
-        onClick={onToggle}
+        onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-neutral-200/60 transition-colors text-black"
-        aria-label="Add content or toggle settings"
-        title="Add content or toggle settings"
+        aria-label="Add content"
+        title="Add content"
       >
         <HugeiconsIcon icon={PlusSignIcon} size={18} />
       </button>
-
       {isOpen && (
-        <div
-          className={`absolute ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-50`}
-        >
-          <button
-            type="button"
-            onClick={() => { onToggleThinking(); onToggle(); }}
-            className="w-full text-left px-4 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center justify-between"
-            aria-label="Toggle thinking mode"
-          >
-            <span className="flex items-center gap-2"><HugeiconsIcon icon={Idea01Icon} size={14} /> Thinking Mode</span>
-            {isThinkingEnabled && <div className="w-2 h-2 rounded-full bg-blue-500"></div>}
-          </button>
+        <div className="absolute bottom-full mb-2 left-0 w-52 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-50">
+          {items.map((item, i) => (
+            <button
+              key={i}
+              type="button"
+              className="w-full text-left px-4 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center gap-2"
+              title={item.title}
+            >
+              <HugeiconsIcon icon={item.icon} size={16} />
+              <span>{item.label}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -111,13 +103,10 @@ function SendButton({
   );
 }
 
-export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkingEnabled, onToggleThinking }: ChatInputProps) {
+export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled, onToggleThinking }: ChatInputProps) {
   const [value, setValue] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const isExpanded = isFocused || !!value || !isIdle;
+  const isActive = !!value.trim() || isLoading;
 
   const adjustHeight = () => {
     const textarea = textareaRef.current;
@@ -128,14 +117,8 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
   };
 
   useEffect(() => {
-    if (isExpanded) adjustHeight();
-  }, [value, isExpanded]);
-
-  useEffect(() => {
-    if (isExpanded && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [isExpanded]);
+    adjustHeight();
+  }, [value]);
 
   const handleSend = () => {
     if (value.trim() && !isLoading) {
@@ -148,8 +131,6 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
     ref: textareaRef,
     value,
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value),
-    onFocus: () => setIsFocused(true),
-    onBlur: () => setIsFocused(false),
     onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -161,37 +142,37 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
   };
 
   return (
-    <div className="relative w-full mx-auto transition-all duration-300" style={{ maxWidth: 'min(880px, 100%)' }}>
-      {isExpanded ? (
-        /* ── EXPANDED STATE: Full auto-resizing input ── */
-        <div className="bg-[#f2f3f6] rounded-[12px] transition-all relative z-10 border border-neutral-200/60 shadow-sm">
-          <ThinScrollbar className="max-h-[145px]">
-            <textarea
-              {...commonTextareaProps}
-              className="w-full py-3 px-4 resize-none outline-none text-[15px] min-h-[48px] bg-transparent overflow-hidden"
-              rows={1}
-            />
-          </ThinScrollbar>
+    <div className="relative w-full mx-auto" style={{ maxWidth: 'min(880px, 100%)' }}>
+      <div className="bg-[#f2f3f6] rounded-[12px] relative z-10 border border-neutral-200/60 shadow-sm">
+        <ThinScrollbar className="max-h-[145px]">
+          <textarea
+            {...commonTextareaProps}
+            className="w-full py-3 px-4 resize-none outline-none text-[15px] min-h-[48px] bg-transparent overflow-hidden"
+            rows={1}
+          />
+        </ThinScrollbar>
 
-          <div className="flex items-center justify-between px-3 py-2 bg-transparent">
-            <div className="flex items-center gap-2">
-              <PlusDropdown isOpen={isDropdownOpen} onToggle={() => setIsDropdownOpen(!isDropdownOpen)} onToggleThinking={onToggleThinking} isThinkingEnabled={isThinkingEnabled} dropUp={true} />
-              {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
+        <div className="flex flex-col px-3 py-1.5 bg-transparent gap-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-0.5">
+              {isActive ? (
+                <>
+                  <button type="button" className="flex items-center gap-1 px-2 py-1.5 text-xs text-neutral-600 rounded-md hover:bg-neutral-200/60 transition-colors whitespace-nowrap" title="Upload file or photos"><HugeiconsIcon icon={Attachment01Icon} size={16} /><span>File or Photos</span></button>
+                  <button type="button" className="flex items-center gap-1 px-2 py-1.5 text-xs text-neutral-600 rounded-md hover:bg-neutral-200/60 transition-colors whitespace-nowrap" title="Take a screenshot"><HugeiconsIcon icon={CameraAdd01Icon} size={16} /><span>Take a Screenshots</span></button>
+                </>
+              ) : (
+                <ToolbarDropdown />
+              )}
             </div>
             <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
           </div>
+          {isThinkingEnabled && (
+            <div className="flex justify-end">
+              <ThinkingPill onToggleThinking={onToggleThinking} size="small" />
+            </div>
+          )}
         </div>
-      ) : (
-        /* ── COLLAPSED STATE: Compact pill ── */
-        <button
-          type="button"
-          onClick={() => setIsFocused(true)}
-          className="w-full flex items-center justify-between bg-[#f2f3f6] rounded-full border border-neutral-200/60 shadow-sm px-5 h-11 transition-all hover:bg-[#ececed] active:scale-[0.99] cursor-text"
-        >
-          <span className="text-sm text-neutral-400">Ask anything...</span>
-          <SendButton isLoading={false} onStop={onStop} onSend={() => {}} hasValue={false} />
-        </button>
-      )}
+      </div>
     </div>
   );
 }
