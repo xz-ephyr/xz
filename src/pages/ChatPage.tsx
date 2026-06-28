@@ -48,19 +48,17 @@ const ChatMessageRow = memo(function ChatMessageRow({
   onCopy,
   onThumbsUp,
   onThumbsDown,
-  onRegenerate,
   handleSend,
 }: {
   message: any;
   index: number;
-  currentModel: string | null;
+  currentModel: string | undefined;
   isLoading: boolean;
   messages: any[];
   onOpenArtifact: (artifact: any) => void;
   onCopy: (content: string) => void;
   onThumbsUp: () => void;
   onThumbsDown: () => void;
-  onRegenerate: (content: string) => void;
   handleSend: (content: string) => void;
 }) {
   const isLastAssistant =
@@ -122,7 +120,7 @@ export const ChatPage = () => {
       if (saved) {
         return Math.max(PANEL_MIN_WIDTH, Math.min(PANEL_MAX_WIDTH, parseInt(saved, 10)));
       }
-    } catch {}
+    } catch { /* ignore */ }
     return DEFAULT_PANEL_WIDTH;
   });
   const previousModelRef = useRef<string | null>(null);
@@ -521,7 +519,6 @@ export const ChatPage = () => {
                   onCopy={(content) => navigator.clipboard.writeText(content)}
                   onThumbsUp={() => console.log('Thumbs up')}
                   onThumbsDown={() => console.log('Thumbs down')}
-                  onRegenerate={(content) => handleSend(content)}
                   handleSend={handleSend}
                 />
               ))}

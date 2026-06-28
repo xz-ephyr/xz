@@ -1,15 +1,15 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
-import OnboardingPage from './pages/OnboardingPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { isTauri } from './lib/tauri';
 import UpdateModal from './components/ui/UpdateModal';
 
-const ChatPage = lazy(() => import('./pages/ChatPage'));
-const ChatsPage = lazy(() => import('./pages/ChatsPage'));
-const SchedulePage = lazy(() => import('./pages/SchedulePage'));
-const PluginsPage = lazy(() => import('./pages/PluginsPage'));
-const WikiPage = lazy(() => import('./pages/WikiPage'));
+const ChatPage = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })));
+const ChatsPage = lazy(() => import('./pages/ChatsPage').then(m => ({ default: m.ChatsPage })));
+const SchedulePage = lazy(() => import('./pages/SchedulePage').then(m => ({ default: m.SchedulePage })));
+const PluginsPage = lazy(() => import('./pages/PluginsPage').then(m => ({ default: m.PluginsPage })));
+const WikiPage = lazy(() => import('./pages/WikiPage').then(m => ({ default: m.WikiPage })));
 
 export default function App() {
   const [updateInfo, setUpdateInfo] = useState<{

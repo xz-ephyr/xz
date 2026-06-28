@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, startTransition } from 'react';
 import { MarkdownMessage } from './MarkdownMessage';
 import {
   ThumbsUpIcon,
@@ -121,27 +121,29 @@ export const AssistantBubble = React.memo(
       if (!hasWriteArtifact || !contentBeforeTool) return;
       if (phase === 'idle') {
         if (content && content.startsWith(contentBeforeTool)) {
-          setIntentionLen(contentBeforeTool.length);
+          startTransition(() => setIntentionLen(contentBeforeTool.length));
           if (contentAfterTool && content.includes(contentAfterTool)) {
-            setExplanationLen(contentAfterTool.length);
-            setPhase('done');
+            startTransition(() => {
+              setExplanationLen(contentAfterTool.length);
+              setPhase('done');
+            });
             return;
           }
-          setPhase('shimmer');
+          startTransition(() => setPhase('shimmer'));
           return;
         }
-        setPhase('intention');
+        startTransition(() => setPhase('intention'));
       }
     }, [hasWriteArtifact, contentBeforeTool, phase, content, contentAfterTool]);
 
     useEffect(() => {
       if (phase !== 'intention' || !contentBeforeTool) return;
       const total = contentBeforeTool.length;
-      if (total === 0) { setPhase('shimmer'); return; }
-      if (intentionLen >= total) { setPhase('shimmer'); return; }
+      if (total === 0) { startTransition(() => setPhase('shimmer')); return; }
+      if (intentionLen >= total) { startTransition(() => setPhase('shimmer')); return; }
       if (contentBeforeTool !== prevIntentionRef.current && prevIntentionRef.current !== '') {
         prevIntentionRef.current = contentBeforeTool;
-        setIntentionLen(total);
+        startTransition(() => setIntentionLen(total));
         return;
       }
       prevIntentionRef.current = contentBeforeTool;
@@ -152,7 +154,7 @@ export const AssistantBubble = React.memo(
 
     useEffect(() => {
       if (phase !== 'shimmer') return;
-      setExplanationLen(0);
+      startTransition(() => setExplanationLen(0));
       const t = setTimeout(() => setPhase('explanation'), 600);
       return () => clearTimeout(t);
     }, [phase]);
@@ -160,11 +162,11 @@ export const AssistantBubble = React.memo(
     useEffect(() => {
       if (phase !== 'explanation' || !contentAfterTool) return;
       const total = contentAfterTool.length;
-      if (total === 0) { setPhase('done'); return; }
-      if (explanationLen >= total) { setPhase('done'); return; }
+      if (total === 0) { startTransition(() => setPhase('done')); return; }
+      if (explanationLen >= total) { startTransition(() => setPhase('done')); return; }
       if (contentAfterTool !== prevExplanationRef.current && prevExplanationRef.current !== '') {
         prevExplanationRef.current = contentAfterTool;
-        setExplanationLen(total);
+        startTransition(() => setExplanationLen(total));
         return;
       }
       prevExplanationRef.current = contentAfterTool;

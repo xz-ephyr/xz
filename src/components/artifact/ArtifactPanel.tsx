@@ -27,6 +27,7 @@ export function ArtifactPanel({
   onRegenerate,
   onRollback: _onRollback,
 }: ArtifactPanelProps) {
+  void _onRollback;
   const [activeTab, setActiveTab] = useState<TabId>('preview');
 
   const activeArtifact = useMemo(() => {
