@@ -1,7 +1,6 @@
-import { useMemo, useRef, useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Clock01Icon, InternetIcon } from '@hugeicons/core-free-icons';
-import { useThinkingTimer } from '../../hooks/useThinkingTimer';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -27,8 +26,6 @@ export interface TimelineStep {
 
 interface ThinkingTimelineProps {
   steps: TimelineStep[];
-  isReasoningOpen: boolean;
-  onToggleReasoning: () => void;
   isStreaming: boolean;
 }
 
@@ -61,37 +58,6 @@ function SourcePill({ url, title }: { url: string; title?: string }) {
 
 // ── Sub-components ─────────────────────────────────────────────────
 
-function ThinkingHeader({
-  isActivelyThinking,
-  isOpen,
-  onClick,
-}: {
-  isActivelyThinking: boolean;
-  isOpen: boolean;
-  onClick: () => void;
-}) {
-  const { label } = useThinkingTimer(isActivelyThinking);
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex items-center bg-transparent p-0 text-left outline-none w-fit transition-all"
-      aria-expanded={isOpen}
-    >
-      <span
-        className={
-          isActivelyThinking
-            ? 'thinking-shimmer-text text-sm font-medium cursor-pointer'
-            : 'text-sm font-medium text-neutral-500 cursor-pointer'
-        }
-      >
-        {label}
-      </span>
-    </button>
-  );
-}
-
 function SearchingHeader({
   query,
   isRunning,
@@ -121,27 +87,23 @@ function SearchingHeader({
 
 // ── Main component ─────────────────────────────────────────────────
 
+/**
+ * ThinkingTimeline
+ *
+ * Renders the vertical timeline of think/search steps that appears INSIDE
+ * the expandable reasoning panel. Each step has a left gutter (icon + connecting
+ * line) and right content (reasoning text / search query + sources).
+ *
+ * The expand/collapse of the outer panel is controlled by the parent
+ * (AssistantBubble) — this component is always visible content within it.
+ */
 export function ThinkingTimeline({
   steps,
-  isReasoningOpen,
-  onToggleReasoning,
   isStreaming,
 }: ThinkingTimelineProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [expandedSearch, setExpandedSearch] = useState<Set<string>>(new Set());
 
-  // Auto-scroll reasoning during streaming
-  useEffect(() => {
-    if (isStreaming && scrollRef.current) {
-      requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      });
-    }
-  }, [steps, isStreaming]);
-
-  // Split reasoning into sentences (same as current AssistantBubble logic)
+  // Split reasoning into sentences (same as original logic)
   const sentences = useMemo(() => {
     const thinkingStep = steps.find((s) => s.type === 'thinking');
     if (!thinkingStep?.reasoning) return [];
@@ -161,63 +123,46 @@ export function ThinkingTimeline({
         const isLast = idx === steps.length - 1;
 
         if (step.type === 'thinking') {
+          const displaySentences = step.sources && step.sources.length > 0
+            ? step.reasoning
+                ?.split(/(?<=[.!?])\s+/)
+                .filter((s) => s.trim().length > 0) || []
+            : sentences;
+
+          // Not actively streaming new reasoning if a search is running
+          const showEllipsis = step.isActive && isStreaming;
+
           return (
             <div key={step.id} className="flex gap-3">
               {/* Left gutter: icon + line */}
               <div className="flex flex-col items-center shrink-0">
                 <div className="flex items-center justify-center w-5 h-5">
-                  <HugeiconsIcon icon={Clock01Icon} size={14} className="text-neutral-400" />
+                  <HugeiconsIcon icon={Clock01Icon} size={12} className="text-neutral-400" />
                 </div>
-                {!isLast && <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />}
+                <div className="w-0.5 flex-1 min-h-4 bg-neutral-200 mt-1" />
               </div>
 
-              {/* Right: header + content */}
-              <div className="flex flex-col gap-2 flex-1 min-w-0 pb-3">
-                <ThinkingHeader
-                  isActivelyThinking={step.isActive && isStreaming}
-                  isOpen={isReasoningOpen}
-                  onClick={onToggleReasoning}
-                />
-
-                <div
-                  className={`grid ${
-                    isReasoningOpen
-                      ? 'grid-rows-[1fr] opacity-100'
-                      : 'grid-rows-[0fr] opacity-0'
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <div
-                      ref={scrollRef}
-                      className="overflow-y-auto no-scrollbar flex flex-col gap-2 pt-1 max-h-[45vh]"
-                    >
-                      {sentences.map((s, sIdx) => (
-                        <div
-                          key={sIdx}
-                          className="text-[15px] leading-relaxed text-neutral-500"
-                        >
-                          {s}
-                        </div>
-                      ))}
-                      {step.isActive && isStreaming && (
-                        <div className="text-[15px] leading-relaxed text-neutral-400 animate-pulse">
-                          ...
-                        </div>
-                      )}
-                    </div>
+              {/* Right: reasoning text */}
+              <div className="flex flex-col gap-1.5 flex-1 min-w-0 pb-3">
+                {displaySentences.map((s, sIdx) => (
+                  <div
+                    key={sIdx}
+                    className="text-[13px] leading-relaxed text-neutral-500"
+                  >
+                    {s}
                   </div>
-                </div>
+                ))}
+                {showEllipsis && (
+                  <div className="text-[13px] leading-relaxed text-neutral-400 animate-pulse">
+                    ...
+                  </div>
+                )}
               </div>
             </div>
           );
         }
 
         if (step.type === 'searching') {
-          const isExpanded = expandedSearch.has(step.id);
-          const sources = step.sources || [];
-          const showSources = !step.isRunning && sources.length > 0;
-          const maxVisibleSources = 4;
-
           const toggleExpand = () => {
             setExpandedSearch((prev) => {
               const next = new Set(prev);
@@ -230,6 +175,11 @@ export function ThinkingTimeline({
             });
           };
 
+          const isExpanded = expandedSearch.has(step.id);
+          const sources = step.sources || [];
+          const showSources = !step.isRunning && sources.length > 0;
+          const maxVisibleSources = 4;
+
           return (
             <div key={step.id} className="flex gap-3">
               {/* Left gutter: icon + line */}
@@ -237,7 +187,7 @@ export function ThinkingTimeline({
                 <div className="flex items-center justify-center w-5 h-5">
                   <HugeiconsIcon
                     icon={InternetIcon}
-                    size={14}
+                    size={12}
                     className={step.isRunning ? 'text-blue-500' : 'text-neutral-400'}
                   />
                 </div>

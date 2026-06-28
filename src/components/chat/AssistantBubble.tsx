@@ -10,6 +10,7 @@ import {
 import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 import { ArtifactsPreviewCard } from './ArtifactsPreviewCard';
 import { WritingToolShimmer } from './WritingToolShimmer';
+import { ThoughtLabel } from './ThoughtLabel';
 import {
   ThinkingTimeline,
   useTimelineSteps,
@@ -186,17 +187,47 @@ export const AssistantBubble = React.memo(
     );
     const showFooterActions = !isStreaming && !hasPendingSearch;
 
+    const timelineScrollRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+      if (isStreaming && timelineScrollRef.current) {
+        requestAnimationFrame(() => {
+          timelineScrollRef.current?.scrollTo(0, timelineScrollRef.current.scrollHeight);
+        });
+      }
+    }, [reasoning, toolInvocations, isStreaming]);
+
   return (
     <div className="mb-6 w-full group/bubble">
       <div className="text-base px-4 py-4 break-words flex flex-col gap-2">
-        {/* ── Timeline (thinking + search steps) ── */}
+        {/* ── Thinking label + timeline inside expandable panel ── */}
         {hasTimeline && (
-          <ThinkingTimeline
-            steps={timelineSteps}
-            isReasoningOpen={isReasoningOpen}
-            onToggleReasoning={() => setIsReasoningOpen((p) => !p)}
-            isStreaming={isStreaming}
-          />
+          <div className="flex flex-col gap-2">
+            <ThoughtLabel
+              isActivelyThinking={isStreaming && !hasPendingSearch}
+              isOpen={isReasoningOpen}
+              onClick={() => setIsReasoningOpen((p) => !p)}
+            />
+
+            <div
+              className={`grid ${
+                isReasoningOpen
+                  ? 'grid-rows-[1fr] opacity-100'
+                  : 'grid-rows-[0fr] opacity-0'
+              }`}
+            >
+              <div className="overflow-hidden">
+                <div
+                  ref={timelineScrollRef}
+                  className="overflow-y-auto no-scrollbar flex flex-col gap-2 pt-1 max-h-[45vh]"
+                >
+                  <ThinkingTimeline
+                    steps={timelineSteps}
+                    isStreaming={isStreaming}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── Write artifact streaming sequence ── */}
