@@ -2,9 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ViewIcon, ViewOffSlashIcon, Settings02Icon, Key01Icon, ZapIcon, Cancel01Icon,
-  FolderLibraryIcon, GlobeIcon, AiSearch02Icon,
+  FolderLibraryIcon, GlobeIcon,
 } from '@hugeicons/core-free-icons';
-import { DatabaseService } from '../../services/DatabaseService';
 import {
   MODEL_MODE_STORAGE_KEY,
   MODEL_MODES,
@@ -41,7 +40,6 @@ const tabs = [
   { id: 'appearance', label: 'Appearance', icon: ViewIcon },
   { id: 'behavior', label: 'Behavior', icon: ZapIcon },
   { id: 'storage', label: 'Storage', icon: FolderLibraryIcon },
-  { id: 'web-search', label: 'Web & Search', icon: AiSearch02Icon },
 ] as const;
 
 type TabId = (typeof tabs)[number]['id'];
@@ -79,7 +77,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       })
       .catch(() => setSearchKeysLoaded(true));
   }, [activeTab, searchKeysLoaded]);
-
   const toggleShowKey = (provider: string) => {
     setShowKeys(prev => ({ ...prev, [provider]: !prev[provider] }));
   };
@@ -172,8 +169,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-background after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
                   </label>
                 </div>
-
-                <ThemeToggle />
 
                 <div className="flex items-center justify-between">
                   <div>
@@ -471,6 +466,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
 
+=======
+>>>>>>> parent of 94ff0f9 (feat: add dark/light mode toggle in Settings → General tab)
             {activeTab === 'appearance' && (
               <div className="space-y-6">
                 <div className="flex flex-col gap-2">
@@ -602,58 +599,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   );
 }
 
-const THEME_KEY = 'theme';
-
-function ThemeToggle() {
-  const [isDark, setIsDark] = useState(() => {
-    const stored = localStorage.getItem(THEME_KEY);
-    if (stored === 'dark') return true;
-    if (stored === 'light') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  const toggle = () => {
-    const next = !isDark;
-    setIsDark(next);
-    if (next) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem(THEME_KEY, 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem(THEME_KEY, 'light');
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-between">
-      <div>
-        <label className="text-sm font-semibold text-foreground">Appearance</label>
-        <p className="text-xs text-neutral-500 mt-0.5">Switch between light and dark theme.</p>
-      </div>
-      <button
-        onClick={toggle}
-        className="relative w-16 h-8 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors flex items-center px-1"
-      >
-        <div
-          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
-            isDark ? 'translate-x-8 bg-neutral-700' : 'translate-x-0 bg-amber-400'
-          }`}
-        >
-          {isDark ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="5" />
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-            </svg>
-          )}
-        </div>
-      </button>
-    </div>
-  );
-}
 
 const ZOOM_PRESETS = [0.5, 0.65, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 2];
 
