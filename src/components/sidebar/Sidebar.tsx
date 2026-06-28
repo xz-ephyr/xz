@@ -10,6 +10,7 @@ import {
   PanelRightIcon,
   FolderLibraryIcon,
   Download01Icon,
+  CursorRectangleSelection02Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import SidebarTab from './SidebarTab';
@@ -30,8 +31,10 @@ const newThreadIcon = <HugeiconRenderer icon={PencilEdit02Icon} />;
 const chatsIcon = <HugeiconRenderer icon={FolderLibraryIcon} />;
 const scheduleIcon = <HugeiconRenderer icon={AlarmClockIcon} />;
 const pluginsIcon = <HugeiconRenderer icon={ResourcesAddIcon} />;
+const workflowIcon = <HugeiconRenderer icon={CursorRectangleSelection02Icon} />;
 const wikiIcon = <HugeiconRenderer icon={TreePalmIcon} />;
 const downloadIcon = <HugeiconRenderer icon={Download01Icon} />;
+const workflowIcon = <HugeiconRenderer icon={CursorRectangleSelection02Icon} />;
 const settingsIcon = <HugeiconRenderer icon={Settings02Icon} />;
 
 export default function Sidebar() {
@@ -212,6 +215,13 @@ export default function Sidebar() {
               label="Schedule"
               path="/schedule"
               active={location.pathname === '/schedule'}
+              collapsed={isCollapsed}
+            />
+            <SidebarTab
+              iconElement={workflowIcon}
+              label="Workflow"
+              path="/workflow"
+              active={location.pathname === '/workflow'}
               collapsed={isCollapsed}
             />
             <SidebarTab
