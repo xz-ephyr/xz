@@ -187,9 +187,9 @@ export default function Sidebar() {
         </div>
 
         <div
-          className={`flex flex-col min-h-0 flex-1 ${isCollapsed ? 'px-1.5 overflow-hidden' : ''}`}
+          className={`flex flex-col min-h-0 flex-1 ${isCollapsed ? 'overflow-hidden' : ''}`}
         >
-          <div className="shrink-0 px-4 overflow-y-auto">
+          <div className={`shrink-0 ${isCollapsed ? 'px-1.5 overflow-hidden' : 'px-4'}`}>
             <SidebarTab
               iconElement={newThreadIcon}
               label="New thread"
