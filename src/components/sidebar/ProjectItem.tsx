@@ -43,12 +43,14 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
   const { uuid } = useParams();
 
   useEffect(() => {
+    let cancelled = false;
     const loadSessions = async () => {
       const allSessions = await ChatSessionManager.getAll(project.id);
-      setSessions(allSessions);
+      if (!cancelled) setSessions(allSessions);
     };
     loadSessions();
-  }, [project.id, uuid]);
+    return () => { cancelled = true; };
+  }, [project.id]);
 
   const handleNewChat = async (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
-import { OnboardingPage, ChatPage, ChatsPage, SchedulePage, PluginsPage, WikiPage } from './pages';
+import OnboardingPage from './pages/OnboardingPage';
 import { isTauri } from './lib/tauri';
 import UpdateModal from './components/ui/UpdateModal';
+
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const ChatsPage = lazy(() => import('./pages/ChatsPage'));
+const SchedulePage = lazy(() => import('./pages/SchedulePage'));
+const PluginsPage = lazy(() => import('./pages/PluginsPage'));
+const WikiPage = lazy(() => import('./pages/WikiPage'));
 
 export default function App() {
   const [updateInfo, setUpdateInfo] = useState<{
@@ -58,14 +64,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<OnboardingPage />} />
         <Route element={<Layout />}>
-          <Route path="/thread/:uuid" element={<ChatPage />} />
-          <Route path="/chats" element={<ChatsPage />} />
-          <Route path="/schedule" element={<SchedulePage />} />
-          <Route path="/plugins" element={<PluginsPage />} />
-          <Route path="/wiki" element={<WikiPage />} />
-          <Route path="/project/:uuid" element={<ChatPage />} />
-          <Route path="/project/:folder/:uuid" element={<ChatPage />} />
-          <Route path="/chat/:uuid" element={<ChatPage />} />
+          <Route path="/thread/:uuid" element={<Suspense fallback={null}><ChatPage /></Suspense>} />
+          <Route path="/chats" element={<Suspense fallback={null}><ChatsPage /></Suspense>} />
+          <Route path="/schedule" element={<Suspense fallback={null}><SchedulePage /></Suspense>} />
+          <Route path="/plugins" element={<Suspense fallback={null}><PluginsPage /></Suspense>} />
+          <Route path="/wiki" element={<Suspense fallback={null}><WikiPage /></Suspense>} />
+          <Route path="/project/:uuid" element={<Suspense fallback={null}><ChatPage /></Suspense>} />
+          <Route path="/project/:folder/:uuid" element={<Suspense fallback={null}><ChatPage /></Suspense>} />
+          <Route path="/chat/:uuid" element={<Suspense fallback={null}><ChatPage /></Suspense>} />
         </Route>
       </Routes>
 

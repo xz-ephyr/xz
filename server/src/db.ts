@@ -14,6 +14,17 @@ const db = new Database(path.join(DATA_DIR, 'xz.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+const stmtCache = new Map<string, Database.Statement>();
+
+function prepare(sql: string): Database.Statement {
+  let stmt = stmtCache.get(sql);
+  if (!stmt) {
+    stmt = db.prepare(sql);
+    stmtCache.set(sql, stmt);
+  }
+  return stmt;
+}
+
 export async function query<T = Record<string, unknown>>(
   text: string,
   params?: any[],
@@ -24,7 +35,7 @@ export async function query<T = Record<string, unknown>>(
     || trimmed.startsWith('WITH')
     || trimmed.includes('RETURNING');
 
-  const stmt = db.prepare(sql);
+  const stmt = prepare(sql);
 
   if (returnsRows) {
     const rows = (params ? stmt.all(...params) : stmt.all()) as T[];
@@ -57,6 +68,8 @@ export async function migrate() {
       created_at INTEGER NOT NULL
     );
 
+    CREATE INDEX IF NOT EXISTS idx_chat_sessions_project_id ON chat_sessions(project_id, created_at DESC);
+
     CREATE TABLE IF NOT EXISTS messages (
       id TEXT PRIMARY KEY,
       session_id TEXT NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
@@ -66,6 +79,8 @@ export async function migrate() {
       tool_invocations TEXT,
       created_at INTEGER NOT NULL
     );
+
+    CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id, created_at ASC);
 
     CREATE TABLE IF NOT EXISTS app_config (
       key TEXT PRIMARY KEY,
@@ -79,6 +94,8 @@ export async function migrate() {
       results TEXT NOT NULL,
       created_at INTEGER NOT NULL
     );
+
+    CREATE INDEX IF NOT EXISTS idx_search_cache_ttl ON search_cache(tool, created_at);
   `);
   console.log('Migration complete');
 }
