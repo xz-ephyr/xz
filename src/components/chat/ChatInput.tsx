@@ -142,7 +142,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled
 
   return (
     <div className="relative w-full mx-auto" style={{ maxWidth: 'min(880px, 100%)' }}>
-      <div className="bg-[#f2f3f6] rounded-[12px] relative z-10 border border-neutral-200/60 shadow-sm">
+      <div className="bg-white/70 rounded-[12px] relative z-10 border border-neutral-200/60 shadow-sm">
         <ThinScrollbar className="max-h-[145px]">
           <textarea
             {...commonTextareaProps}

@@ -21,6 +21,8 @@ import type { Artifact } from '../types/artifact';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { useSessionTitle } from '../hooks/useSessionTitle';
 import TitleBar from '../components/layout/TitleBar';
+import { isTauri } from '../lib/tauri';
+import type { Project } from '../types/chat';
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -120,7 +122,7 @@ const ChatMessageRow = memo(function ChatMessageRow({
 });
 
 export const ChatPage = () => {
-  const { uuid } = useParams();
+  const { uuid, folder } = useParams();
   const navigate = useNavigate();
   const [isThinkingEnabled, setIsThinkingEnabled] = useState(false);
   const [panelWidth, setPanelWidth] = useState<number>(() => {
@@ -138,6 +140,11 @@ export const ChatPage = () => {
   const { addToast } = useToast();
   const { setTitle: setSessionTitle, setSessionId, setIsTitleGenerating } = useSessionTitle();
   const isMobile = useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+
+  const currentProjectName = useMemo(() => {
+    if (!folder) return undefined;
+    return folder.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }, [folder]);
 
   const toggleThinking = () => setIsThinkingEnabled((prev) => !prev);
 
@@ -464,6 +471,43 @@ export const ChatPage = () => {
     [uuid, sendMessage, navigate, setSessionId, setSessionTitle, setIsTitleGenerating]
   );
 
+  const handleAddProject = useCallback(async () => {
+    try {
+      let newProject: Project | null = null;
+      let folderName = '';
+      if (isTauri()) {
+        const { open } = await import('@tauri-apps/plugin-dialog');
+        const selected = await open({ directory: true, multiple: false, title: 'Select Project Folder' });
+        if (selected && typeof selected === 'string') {
+          folderName = selected.split(/[/\\]/).pop() || 'New Project';
+          newProject = await ChatSessionManager.createProject(folderName, selected);
+        }
+      } else {
+        if ('showDirectoryPicker' in window) {
+          const dirHandle = await (window as any).showDirectoryPicker();
+          folderName = dirHandle.name || 'New Project';
+          const projectPath = await FileSystemService.importDirectory(dirHandle);
+          newProject = await ChatSessionManager.createProject(folderName, projectPath);
+          await FileSystemService.uploadProjectFiles(newProject.id, projectPath);
+        } else {
+          folderName = prompt('Enter a name for your project:') || '';
+          if (folderName) {
+            const fakePath = `/web-projects/${folderName}`;
+            newProject = await ChatSessionManager.createProject(folderName, fakePath);
+          }
+        }
+      }
+      if (!newProject) return;
+      window.dispatchEvent(new CustomEvent('projects-changed'));
+      const newSession = await ChatSessionManager.create('New conversation', undefined, newProject.id);
+      const slug = folderName.toLowerCase().replace(/\s+/g, '-');
+      navigate(`/project/${slug}/${newSession.id}`);
+    } catch (err) {
+      console.error('Failed to open directory:', err);
+      addToast('Could not open folder. Make sure the server is running and try again.', 'error');
+    }
+  }, [navigate, addToast]);
+
   useEffect(() => {
     if (uuid && uuid !== 'new') {
       const pendingMessage = sessionStorage.getItem('pending-first-message');
@@ -627,13 +671,14 @@ export const ChatPage = () => {
                   <h1 className="text-[38px] font-serif-source mb-[10px] text-neutral-800 dark:text-neutral-200 text-center">
                     Hello, how can I help?
                   </h1>
-                  <ChatInput
+                  <ChatInputContainer
                     onSend={handleSend}
                     isLoading={isLoading}
                     onStop={stop}
-                    isIdle={true}
                     isThinkingEnabled={isThinkingEnabled}
                     onToggleThinking={toggleThinking}
+                    onCreateProject={handleAddProject}
+                    currentProjectName={currentProjectName}
                   />
                 </div>
               )}
@@ -660,6 +705,8 @@ export const ChatPage = () => {
                 onStop={stop}
                 isThinkingEnabled={isThinkingEnabled}
                 onToggleThinking={toggleThinking}
+                onCreateProject={handleAddProject}
+                currentProjectName={currentProjectName}
               />
             </div>
           )}

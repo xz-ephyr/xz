@@ -48,20 +48,28 @@ export default function Sidebar() {
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
-    if (hasLoadedRef.current) return;
-    hasLoadedRef.current = true;
     const loadProjects = async () => {
       const allProjects = await ChatSessionManager.getProjects();
       setProjects(allProjects);
     };
-    loadProjects();
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadProjects();
+    }
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
+    const handleProjectsChanged = () => {
+      loadProjects();
+    };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('projects-changed', handleProjectsChanged);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('projects-changed', handleProjectsChanged);
+    };
   }, []);
 
   const handleDownloadApp = async () => {
