@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import type { ToolDef } from '../types';
 
-declare const __TAURI_INTERNALS__: any;
-
 interface SystemInfo {
   os: string;
   platform: string;
@@ -48,7 +46,7 @@ export const systemInfoTool: ToolDef = {
       language: navigator.language,
       cpuCores: navigator.hardwareConcurrency || 0,
       memoryGB: (navigator as any).deviceMemory || null,
-      isTauri: typeof window !== 'undefined' && window.__TAURI_INTERNALS__ !== undefined,
+      isTauri: typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__ !== undefined,
       isMobile: /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
