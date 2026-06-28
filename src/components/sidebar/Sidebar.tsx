@@ -31,7 +31,6 @@ const newThreadIcon = <HugeiconRenderer icon={PencilEdit02Icon} />;
 const chatsIcon = <HugeiconRenderer icon={FolderLibraryIcon} />;
 const scheduleIcon = <HugeiconRenderer icon={AlarmClockIcon} />;
 const pluginsIcon = <HugeiconRenderer icon={ResourcesAddIcon} />;
-const workflowIcon = <HugeiconRenderer icon={CursorRectangleSelection02Icon} />;
 const wikiIcon = <HugeiconRenderer icon={TreePalmIcon} />;
 const downloadIcon = <HugeiconRenderer icon={Download01Icon} />;
 const workflowIcon = <HugeiconRenderer icon={CursorRectangleSelection02Icon} />;
