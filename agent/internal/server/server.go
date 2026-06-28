@@ -1,0 +1,234 @@
+package server
+
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+	"github.com/gorilla/mux"
+	"github.com/rs/cors"
+	"github.com/xz-ephyr/raw-code/agent/internal/agent"
+	"github.com/xz-ephyr/raw-code/agent/internal/infra"
+	"github.com/xz-ephyr/raw-code/agent/internal/task"
+	"github.com/xz-ephyr/raw-code/agent/internal/tool"
+	"github.com/xz-ephyr/raw-code/agent/internal/worker"
+	"github.com/xz-ephyr/raw-code/agent/pkg/api"
+)
+
+type Server struct {
+	router       *mux.Router
+	http         *http.Server
+	taskManager  *task.Manager
+	toolRegistry *tool.Registry
+	executor     *tool.Executor
+	pool         *worker.Pool
+	orchestrator *agent.Orchestrator
+	express      *infra.ExpressClient
+	tauri        *infra.TauriShell
+	startTime    time.Time
+	workerCount  int
+}
+
+func New(
+	tm *task.Manager,
+	reg *tool.Registry,
+	exec *tool.Executor,
+	pool *worker.Pool,
+	orch *agent.Orchestrator,
+	exp *infra.ExpressClient,
+	ts *infra.TauriShell,
+	workerCount int,
+) *Server {
+	s := &Server{
+		router:       mux.NewRouter(),
+		taskManager:  tm,
+		toolRegistry: reg,
+		executor:     exec,
+		pool:         pool,
+		orchestrator: orch,
+		express:      exp,
+		tauri:        ts,
+		startTime:    time.Now(),
+		workerCount:  workerCount,
+	}
+	s.registerRoutes()
+	return s
+}
+
+func (s *Server) Handler() http.Handler {
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+	return c.Handler(s.router)
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.Handler().ServeHTTP(w, r)
+}
+
+func (s *Server) Listen(addr string) *http.Server {
+	s.http = &http.Server{
+		Addr:         addr,
+		Handler:      s.Handler(),
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 5 * time.Minute,
+	}
+	return s.http
+}
+
+func (s *Server) registerRoutes() {
+	s.router.HandleFunc("/health", s.handleHealth).Methods("GET")
+	s.router.HandleFunc("/api/tools", s.handleListTools).Methods("GET")
+	s.router.HandleFunc("/api/tasks", s.handleSubmitTask).Methods("POST")
+	s.router.HandleFunc("/api/tasks/{id}", s.handleGetTask).Methods("GET")
+	s.router.HandleFunc("/api/tasks/{id}/cancel", s.handleCancelTask).Methods("POST")
+	s.router.HandleFunc("/api/tasks", s.handleListTasks).Methods("GET")
+	s.router.HandleFunc("/api/clis", s.handleDetectCLIs).Methods("GET")
+	s.router.HandleFunc("/api/clis/{name}", s.handleCLIInfo).Methods("GET")
+	s.router.HandleFunc("/api/chat", s.handleChatProxy).Methods("POST")
+	s.router.HandleFunc("/api/workflows", s.handleListWorkflows).Methods("GET")
+}
+
+func writeJSON(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(data)
+}
+
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	uptime := time.Since(s.startTime).Round(time.Second).String()
+
+	expressOK := true
+	if err := s.express.HealthCheck(r.Context()); err != nil {
+		expressOK = false
+	}
+
+	writeJSON(w, http.StatusOK, api.HealthResponse{
+		Status:    "ok",
+		Version:   "0.1.0",
+		Uptime:    uptime,
+		Workers:   s.workerCount,
+		TasksInQ:  s.taskManager.QueueLength(),
+		ExpressOK: expressOK,
+	})
+}
+
+func (s *Server) handleListTools(w http.ResponseWriter, r *http.Request) {
+	category := r.URL.Query().Get("category")
+	var tools []api.ToolDefinition
+	if category != "" {
+		tools = s.toolRegistry.ListByCategory(category)
+	} else {
+		tools = s.toolRegistry.List()
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"tools": tools, "count": len(tools)})
+}
+
+func (s *Server) handleSubmitTask(w http.ResponseWriter, r *http.Request) {
+	var req api.TaskRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.Prompt == "" {
+		writeError(w, http.StatusBadRequest, "prompt is required")
+		return
+	}
+	if req.Type == "" {
+		req.Type = "direct"
+	}
+	if req.MaxSteps <= 0 {
+		req.MaxSteps = 6
+	}
+
+	t := s.orchestrator.SubmitTask(req)
+	writeJSON(w, http.StatusAccepted, map[string]any{
+		"taskId": t.ID,
+		"status": t.Status,
+	})
+}
+
+func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	t, ok := s.taskManager.Get(id)
+	if !ok {
+		writeError(w, http.StatusNotFound, "task not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, t.ToAPI())
+}
+
+func (s *Server) handleCancelTask(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	s.taskManager.Cancel(id)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "cancelled"})
+}
+
+func (s *Server) handleListTasks(w http.ResponseWriter, r *http.Request) {
+	sessionID := r.URL.Query().Get("sessionId")
+	var tasks []*task.Task
+	if sessionID != "" {
+		tasks = s.taskManager.ListBySession(sessionID)
+	} else {
+		tasks = s.taskManager.List()
+	}
+
+	apiTasks := make([]api.AgentTask, len(tasks))
+	for i, t := range tasks {
+		apiTasks[i] = t.ToAPI()
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"tasks": apiTasks, "count": len(apiTasks)})
+}
+
+func (s *Server) handleDetectCLIs(w http.ResponseWriter, r *http.Request) {
+	clis := s.tauri.DetectCLIs()
+	writeJSON(w, http.StatusOK, map[string]any{"clis": clis, "count": len(clis)})
+}
+
+func (s *Server) handleCLIInfo(w http.ResponseWriter, r *http.Request) {
+	name := mux.Vars(r)["name"]
+	info := s.tauri.GetCLIInfo(name)
+	writeJSON(w, http.StatusOK, info)
+}
+
+func (s *Server) handleChatProxy(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		SessionID string `json:"sessionId"`
+		Message   string `json:"message"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	// Delegate the message as a task to the orchestrator
+	taskReq := api.TaskRequest{
+		SessionID: req.SessionID,
+		Type:      "delegate",
+		Prompt:    req.Message,
+		MaxSteps:  10,
+	}
+
+	t := s.orchestrator.SubmitTask(taskReq)
+	writeJSON(w, http.StatusAccepted, map[string]any{
+		"taskId": t.ID,
+		"status": t.Status,
+	})
+}
+
+func (s *Server) handleListWorkflows(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"workflows": []map[string]string{
+			{"name": "research_and_summarize", "description": "Search the web and create a summary"},
+			{"name": "codebase_audit", "description": "Search codebase for patterns and report findings"},
+		},
+	})
+}

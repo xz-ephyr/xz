@@ -185,9 +185,9 @@ export default function Sidebar() {
         </div>
 
         <div
-          className={`flex-1 ${isCollapsed ? 'px-1.5 overflow-hidden' : 'px-4 overflow-y-auto'}`}
+          className={`flex flex-col min-h-0 flex-1 ${isCollapsed ? 'px-1.5 overflow-hidden' : ''}`}
         >
-          <>
+          <div className="shrink-0 px-4 overflow-y-auto">
             <SidebarTab
               iconElement={newThreadIcon}
               label="New thread"
@@ -228,38 +228,38 @@ export default function Sidebar() {
               active={location.pathname === '/wiki'}
               collapsed={isCollapsed}
             />
+          </div>
 
-            {!isCollapsed && (
-              <>
-                <div className="mt-6 flex justify-between items-center mb-2 px-2">
-                  <h2 className="text-sm font-bold text-gray-500 whitespace-nowrap">Projects</h2>
-                  <button
-                    onClick={handleAddProject}
-                    className="text-gray-500 hover:text-black hover:bg-[#e5e5e5] active:bg-[#d4d4d4] p-1 rounded-[6px] transition-all active:scale-95"
-                    aria-label="Add project"
-                    title="Add project"
-                  >
-                    +
-                  </button>
-                </div>
+          {!isCollapsed && (
+            <div className="flex flex-col min-h-0 flex-1 px-4 overflow-hidden">
+              <div className="mt-6 flex justify-between items-center mb-2 px-2 shrink-0">
+                <h2 className="text-sm font-bold text-gray-500 whitespace-nowrap">Projects</h2>
+                <button
+                  onClick={handleAddProject}
+                  className="text-gray-500 hover:text-black hover:bg-[#e5e5e5] active:bg-[#d4d4d4] p-1 rounded-[6px] transition-all active:scale-95"
+                  aria-label="Add project"
+                  title="Add project"
+                >
+                  +
+                </button>
+              </div>
 
-                <div className="space-y-1">
-                  {projects.map((project) => (
-                    <ProjectItem
-                      key={project.id}
-                      project={project}
-                      onDelete={handleDeleteProject}
-                    />
-                  ))}
-                  {projects.length === 0 && (
-                    <p className="text-[11px] text-neutral-400 px-2 italic">
-                      Click + to add a project
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-          </>
+              <div className="space-y-1 overflow-y-auto min-h-0 thin-scrollbar">
+                {projects.map((project) => (
+                  <ProjectItem
+                    key={project.id}
+                    project={project}
+                    onDelete={handleDeleteProject}
+                  />
+                ))}
+                {projects.length === 0 && (
+                  <p className="text-[11px] text-neutral-400 px-2 italic">
+                    Click + to add a project
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bottom section */}

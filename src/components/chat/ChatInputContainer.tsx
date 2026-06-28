@@ -61,7 +61,7 @@ export default function ChatInputContainer({
   const handleProjectClick = async (project: Project) => {
     setIsProjectOpen(false);
     setSelectedProjectName(project.name);
-    const newSession = await ChatSessionManager.create(`${project.name} — Chat`, undefined, project.id);
+    const newSession = await ChatSessionManager.create('New conversation', undefined, project.id);
     const slug = project.name.toLowerCase().replace(/\s+/g, '-');
     navigate(`/project/${slug}/${newSession.id}`);
   };

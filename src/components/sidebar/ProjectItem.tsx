@@ -49,12 +49,23 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
       if (!cancelled) setSessions(allSessions);
     };
     loadSessions();
-    return () => { cancelled = true; };
+
+    const handleTitleChanged = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.projectId === project.id) {
+        loadSessions();
+      }
+    };
+    window.addEventListener('session-title-changed', handleTitleChanged);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('session-title-changed', handleTitleChanged);
+    };
   }, [project.id]);
 
   const handleNewChat = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newSession = await ChatSessionManager.create(`${project.name} — Chat`, undefined, project.id);
+    const newSession = await ChatSessionManager.create('New conversation', undefined, project.id);
     const allSessions = await ChatSessionManager.getAll(project.id);
     setSessions(allSessions);
     const slug = project.name.toLowerCase().replace(/\s+/g, '-');
@@ -115,7 +126,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
       </div>
 
       {isExpanded && (
-        <div className="ml-4 border-l border-neutral-200 pl-2 mt-1 space-y-1">
+        <div className="mt-1 space-y-1">
           {sessions.map((session) => (
             <div
               key={session.id}
@@ -123,7 +134,7 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
                 const slug = project.name.toLowerCase().replace(/\s+/g, '-');
                 navigate(`/project/${slug}/${session.id}`);
               }}
-              className={`text-sm p-2 hover:bg-[#f2f3f6] rounded-[8px] flex items-center gap-3 group cursor-pointer active:scale-[0.99] transition-transform ${uuid === session.id ? 'bg-[#f2f3f6] text-black font-medium' : 'text-gray-600'}`}
+              className={`text-sm py-1 px-2 hover:bg-[#f2f3f6] rounded-[8px] flex items-center gap-3 group cursor-pointer active:scale-[0.99] transition-transform ${uuid === session.id ? 'bg-[#f2f3f6] text-black font-medium' : 'text-gray-600'}`}
             >
               <span className="flex-1 truncate">{session.title}</span>
             </div>

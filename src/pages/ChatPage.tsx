@@ -454,6 +454,8 @@ export const ChatPage = () => {
           generateSessionTitle(content).then(async (generatedTitle) => {
             if (generatedTitle && generatedTitle !== 'New conversation') {
               await ChatSessionManager.rename(uuid, generatedTitle);
+              const session = await ChatSessionManager.getSession(uuid).catch(() => null);
+              window.dispatchEvent(new CustomEvent('session-title-changed', { detail: { projectId: session?.projectId } }));
               setSessionTitle(generatedTitle);
             }
             setIsTitleGenerating(false);
