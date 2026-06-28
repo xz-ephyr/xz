@@ -96,6 +96,14 @@ export async function migrate() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_search_cache_ttl ON search_cache(tool, created_at);
+
+    CREATE TABLE IF NOT EXISTS project_files (
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      file_path TEXT NOT NULL,
+      content TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      PRIMARY KEY (project_id, file_path)
+    );
   `);
   console.log('Migration complete');
 }

@@ -1,4 +1,5 @@
 import { isTauri } from '../lib/tauri';
+import { DatabaseService } from './DatabaseService';
 
 export interface FileEntry {
   name: string;
@@ -28,7 +29,7 @@ function clearTreeCache() {
   treeCache.clear();
 }
 
-// In-memory virtual filesystem for web-browser mode
+// In-memory virtual filesystem for web-browser mode (fallback when no server available)
 const webVirtualFS: Record<string, string> = {};
 
 // Restore previously saved files from localStorage on initialisation
@@ -47,24 +48,54 @@ try {
   // localStorage not available
 }
 
-// Recursively read all files from a FileSystemDirectoryHandle into the virtual FS
-async function importDirectoryHandle(
+// Recursively read all files from a FileSystemDirectoryHandle
+async function readDirectoryHandle(
   dirHandle: FileSystemDirectoryHandle,
   basePath: string,
-): Promise<void> {
+): Promise<{ path: string; content: string }[]> {
+  const results: { path: string; content: string }[] = [];
   for await (const [name, handle] of (dirHandle as any).entries()) {
     const fullPath = basePath + '/' + name;
     if (handle.kind === 'directory') {
-      await importDirectoryHandle(handle as FileSystemDirectoryHandle, fullPath);
+      results.push(...await readDirectoryHandle(handle as FileSystemDirectoryHandle, fullPath));
     } else {
       try {
         const file = await (handle as FileSystemFileHandle).getFile();
-        webVirtualFS[fullPath] = await file.text();
+        results.push({ path: fullPath, content: await file.text() });
       } catch {
         // skip files that can't be read
       }
     }
   }
+  return results;
+}
+
+// Build a tree structure from a flat list of file paths
+function buildTreeFromPaths(paths: string[], basePrefix: string): FileEntry[] {
+  const prefix = basePrefix.endsWith('/') ? basePrefix : basePrefix + '/';
+  const childNames = new Set<string>();
+
+  for (const p of paths) {
+    if (p.startsWith(prefix)) {
+      const rest = p.slice(prefix.length);
+      const seg = rest.split('/')[0];
+      if (seg) childNames.add(seg);
+    }
+  }
+
+  const result: FileEntry[] = [];
+  for (const name of childNames) {
+    if (name.startsWith('.') || name === 'node_modules') continue;
+    const fullPath = prefix + name;
+    const isDirectory = paths.some(p => p.startsWith(fullPath + '/'));
+    result.push({
+      name,
+      path: fullPath,
+      isDirectory,
+      children: isDirectory ? buildTreeFromPaths(paths, fullPath) : undefined,
+    });
+  }
+  return result;
 }
 
 // ------------------------------------------------------------------
@@ -79,7 +110,7 @@ const getTauriPath = async () => {
 };
 
 export const FileSystemService = {
-  getTree: async (basePath: string, depth = 0): Promise<FileEntry[]> => {
+  getTree: async (basePath: string, depth = 0, projectId?: string): Promise<FileEntry[]> => {
     if (depth > 20) return [];
 
     const cached = treeCache.get(basePath);
@@ -103,7 +134,7 @@ export const FileSystemService = {
             path: fullPath,
             isDirectory,
             children: isDirectory
-              ? await FileSystemService.getTree(fullPath, depth + 1)
+              ? await FileSystemService.getTree(fullPath, depth + 1, projectId)
               : undefined,
           });
         }
@@ -111,6 +142,21 @@ export const FileSystemService = {
         return result;
       } catch (e) {
         console.error('Error reading dir:', e);
+        return [];
+      }
+    }
+
+    // Web with projectId: fetch file listing from server DB
+    if (projectId) {
+      try {
+        const prefix = basePath.endsWith('/') ? basePath : basePath + '/';
+        const files = await DatabaseService.getProjectFiles(projectId);
+        const paths = files.map(f => f.path);
+        const result = buildTreeFromPaths(paths, prefix);
+        treeCache.set(basePath, { result, timestamp: Date.now() });
+        return result;
+      } catch (e) {
+        console.error('Error reading files from server:', e);
         return [];
       }
     }
@@ -137,7 +183,7 @@ export const FileSystemService = {
           name,
           path: fullPath,
           isDirectory,
-          children: isDirectory ? await FileSystemService.getTree(fullPath, depth + 1) : undefined,
+          children: isDirectory ? await FileSystemService.getTree(fullPath, depth + 1, projectId) : undefined,
         });
       }
       treeCache.set(basePath, { result, timestamp: Date.now() });
@@ -164,7 +210,7 @@ export const FileSystemService = {
     return summarize(tree);
   },
 
-  getFileContent: async (path: string): Promise<string> => {
+  getFileContent: async (path: string, projectId?: string): Promise<string> => {
     if (isTauri()) {
       try {
         const { readFile } = await getTauriFs();
@@ -172,6 +218,16 @@ export const FileSystemService = {
         return new TextDecoder().decode(uint8Array);
       } catch (e) {
         console.error('Error reading file:', e);
+        return '';
+      }
+    }
+
+    // Web with projectId: fetch from server DB
+    if (projectId) {
+      try {
+        return await DatabaseService.getProjectFileContent(projectId, path);
+      } catch (e) {
+        console.error('Error reading file from server:', e);
         return '';
       }
     }
@@ -190,10 +246,10 @@ export const FileSystemService = {
   },
 
   /** Walk the file tree recursively and read file contents with sensible limits. */
-  getProjectContent: async (basePath: string): Promise<ProjectContent> => {
+  getProjectContent: async (basePath: string, projectId?: string): Promise<ProjectContent> => {
     const MAX_TOTAL_CHARS = 60_000;
     const MAX_FILE_CHARS = 30_000;
-    const tree = await FileSystemService.getTree(basePath);
+    const tree = await FileSystemService.getTree(basePath, 0, projectId);
 
     const lines: string[] = [];
     const contents: FileContent[] = [];
@@ -220,7 +276,7 @@ export const FileSystemService = {
         } else if (!entry.isDirectory) {
           jobs.push((async () => {
             if (totalChars >= MAX_TOTAL_CHARS) { truncated = true; return; }
-            const raw = await FileSystemService.getFileContent(entry.path);
+            const raw = await FileSystemService.getFileContent(entry.path, projectId);
             if (!raw) return;
             if (FileSystemService.isLikelyBinary(raw)) { skippedBinary++; return; }
             if (raw.length > MAX_FILE_CHARS) { skippedSize++; return; }
@@ -243,14 +299,54 @@ export const FileSystemService = {
     };
   },
 
-  importDirectory: async (dirHandle: FileSystemDirectoryHandle): Promise<string> => {
+  importDirectory: async (dirHandle: FileSystemDirectoryHandle, projectId?: string): Promise<string> => {
     const name = dirHandle.name;
-    webVirtualFS['/web-projects/' + name + '/'] = ''; // mark root
-    await importDirectoryHandle(dirHandle, '/web-projects/' + name);
-    return '/web-projects/' + name;
+    const projectPath = '/web-projects/' + name;
+
+    const files = await readDirectoryHandle(dirHandle, projectPath);
+
+    // Upload to server DB if projectId is available
+    if (projectId) {
+      try {
+        await DatabaseService.saveProjectFiles(projectId, files.map(f => ({ path: f.path, content: f.content })));
+        return projectPath;
+      } catch (e) {
+        console.error('Error uploading files to server:', e);
+      }
+    }
+
+    // Fallback: store in virtual FS
+    webVirtualFS[projectPath + '/'] = '';
+    for (const f of files) {
+      webVirtualFS[f.path] = f.content;
+      try {
+        if (f.content.length < 500_000) {
+          localStorage.setItem(`vfs:${f.path}`, f.content);
+        }
+      } catch { /* quota exceeded */ }
+    }
+    return projectPath;
   },
 
-  saveFile: async (path: string, content: string): Promise<void> => {
+  /** Upload all files in a project's virtual FS path to the server DB. */
+  uploadProjectFiles: async (projectId: string, projectPath: string): Promise<void> => {
+    const prefix = projectPath.endsWith('/') ? projectPath : projectPath + '/';
+    const files: { path: string; content: string }[] = [];
+    for (const key of Object.keys(webVirtualFS)) {
+      if (key.startsWith(prefix) && key !== prefix) {
+        files.push({ path: key, content: webVirtualFS[key] });
+      }
+    }
+    if (files.length === 0) return;
+    await DatabaseService.saveProjectFiles(projectId, files);
+    // Clear from localStorage after upload
+    for (const f of files) {
+      try { localStorage.removeItem(`vfs:${f.path}`); } catch { /* ignore */ }
+      delete webVirtualFS[f.path];
+    }
+  },
+
+  saveFile: async (path: string, content: string, projectId?: string): Promise<void> => {
     clearTreeCache();
     if (isTauri()) {
       try {
@@ -272,7 +368,17 @@ export const FileSystemService = {
       return;
     }
 
-    // Web fallback: persist to virtual in-memory FS (and optionally localStorage for small files)
+    // Web with projectId: save to server DB
+    if (projectId) {
+      try {
+        await DatabaseService.saveProjectFiles(projectId, [{ path, content }]);
+        return;
+      } catch (e) {
+        console.error('Error saving file to server:', e);
+      }
+    }
+
+    // Web fallback: persist to virtual in-memory FS
     webVirtualFS[path] = content;
     try {
       const storageKey = `vfs:${path}`;

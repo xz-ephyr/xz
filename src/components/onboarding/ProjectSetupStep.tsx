@@ -41,7 +41,8 @@ export function ProjectSetupStep({ onComplete, onSkip }: ProjectSetupStepProps) 
           const dirHandle = await (window as any).showDirectoryPicker();
           const folderName = dirHandle.name || 'My Project';
           const projectPath = await FileSystemService.importDirectory(dirHandle);
-          await ChatSessionManager.createProject(folderName, projectPath);
+          const newProject = await ChatSessionManager.createProject(folderName, projectPath);
+          await FileSystemService.uploadProjectFiles(newProject.id, projectPath);
           const allProjects = await ChatSessionManager.getProjects();
           setProjects(allProjects);
         } else {

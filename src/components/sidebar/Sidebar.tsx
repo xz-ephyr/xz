@@ -124,6 +124,7 @@ export default function Sidebar() {
           const folderName = dirHandle.name || 'New Project';
           const projectPath = await FileSystemService.importDirectory(dirHandle);
           const newProject = await ChatSessionManager.createProject(folderName, projectPath);
+          await FileSystemService.uploadProjectFiles(newProject.id, projectPath);
           const allProjects = await ChatSessionManager.getProjects();
           setProjects(allProjects);
           const slug = folderName.toLowerCase().replace(/\s+/g, '-');

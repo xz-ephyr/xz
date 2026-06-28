@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import ChatInput from '../components/chat/ChatInput';
+import ChatInputContainer from '../components/chat/ChatInputContainer';
 import { UserBubble } from '../components/chat/UserBubble';
 import { AssistantBubble } from '../components/chat/AssistantBubble';
 import { ChatSessionManager } from '../services/ChatSessionManager';
@@ -235,7 +236,7 @@ export const ChatPage = () => {
       const projects = await DatabaseService.getProjects();
       const project = projects.find(p => p.id === session.projectId);
       if (!project) return undefined;
-      const pc = await FileSystemService.getProjectContent(project.path);
+      const pc = await FileSystemService.getProjectContent(project.path, project.id);
       let files = pc.tree;
       if (pc.contents.length > 0) {
         files += '\n\n### File Contents\n\n';
@@ -652,8 +653,8 @@ export const ChatPage = () => {
           )}
 
           {messages.length > 0 && (
-            <div className="shrink-0 pb-8 w-full mx-auto px-4 bg-white dark:bg-[#111110]" style={{ maxWidth: 'min(880px, 100%)' }}>
-              <ChatInput
+            <div className="shrink-0 w-full mx-auto px-4 bg-white dark:bg-[#111110]">
+              <ChatInputContainer
                 onSend={handleSend}
                 isLoading={isLoading}
                 onStop={stop}

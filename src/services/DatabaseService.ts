@@ -139,6 +139,20 @@ export const DatabaseService = {
     await request('save_messages', { sessionId, messages: messagesToSave });
   },
 
+  // Project Files
+  async saveProjectFiles(projectId: string, files: { path: string; content: string }[]) {
+    await request('save_project_files', { projectId, files });
+  },
+
+  async getProjectFiles(projectId: string): Promise<{ path: string; size: number }[]> {
+    return await request('get_project_files', { projectId });
+  },
+
+  async getProjectFileContent(projectId: string, filePath: string): Promise<string> {
+    const result = await request<{ content: string }>('get_project_file_content', { projectId, filePath });
+    return result.content;
+  },
+
   // App Config
   async getConfig(key: string): Promise<string | null> {
     try {

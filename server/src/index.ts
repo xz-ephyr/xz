@@ -42,6 +42,43 @@ app.post('/delete_project', async (req, res) => {
   res.json({ success: true });
 });
 
+// --- Project Files ---
+
+app.post('/save_project_files', async (req, res) => {
+  const { projectId, files } = req.body;
+  if (!projectId || !Array.isArray(files)) {
+    return res.status(400).json({ error: 'projectId and files array required' });
+  }
+  const now = Date.now();
+  const upsert = `INSERT INTO project_files (project_id, file_path, content, updated_at) VALUES ($1, $2, $3, $4)
+                  ON CONFLICT (project_id, file_path) DO UPDATE SET content = EXCLUDED.content, updated_at = EXCLUDED.updated_at`;
+  for (const f of files) {
+    await query(upsert, [projectId, f.path, f.content, now]);
+  }
+  res.json({ success: true });
+});
+
+app.post('/get_project_files', async (req, res) => {
+  const { projectId } = req.body;
+  if (!projectId) return res.status(400).json({ error: 'projectId required' });
+  const result = await query(
+    'SELECT file_path, LENGTH(content) as size FROM project_files WHERE project_id = $1 ORDER BY file_path ASC',
+    [projectId]
+  );
+  res.json(result.rows.map(r => ({ path: r.file_path, size: Number(r.size) })));
+});
+
+app.post('/get_project_file_content', async (req, res) => {
+  const { projectId, filePath } = req.body;
+  if (!projectId || !filePath) return res.status(400).json({ error: 'projectId and filePath required' });
+  const result = await query(
+    'SELECT content FROM project_files WHERE project_id = $1 AND file_path = $2',
+    [projectId, filePath]
+  );
+  if (result.rows.length === 0) return res.status(404).json({ error: 'File not found' });
+  res.json({ path: filePath, content: result.rows[0].content });
+});
+
 // --- Sessions ---
 
 app.post('/get_sessions', async (req, res) => {
