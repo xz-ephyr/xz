@@ -23,7 +23,7 @@ export default function ChatInputContainer({
       <div className="relative">
         <div
           className="absolute left-0 right-0 bg-neutral-100 dark:bg-neutral-800 rounded-[12px]"
-          style={{ top: 0, height: 'calc(100% + 55px)' }}
+          style={{ height: '655px', top: '50%', transform: 'translateY(-50%)' }}
         />
         <ChatInput
           onSend={onSend}
