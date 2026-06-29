@@ -1,0 +1,152 @@
+import { useState } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ZapIcon, GlobeIcon } from '@hugeicons/core-free-icons';
+import {
+  MODEL_MODE_STORAGE_KEY,
+  MODEL_MODES,
+  SELECTED_MODEL_STORAGE_KEY,
+  getStoredModelMode,
+  getStoredSelectedModel,
+  API_KEYS,
+  MODELS,
+} from '../../../config/models';
+import { refreshProviders } from '../../../services/aiService';
+import { PasswordInput } from '../../ui/PasswordInput';
+
+const PROVIDER_LABELS: Record<string, string> = {
+  google: 'Google Gemini',
+  groq: 'Groq',
+  opencodezen: 'OpenCode Zen',
+  mistral: 'Mistral',
+  openrouter: 'OpenRouter',
+  cerebras: 'Cerebras',
+};
+
+export function ApiKeysTab() {
+  const [keys, setKeys] = useState(() => {
+    const initial: any = {};
+    Object.keys(API_KEYS).forEach((key) => {
+      initial[key] = localStorage.getItem((API_KEYS as any)[key]) || '';
+    });
+    return initial;
+  });
+
+  const [selectedModel, setSelectedModel] = useState(getStoredSelectedModel);
+  const [modelMode, setModelMode] = useState(getStoredModelMode);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+
+  const handleSaveApiKeys = async () => {
+    setIsSaving(true);
+    await new Promise((r) => setTimeout(r, 300));
+    Object.keys(API_KEYS).forEach((key) => {
+      localStorage.setItem((API_KEYS as any)[key], keys[key]);
+    });
+    localStorage.setItem(SELECTED_MODEL_STORAGE_KEY, selectedModel);
+    localStorage.setItem(MODEL_MODE_STORAGE_KEY, modelMode);
+    refreshProviders();
+    window.dispatchEvent(new CustomEvent('model-changed'));
+    setIsSaving(false);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+        <p className="text-xs text-blue-700 leading-relaxed">
+          Enter your API keys for the providers you wish to use. The system will use these keys for routing and fallbacks.
+        </p>
+      </div>
+
+      <div className="grid gap-x-6 gap-y-4 grid-cols-1 sm:grid-cols-2">
+        {Object.keys(PROVIDER_LABELS).map((providerId) => (
+          <div key={providerId} className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-medium text-neutral-600 ml-1">{PROVIDER_LABELS[providerId]}</label>
+            <PasswordInput
+              value={keys[providerId]}
+              onChange={(value) => setKeys({ ...keys, [providerId]: value })}
+              placeholder={`Enter ${PROVIDER_LABELS[providerId]} Key`}
+              showKeyIcon
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-neutral-100 pt-5 space-y-5">
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+            <HugeiconsIcon icon={ZapIcon} size={16} />
+            Model Mode
+          </label>
+          <select
+            className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+            value={modelMode}
+            onChange={(e) => setModelMode(e.target.value as typeof modelMode)}
+          >
+            <option value={MODEL_MODES.fixed}>Fixed selected model</option>
+            <option value={MODEL_MODES.rotate}>Auto rotate models</option>
+          </select>
+          <p className="text-xs text-neutral-500">
+            Auto rotate cycles through every available model in the active chat session.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+            <HugeiconsIcon icon={GlobeIcon} size={16} />
+            Default Model
+          </label>
+          <div className="relative">
+            <div
+              className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 flex items-center cursor-pointer"
+              onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+            >
+              <span className="flex-1 truncate">
+                {(() => {
+                  const def = MODELS.find(m => m.id === selectedModel);
+                  return def ? `${def.label} (${PROVIDER_LABELS[def.provider] || def.provider})` : selectedModel;
+                })()}
+              </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400 shrink-0">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+            {isModelDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-neutral-200 rounded-[10px] shadow-lg overflow-hidden">
+                <div className="overflow-y-auto thin-scrollbar" style={{ maxHeight: 155 }}>
+                  {MODELS.map((model) => (
+                    <button
+                      key={model.id}
+                      className={`w-full px-3 py-2 text-sm text-left hover:bg-neutral-50 transition-colors flex items-center gap-2 ${
+                        selectedModel === model.id ? 'bg-neutral-100 font-medium' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedModel(model.id as typeof selectedModel);
+                        setIsModelDropdownOpen(false);
+                      }}
+                    >
+                      <span className="flex-1 truncate">{model.label}</span>
+                      <span className="text-[11px] text-neutral-400 shrink-0">{PROVIDER_LABELS[model.provider] || model.provider}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-2">
+        <button
+          onClick={handleSaveApiKeys}
+          disabled={isSaving}
+          className="px-6 py-2 text-sm font-bold text-white bg-black hover:bg-neutral-800 rounded-[10px] transition-all flex items-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98] disabled:opacity-50"
+        >
+          {isSaving ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : null}
+          Save Changes
+        </button>
+      </div>
+    </div>
+  );
+}

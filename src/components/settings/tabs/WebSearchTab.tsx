@@ -1,0 +1,155 @@
+import { useState, useEffect } from 'react';
+import { DatabaseService } from '../../../services/DatabaseService';
+import { PasswordInput } from '../../ui/PasswordInput';
+
+export function WebSearchTab() {
+  const [searchConfig, setSearchConfig] = useState<Record<string, string>>({});
+  const [searchKeysLoaded, setSearchKeysLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (searchKeysLoaded) return;
+    const keys = ['search-provider', 'search-api-key', 'search-exa-api-key', 'search-firecrawl-api-key', 'search-google-api-key', 'search-google-cx'];
+    Promise.all(keys.map(k => DatabaseService.getConfig(k).then(v => ({ key: k, value: v || '' }))))
+      .then((entries) => {
+        const map: Record<string, string> = {};
+        entries.forEach(e => { map[e.key] = e.value; });
+        setSearchConfig(map);
+        setSearchKeysLoaded(true);
+      })
+      .catch(() => setSearchKeysLoaded(true));
+  }, [searchKeysLoaded]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await Promise.all(
+      Object.entries(searchConfig).map(([key, value]) =>
+        DatabaseService.setConfig(key, value)
+      )
+    );
+    await new Promise((r) => setTimeout(r, 200));
+    setIsSaving(false);
+  };
+
+  if (!searchKeysLoaded) {
+    return (
+      <div className="flex items-center justify-center py-12 text-neutral-400 text-sm">Loading...</div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+        <p className="text-xs text-blue-700 leading-relaxed">
+          Configure web search providers. API keys are stored securely in the local database.
+          At minimum, set a <strong>Search Provider</strong> (Tavily recommended) for web search.
+          <strong>Google Custom Search</strong> handles image search;
+          <strong>Exa</strong> handles news search (falls back to Tavily).
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-semibold text-neutral-700">Search Provider</label>
+        <select
+          className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+          value={searchConfig['search-provider'] || 'tavily'}
+          onChange={(e) => setSearchConfig(p => ({ ...p, 'search-provider': e.target.value }))}
+        >
+          <option value="tavily">Tavily (Recommended)</option>
+          <option value="exa">Exa</option>
+          <option value="firecrawl">Firecrawl</option>
+          <option value="google">Google Custom Search</option>
+        </select>
+        <p className="text-xs text-neutral-500">Provider used for general web search.</p>
+      </div>
+
+      <div className="border-t border-neutral-100 pt-4 space-y-4">
+        <SearchKeyField
+          label="Tavily API Key"
+          hint="Get a free key at tavily.com"
+          value={searchConfig['search-api-key'] || ''}
+          onChange={(v) => setSearchConfig(p => ({ ...p, 'search-api-key': v }))}
+        />
+
+        <SearchKeyField
+          label="Exa API Key"
+          hint="1,000 free queries/mo at exa.ai. Used for news search (falls back to Tavily)."
+          subtitle="for news search"
+          value={searchConfig['search-exa-api-key'] || ''}
+          onChange={(v) => setSearchConfig(p => ({ ...p, 'search-exa-api-key': v }))}
+        />
+
+        <SearchKeyField
+          label="Firecrawl API Key"
+          hint="Best for fetching full page content. Get a key at firecrawl.dev"
+          subtitle="for page scraping"
+          value={searchConfig['search-firecrawl-api-key'] || ''}
+          onChange={(v) => setSearchConfig(p => ({ ...p, 'search-firecrawl-api-key': v }))}
+        />
+
+        <div className="border-t border-neutral-100 pt-4">
+          <details className="group">
+            <summary className="text-sm font-medium text-neutral-600 cursor-pointer hover:text-neutral-800 list-none flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-90">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              Google Custom Search <span className="text-neutral-400 font-normal">(fallback)</span>
+            </summary>
+            <div className="mt-3 space-y-3 pl-4">
+              <SearchKeyField
+                label="Google API Key"
+                value={searchConfig['search-google-api-key'] || ''}
+                onChange={(v) => setSearchConfig(p => ({ ...p, 'search-google-api-key': v }))}
+              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[12px] font-medium text-neutral-600 ml-1">CX (Engine ID)</label>
+                <input
+                  type="text"
+                  className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-3 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
+                  placeholder={searchConfig['search-google-cx'] ? '••••••••••••••••' : 'Enter CX (Engine ID)'}
+                  value={searchConfig['search-google-cx'] || ''}
+                  onChange={(e) => setSearchConfig(p => ({ ...p, 'search-google-cx': e.target.value }))}
+                />
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-2 border-t border-neutral-100">
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="mt-4 px-6 py-2 text-sm font-bold text-white bg-black hover:bg-neutral-800 rounded-[10px] transition-all flex items-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98] disabled:opacity-50"
+        >
+          {isSaving ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : null}
+          Save Search Settings
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SearchKeyField({ label, subtitle, hint, value, onChange }: {
+  label: string;
+  subtitle?: string;
+  hint?: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[12px] font-medium text-neutral-600 ml-1">
+        {label} {subtitle && <span className="text-neutral-400">({subtitle})</span>}
+      </label>
+      <PasswordInput
+        value={value}
+        onChange={onChange}
+        placeholder={value ? '••••••••••••••••' : `Enter ${label}`}
+      />
+      {hint && <p className="text-xs text-neutral-400">{hint}</p>}
+    </div>
+  );
+}
