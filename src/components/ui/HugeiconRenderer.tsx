@@ -1,3 +1,4 @@
+import React from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 interface HugeiconRendererProps {
@@ -8,18 +9,26 @@ interface HugeiconRendererProps {
   strokeWidth?: number;
 }
 
-export const HugeiconRenderer = ({
-  icon: Icon,
-  size = 18,
-  className = '',
-  color = 'currentColor',
-  strokeWidth = 1.5,
-}: HugeiconRendererProps) => (
-  <HugeiconsIcon
-    icon={Icon}
-    size={size}
-    color={color}
-    strokeWidth={strokeWidth}
-    className={className}
-  />
+/**
+ * HugeiconRenderer
+ *
+ * A centralized icon renderer that uses React.memo to prevent unnecessary re-renders.
+ * Standardizing icon rendering across the app improves performance and maintainability.
+ */
+export const HugeiconRenderer = React.memo(
+  ({
+    icon: Icon,
+    size = 18,
+    className = '',
+    color = 'currentColor',
+    strokeWidth = 1.5,
+  }: HugeiconRendererProps) => (
+    <HugeiconsIcon
+      icon={Icon}
+      size={size}
+      color={color}
+      strokeWidth={strokeWidth}
+      className={className}
+    />
+  )
 );

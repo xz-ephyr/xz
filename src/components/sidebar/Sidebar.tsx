@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   PencilEdit02Icon,
@@ -12,7 +12,6 @@ import {
   Download01Icon,
   CursorRectangleSelection02Icon,
 } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import SidebarTab from './SidebarTab';
 import ProjectItem from './ProjectItem';
 import { SettingsModal } from '../settings/SettingsModal';
@@ -21,11 +20,7 @@ import { FileSystemService } from '../../services/FileSystemService';
 import { Project } from '../../types/chat';
 import { isTauri } from '../../lib/tauri';
 import { useToast } from '../ui/Toast';
-
-
-const HugeiconRenderer = ({ icon: Icon, size = 18 }: { icon: any; size?: number }) => (
-  <HugeiconsIcon icon={Icon} size={size} color="currentColor" strokeWidth={1.5} />
-);
+import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 
 const newThreadIcon = <HugeiconRenderer icon={PencilEdit02Icon} />;
 const chatsIcon = <HugeiconRenderer icon={FolderLibraryIcon} />;
@@ -157,14 +152,14 @@ export default function Sidebar() {
     }
   };
 
-  const handleDeleteProject = async (id: string) => {
+  const handleDeleteProject = useCallback(async (id: string) => {
     await ChatSessionManager.deleteProject(id);
     const allProjects = await ChatSessionManager.getProjects();
     setProjects(allProjects);
     if (location.pathname.includes('/chat/')) {
       navigate('/chats');
     }
-  };
+  }, [location.pathname, navigate]);
 
   return (
     <>

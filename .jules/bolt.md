@@ -1,0 +1,3 @@
+## 2025-05-15 - [Sidebar & Icon Memoization]
+**Learning:** List items in the sidebar (like `ProjectItem`) and high-frequency UI elements (like `HugeiconRenderer`) can cause significant rendering overhead if not memoized. Stabilizing handlers with `useCallback` in the parent is necessary but must account for navigation-driven state (e.g., `location.pathname`) to be truly effective.
+**Action:** Always memoize recurring list items and centralized UI components. When using `useCallback`, ensure the dependency array is as minimal as possible but includes all necessary routing hooks if the handler depends on the current path.

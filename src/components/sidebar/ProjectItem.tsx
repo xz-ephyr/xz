@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   MoreVerticalIcon,
@@ -9,34 +9,19 @@ import {
   Delete02Icon,
   ArchiveIcon,
 } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { Project, ChatSession } from '../../types/chat';
 import { ChatSessionManager } from '../../services/ChatSessionManager';
+import { HugeiconRenderer } from '../ui/HugeiconRenderer';
 
 interface ProjectItemProps {
   project: Project;
   onDelete: (id: string) => void;
 }
 
-const HugeiconRenderer = ({
-  icon: Icon,
-  size = 16,
-  className,
-}: {
-  icon: any;
-  size?: number;
-  className?: string;
-}) => (
-  <HugeiconsIcon
-    icon={Icon}
-    size={size}
-    color="currentColor"
-    strokeWidth={1.5}
-    className={className}
-  />
-);
-
-export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
+/**
+ * ProjectItem component with React.memo to optimize rendering performance in large sidebars.
+ */
+const ProjectItem = React.memo(({ project, onDelete }: ProjectItemProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showMenu, setShowMenu] = useState(false);
@@ -263,4 +248,6 @@ export default function ProjectItem({ project, onDelete }: ProjectItemProps) {
       )}
     </div>
   );
-}
+});
+
+export default ProjectItem;
