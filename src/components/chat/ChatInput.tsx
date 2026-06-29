@@ -255,6 +255,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
         <div className="flex flex-col px-3 py-1.5 bg-transparent gap-1">
             <div className="flex items-center justify-between">
             <div className="flex items-center gap-0.5">
+              <NTabDropdown isIdle={isIdle} />
               <ToolbarDropdown isThinkingEnabled={isThinkingEnabled} onToggleThinking={onToggleThinking} isIdle={isIdle} />
               {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
             </div>
