@@ -1,16 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { ZoomProvider } from './components/layout/ZoomProvider';
-import { ToastProvider } from './components/ui/Toast';
+import { AppProviders } from './components/layout/AppProviders';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ZoomProvider>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
-    </ZoomProvider>
+    <AppProviders>
+      <App />
+    </AppProviders>
   </React.StrictMode>
 );

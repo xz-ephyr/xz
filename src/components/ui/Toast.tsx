@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, memo } from 'react';
 
 type ToastType = 'info' | 'success' | 'error' | 'warning';
 
@@ -70,7 +70,7 @@ const iconStyles: Record<ToastType, string> = {
   warning: 'text-amber-500',
 };
 
-function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) => void }) {
+const ToastItem = memo(function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) => void }) {
   useEffect(() => {
     const timer = setTimeout(() => onRemove(toast.id), 4000);
     return () => clearTimeout(timer);
@@ -96,7 +96,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
       </button>
     </div>
   );
-}
+});
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);

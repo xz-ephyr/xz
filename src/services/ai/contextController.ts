@@ -9,7 +9,7 @@ export function getSmartSystemPrompt(basePrompt: string, projectContext?: Projec
 
   return `${basePrompt}
 
-## Rroject Context
+## Project Context
 
 You are inside a folder named "${projectContext.name}" located at \`${projectContext.path}\`.
 

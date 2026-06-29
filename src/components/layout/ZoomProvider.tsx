@@ -23,6 +23,14 @@ export function ZoomProvider({ children }: { children: ReactNode }) {
   const zoomRef = useRef(zoom);
   const throttleRef = useRef(0);
 
+  const zoomInRef = useRef(zoomIn);
+  const zoomOutRef = useRef(zoomOut);
+  const resetZoomRef = useRef(resetZoom);
+
+  zoomInRef.current = zoomIn;
+  zoomOutRef.current = zoomOut;
+  resetZoomRef.current = resetZoom;
+
   useEffect(() => {
     zoomRef.current = zoom;
   });
@@ -34,7 +42,6 @@ export function ZoomProvider({ children }: { children: ReactNode }) {
           const { getCurrentWebview } = await import('@tauri-apps/api/webview');
           await getCurrentWebview().setZoom(zoom);
         } catch {
-          // Tauri API not available — fallback to CSS zoom below
           document.documentElement.style.zoom = String(zoom);
         }
       })();
@@ -52,11 +59,11 @@ export function ZoomProvider({ children }: { children: ReactNode }) {
     throttleRef.current = now;
 
     if (e.deltaY < 0) {
-      zoomIn();
+      zoomInRef.current();
     } else {
-      zoomOut();
+      zoomOutRef.current();
     }
-  }, [zoomIn, zoomOut]);
+  }, []);
 
   useEffect(() => {
     window.addEventListener('wheel', handleWheel, { passive: false });
@@ -70,18 +77,18 @@ export function ZoomProvider({ children }: { children: ReactNode }) {
 
       if (e.key === '=' || e.key === '+') {
         e.preventDefault();
-        zoomIn();
+        zoomInRef.current();
       } else if (e.key === '-') {
         e.preventDefault();
-        zoomOut();
+        zoomOutRef.current();
       } else if (e.key === '0') {
         e.preventDefault();
-        resetZoom();
+        resetZoomRef.current();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [zoomIn, zoomOut, resetZoom]);
+  }, []);
 
   return (
     <ZoomContext.Provider value={{ zoom, zoomIn, zoomOut, resetZoom, setZoomLevel }}>
