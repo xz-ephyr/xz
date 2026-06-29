@@ -423,84 +423,177 @@ class XZAppInitializer {
 
 ## UI Integration
 
-### Settings Panel (minimal)
+### Connected CLI Icons (Above Chat Input)
+
+Detected CLIs appear as a stack of icons beside the greeting text, positioned above the chat input. Each icon represents a connected CLI agent. Clicking an icon expands it into a pill showing the icon + name. Clicking again collapses it back.
+
+```
+┌──────────────────────────────────────────────────────┐
+│  ┌──────────────────────────────────────────┐       │
+│  │  What can I help you build today?        │       │
+│  │                                          │       │
+│  │  ┌──────┐                                │       │
+│  │  │ ○ ○ ○│  ← icon stack (collapsed)      │       │
+│  │  └──────┘                                │       │
+│  │                                          │       │
+│  │  ┌──────┐  ┌──────────┐  ┌──────────┐    │       │
+│  │  │ ○ ○ ○│  │ ○ opencode│  │ ○ codex  │    │       │
+│  │  └──────┘  └──────────┘  └──────────┘    │       │
+│  │   collapsed     expanded                  │       │
+│  └──────────────────────────────────────────┘       │
+│  ┌──────────────────────────────────────────────┐   │
+│  │  Type a message...                      [→]  │   │
+│  └──────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────┘
+```
 
 ```tsx
-function CLIBridgesPanel() {
-  const [bridges, setBridges] = useState<Map<string, CLIBridge>>(new Map());
+function ConnectedCLIIcons({ bridges }: { bridges: CLIBridge[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const service = new CLIBridgeService();
-
-    service.getAllBridges().then(allBridges => {
-      setBridges(allBridges);
-    });
-
-    const monitor = new BackgroundCLIConnection();
-    monitor.start();
-
-    return () => monitor.stop();
-  }, []);
+  if (bridges.length === 0) return null;
 
   return (
-    <div>
-      <h3>Connected AI Agents</h3>
-      {Array.from(bridges.entries()).map(([id, bridge]) => (
-        <CLIConnectionCard
-          key={id}
-          cliId={id}
-          isConnected={bridge.isConnected()}
-          modelsCount={bridge.getModelCount()}
-          onReconnect={() => bridge.connect()}
-          onDisconnect={() => bridge.disconnect()}
-        />
-      ))}
+    <div className="relative flex items-center gap-1">
+      {/* Collapsed: stack of icons */}
+      <div className="flex -space-x-1.5">
+        {bridges.slice(0, 3).map(b => (
+          <button
+            key={b.id}
+            onClick={() => setExpandedId(expandedId === b.id ? null : b.id)}
+            className="w-6 h-6 rounded-full bg-neutral-100 border border-white flex items-center justify-center text-xs hover:bg-neutral-200 transition-all"
+            title={b.id}
+          >
+            <CLIIcon cliId={b.id} />
+          </button>
+        ))}
+        {bridges.length > 3 && (
+          <span className="w-6 h-6 rounded-full bg-neutral-100 border border-white flex items-center justify-center text-[10px] text-neutral-500 font-medium">
+            +{bridges.length - 3}
+          </span>
+        )}
+      </div>
+
+      {/* Expanded: pill with icon + name */}
+      {expandedId && (
+        <div className="flex gap-1 animate-in fade-in slide-in-from-left-1">
+          {bridges.map(b => (
+            <span
+              key={b.id}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-all cursor-default ${
+                b.id === expandedId
+                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                  : 'bg-neutral-50 border-neutral-200 text-neutral-600'
+              }`}
+            >
+              <CLIIcon cliId={b.id} />
+              {b.id}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 ```
 
-### Model Picker (unified)
+### Placement
 
-```tsx
-function CLIModelPicker({ bridges }: { bridges: Map<string, CLIBridge> }) {
-  const [cliModels, setCLIModels] = useState<ModelInfo[]>([]);
+```
+┌─────────────────────────────────────────────────┐
+│  ┌──────────────────────────────────────────┐   │
+│  │  xz (logo)                                │   │
+│  │                                           │   │
+│  │  What can I help you build today?         │   │
+│  │                                           │   │
+│  │  [○  ○  ○]   ← icon stack              │   │
+│  │  ───or expanded───                       │   │
+│  │  [○ opencode] [○ codex] [○ aider]        │   │
+│  │                                           │   │
+│  │  ┌────────────────────────────────────┐   │   │
+│  │  │ Type a message...            [→]  │   │   │
+│  │  └────────────────────────────────────┘   │   │
+│  └──────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────┘
+```
 
-  useEffect(() => {
-    const loadCLIModels = async () => {
-      const allModels: ModelInfo[] = [];
+### Behavior
 
-      for (const bridge of bridges.values()) {
-        if (bridge.isConnected()) {
-          const models = await bridge.getModels();
-          allModels.push(...models.map(m => ({
-            ...m,
-            source: 'cli' as const,
-            sourceId: bridge.id
-          })));
-        }
-      }
+- On mount, icons appear collapsed (stacked, only icons visible)
+- Click any icon → stack expands into labeled pills (icon + name)
+- Click the same icon again or click outside → collapses back to icon stack
+- Hover tooltip on collapsed icons shows the CLI name
+- Connected status shown via a small green dot on the icon
+- Icons for apps like opencode, codex, aider, claude, agy use their brand icons
 
-      setCLIModels(allModels);
-    };
+### Model Injection
 
-    if (bridges.size > 0) {
-      loadCLIModels();
-    }
-  }, [bridges]);
+When a CLI is selected from the stack (expanded + clicked), its free models are injected into the app:
 
-  return (
-    <ModelSelector
-      models={cliModels}
-      groupBy="source"
-      customGroups={{
-        'cli': 'Installed AI Agents',
-        'default': 'Standard Models'
-      }}
-    />
-  );
+- **Chat model list** — CLI's free models appear in the model dropdown beside the send button, grouped under a "Connected CLI" section
+- **Settings AI listing** — same models appear in Settings → AI Models, marked with the CLI's icon and a "free" badge
+- **Only free models** — the bridge filters out paid/pro-tier models from the CLI; the `getModels()` call returns only `{ free: true }` entries
+- **On deselect** — models are removed from both lists when the CLI is disconnected or deselected
+
+```ts
+interface ModelInfo {
+  id: string;
+  name: string;
+  free: boolean;        // ← only free models are injected
+  provider: string;
+  source: 'cli';
+  cliId: string;
+}
+
+class CLIModelInjector {
+  private injectedModels: Map<string, ModelInfo[]> = new Map();
+
+  selectCLI(bridge: CLIBridge) {
+    const models = (await bridge.getModels()).filter(m => m.free);
+    this.injectedModels.set(bridge.id, models);
+    this.publishToModelList(models);       // Chat model dropdown
+    this.publishToSettingsListing(models);  // Settings → AI Models
+  }
+
+  deselectCLI(cliId: string) {
+    const models = this.injectedModels.get(cliId) || [];
+    this.removeFromModelList(models);
+    this.removeFromSettingsListing(models);
+    this.injectedModels.delete(cliId);
+  }
 }
 ```
+
+```
+┌─────────────────────────────────────────────────┐
+│  Model Selector (chat input)                    │
+│                                                 │
+│  ┌─────────────────────────────────────────┐   │
+│  │  ◉ gemini-3.5-flash               ▼    │   │
+│  ├─────────────────────────────────────────┤   │
+│  │  Connected CLI                          │   │
+│  │    ○ opencode/deepseek-v4-flash-free    │   │
+│  │    ○ opencode/mimo-v2.5-free            │   │
+│  │    ○ opencode/big-pickle                │   │
+│  ├─────────────────────────────────────────┤   │
+│  │  Google                                 │   │
+│  │    ○ gemini-3.5-flash                   │   │
+│  │    ...                                  │   │
+│  └─────────────────────────────────────────┘   │
+│                                                 │
+│  Settings → AI Models                           │
+│  ┌─────────────────────────────────────────┐   │
+│  │  opencode connected         3 models    │   │
+│  │  ┌──────────────────────────────────┐   │   │
+│  │  │ ○ deepseek-v4-flash-free  [free] │   │   │
+│  │  │ ○ mimo-v2.5-free          [free] │   │   │
+│  │  │ ○ big-pickle              [free] │   │   │
+│  │  └──────────────────────────────────┘   │   │
+│  └─────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────┘
+```
+
+Only `{ free: true }` models from each connected CLI are surfaced — no paid tier models appear in the lists.
 
 ---
 
@@ -513,6 +606,206 @@ function CLIModelPicker({ bridges }: { bridges: Map<string, CLIBridge> }) {
 | **Claude Code** | Subprocess bridge | Auth file | Anthropic models, code understanding |
 | **Aider** | Subprocess bridge | Config file | Code editing, git integration |
 | **Antigravity CLI** | Subprocess bridge | Env variables | Google models, real-time coding |
+
+---
+
+## Web Mode
+
+When xz runs in a browser (dev mode or web app), shell access is unavailable — no `which`, no subprocess spawning. Here's what works and what doesn't:
+
+### What Works in Web Mode
+
+| CLI | Bridge Type | Works in Web? | Reason |
+|-----|-------------|---------------|--------|
+| **OpenCode** | WebSocket to `localhost:3080` | ✅ | Pure HTTP/WS — works in any browser |
+| **Other CLIs via opencode proxy** | Routed through opencode | ✅ | Opencode server forwards to subprocesses |
+| **Codex, Claude, Aider, etc.** | Direct subprocess | ❌ | Browser cannot spawn native processes |
+
+### Strategy 1: OpenCode as Proxy (Recommended)
+
+If opencode is running locally, use it as a router — it spawns the other CLIs on your behalf:
+
+```
+┌──────────────────────────────────────────────────┐
+│                  Browser (Web Mode)              │
+│  xz Web App                                     │
+│    ↓                                            │
+│  fetch('http://localhost:3080/api/v1/...')      │
+├──────────────────────────────────────────────────┤
+│                  OpenCode Server                 │
+│    ↓                                            │
+│  spawn('codex', [...args])                      │
+│  spawn('claude', [...args])                     │
+│  spawn('aider', [...args])                      │
+└──────────────────────────────────────────────────┘
+```
+
+```ts
+// Web-mode bridge that proxies through opencode
+class WebOpenCodeProxyBridge implements CLIBridge {
+  private baseUrl = 'http://localhost:3080';
+
+  async connect(): Promise<void> {
+    // Same as OpenCodeBridge but HTTP-only (no WebSocket needed)
+    const res = await fetch(`${this.baseUrl}/health`);
+    if (!res.ok) throw new Error('OpenCode server not available');
+  }
+
+  async execute(command: string, args?: string[]): Promise<CommandResult> {
+    const res = await fetch(`${this.baseUrl}/api/v1/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool: command, args })
+    });
+    return res.json();
+  }
+
+  async getModels(): Promise<ModelInfo[]> {
+    const res = await fetch(`${this.baseUrl}/api/v1/models`);
+    return res.json();
+  }
+}
+
+// Web-mode detector — no shell commands, only HTTP checks
+class WebBackgroundCLIDetector {
+  async detectInstalledCLIs(): Promise<string[]> {
+    const found: string[] = [];
+
+    // HTTP-based detection only
+    if (await this.checkOpenCodeServer()) {
+      found.push('opencode');
+      // opencode can report what other CLIs it can proxy
+      const proxied = await this.getProxiedCLIs();
+      found.push(...proxied);
+    }
+
+    return found;
+  }
+
+  private async checkOpenCodeServer(): Promise<boolean> {
+    try {
+      const res = await fetch('http://localhost:3080/health', {
+        signal: AbortSignal.timeout(1000)
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  private async getProxiedCLIs(): Promise<string[]> {
+    try {
+      const res = await fetch('http://localhost:3080/api/v1/available-tools', {
+        signal: AbortSignal.timeout(1000)
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.tools || [];
+    } catch {
+      return [];
+    }
+  }
+}
+```
+
+### Strategy 2: Companion Daemon (Standalone)
+
+Bundle a lightweight HTTP daemon (a single binary, ~2MB) that runs as a background process alongside the browser:
+
+```
+xz-daemon.exe / xz-daemon
+  - Listens on localhost:9300
+  - Exposes REST API for CLI detection and execution
+  - Spawns CLIs as subprocesses
+  - Returns results as JSON
+```
+
+```ts
+class CompanionDaemonBridge implements CLIBridge {
+  private daemonUrl = 'http://localhost:9300';
+
+  async connect(): Promise<void> {
+    const res = await fetch(`${this.daemonUrl}/health`, {
+      signal: AbortSignal.timeout(2000)
+    });
+    if (!res.ok) throw new Error('Daemon not running');
+  }
+
+  async execute(command: string, args?: string[]): Promise<CommandResult> {
+    const res = await fetch(`${this.daemonUrl}/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ binary: command, args })
+    });
+    return res.json();
+  }
+
+  async getModels(): Promise<ModelInfo[]> {
+    const res = await fetch(`${this.daemonUrl}/models`);
+    return res.json();
+  }
+
+  async getAuthStatus(): Promise<AuthStatus> {
+    const res = await fetch(`${this.daemonUrl}/auth`);
+    return res.json();
+  }
+}
+```
+
+### Strategy 3: localStorage Fallback
+
+Manual declaration for users who want CLI features but run purely in browser:
+
+```ts
+const CLI_DECLARATION_KEY = 'xz-declared-clis';
+
+class LocalStorageBridge implements CLIBridge {
+  async connect(): Promise<void> {
+    // No-op — user declared these exist
+  }
+
+  async getModels(): Promise<ModelInfo[]> {
+    const declared = localStorage.getItem(CLI_DECLARATION_KEY);
+    if (!declared) return [];
+    return JSON.parse(declared).models || [];
+  }
+
+  async execute(): Promise<CommandResult> {
+    return { success: false, error: 'Browser cannot execute CLIs. Install the desktop app or opencode server.' };
+  }
+}
+```
+
+The user can add a JSON block in settings:
+```json
+{
+  "opencode": {
+    "server": "http://localhost:3080",
+    "models": ["deepseek-v4-flash-free", "gemini-3.5-flash"]
+  }
+}
+```
+
+### Detection Logic
+
+```ts
+function createBridgeService(): CLIBridgeService {
+  const service = new CLIBridgeService();
+
+  if (isDesktopApp()) {
+    // Desktop: full shell access
+    service.registerDetector(new BackgroundCLIDetector());
+  } else if (await opencodeServerRunning()) {
+    // Web + opencode server running
+    service.registerDetector(new WebBackgroundCLIDetector());
+  } else {
+    // Pure web: only localStorage
+    service.registerDetector(new LocalStorageDetector());
+  }
+
+  return service;
+}
+```
 
 ---
 
