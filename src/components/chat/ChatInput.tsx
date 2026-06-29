@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowUp02Icon, Add01Icon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon, Atom02Icon, HandBag01Icon, ArrowRight01Icon, ListViewIcon, TeamWorkIcon, HandsClappingIcon, QuillWrite02Icon, CursorMagicSelection04Icon, Bug02Icon } from '@hugeicons/core-free-icons';
+import { ArrowUp02Icon, Add01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon, Atom02Icon, HandBag01Icon, ArrowRight01Icon, TeamWorkIcon, HandsClappingIcon, QuillWrite02Icon, CursorMagicSelection04Icon, Bug02Icon } from '@hugeicons/core-free-icons';
 import { ThinScrollbar } from '../ui/ThinScrollbar';
 import ModelList from './ModelList';
 
@@ -15,14 +15,15 @@ interface ChatInputProps {
 }
 
 const NTABS = [
-  { icon: CursorMagicSelection04Icon, label: 'pLAN' },
-  { icon: Bug02Icon, label: 'DEBUGS' },
-  { icon: TeamWorkIcon, label: 'TEAMWORK' },
-  { icon: HandsClappingIcon, label: 'GRILL ME' },
-  { icon: QuillWrite02Icon, label: 'SUpER MODE' },
+  { icon: CursorMagicSelection04Icon, label: 'Plan' },
+  { icon: Bug02Icon, label: 'Debugs' },
+  { icon: TeamWorkIcon, label: 'Teamwork' },
+  { icon: HandsClappingIcon, label: 'Grill Me' },
+  { icon: QuillWrite02Icon, label: 'Super Mode' },
 ];
 
 function NTabDropdown({ isIdle }: { isIdle?: boolean }) {
+  const [currentTab, setCurrentTab] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -37,27 +38,34 @@ function NTabDropdown({ isIdle }: { isIdle?: boolean }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+  const tab = NTABS[currentTab];
+
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-neutral-200/60 transition-colors text-black"
-        aria-label="NTabs"
-        title="NTabs"
+        className="flex items-center gap-1 px-2 py-1 rounded-[6px] text-neutral-500 hover:bg-neutral-200/60 hover:text-neutral-700 transition-colors text-xs"
+        title={tab.label}
       >
-        <HugeiconsIcon icon={ListViewIcon} size={18} />
+        <HugeiconsIcon icon={tab.icon} size={14} />
+        <span className="max-w-[80px] truncate">{tab.label}</span>
       </button>
       {isOpen && (
-        <div className={`absolute ${isIdle ? 'top-full mt-1' : 'bottom-full mb-1'} left-0 w-[180px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden`}>
-          {NTABS.map((tab, i) => (
+        <div className={`absolute ${isIdle ? 'top-full mt-1' : 'bottom-full mb-1'} left-0 w-[220px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden`}>
+          {NTABS.map((t, i) => (
             <button
               key={i}
               type="button"
-              className="w-full text-left px-3 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center gap-2 rounded-md"
+              onClick={() => { setCurrentTab(i); setIsOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center gap-2 rounded-md ${
+                i === currentTab
+                  ? 'text-neutral-900 bg-neutral-100'
+                  : 'text-neutral-600 hover:bg-neutral-50'
+              }`}
             >
-              <HugeiconsIcon icon={tab.icon} size={16} />
-              <span>{tab.label}</span>
+              <HugeiconsIcon icon={t.icon} size={16} />
+              <span>{t.label}</span>
             </button>
           ))}
         </div>
@@ -255,8 +263,8 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
         <div className="flex flex-col px-3 py-1.5 bg-transparent gap-1">
             <div className="flex items-center justify-between">
             <div className="flex items-center gap-0.5">
-              <NTabDropdown isIdle={isIdle} />
               <ToolbarDropdown isThinkingEnabled={isThinkingEnabled} onToggleThinking={onToggleThinking} isIdle={isIdle} />
+              <NTabDropdown isIdle={isIdle} />
               {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
             </div>
             <div className="flex items-center gap-1">

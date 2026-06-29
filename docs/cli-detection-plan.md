@@ -193,63 +193,24 @@ class OpenCodeBridge implements CLIBridge {
 }
 ```
 
-### 3. CLI Detection (Silent, Background)
+### 3. Passive Connection (No Detection, No Polling)
+
+No health checks, no timeouts, no polling intervals. The bridge just opens a WebSocket to the CLI server. If the server is running, the connection succeeds. If it's not, the WebSocket stays in a connecting state and auto-reconnects when the server appears. That's it.
 
 ```ts
-// Background detection without UI
-class BackgroundCLIDetector {
-  async detectInstalledCLIs(): Promise<string[]> {
-    // Check opencode (running server)
-    if (await this.checkOpenCodeServer()) {
-      return ['opencode'];
-    }
+// No polling, no timeouts, no health checks.
+// The bridge just opens a WebSocket — when the server appears,
+// the connection succeeds. When it goes away, it reconnects.
+class OpenCodeBridge implements CLIBridge {
+  private ws: WebSocket | null = null;
 
-    // Check CLI binaries (no version, just existence)
-    const binaries = ['codex', 'claude', 'aider', 'agy'];
-    const found = [];
-
-    for (const binary of binaries) {
-      if (await this.isBinaryAvailable(binary)) {
-        found.push(binary);
-      }
-    }
-
-    return found;
-  }
-
-  // Check if opencode server is running
-  private async checkOpenCodeServer(): Promise<boolean> {
-    try {
-      const response = await fetch('http://localhost:3080/health', {
-        method: 'GET',
-        signal: AbortSignal.timeout(1000)
-      });
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  // Check if binary exists (simple and fast)
-  private async isBinaryAvailable(binary: string): Promise<boolean> {
-    try {
-      const cmd = process.platform === 'win32' ? 'where' : 'which';
-
-      if (process.platform === 'win32') {
-        const result = await execPromise(`${cmd} ${binary}`);
-        return result.trim() !== '';
-      } else {
-        const result = await execPromise(`command -v ${binary}`);
-        return result.trim() !== '';
-      }
-    } catch {
-      return false;
-    }
-  }
-
-  // No UI indicators, just logging
-  private log(message: string): void {
-    console.log(`[CLI Detection] ${message}`);
+  async connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.ws = new WebSocket('ws://localhost:3080/ws');
+      this.ws.onopen = () => resolve();
+      this.ws.onerror = () => reject(new Error('Connection failed'));
+      this.ws.onclose = () => setTimeout(() => this.connect(), 2000);
+    });
   }
 }
 ```
@@ -297,50 +258,12 @@ class CLIToolAdapter {
 
 ### 5. Background Management
 
-```ts
-// Manage persistent CLI connections
-class BackgroundCLIConnection {
-  private detectionInterval: NodeJS.Timeout;
-  private reconnectInterval: NodeJS.Timeout;
-  private healthInterval: NodeJS.Timeout;
+No intervals, no health polling. The WebSocket handles everything:
 
-  start() {
-    // Detection every 5 minutes (silent)
-    this.detectionInterval = setInterval(() => {
-      this.checkConnections();
-    }, 300000);
-
-    // Reconnect on failure (silent)
-    this.reconnectInterval = setInterval(() => {
-      this.attemptReconnections();
-    }, 60000);
-
-    // Health check every 30 seconds
-    this.healthInterval = setInterval(() => {
-      this.checkHealth();
-    }, 30000);
-  }
-
-  private async checkConnections() {
-    const detector = new BackgroundCLIDetector();
-    const detected = await detector.detectInstalledCLIs();
-
-    // Connect to newly detected CLIs
-    for (const cli of detected) {
-      if (!this.isConnected(cli)) {
-        this.connectSilent(cli);
-      }
-    }
-
-    // Remove disconnected bridges
-    for (const [id] of this.bridges) {
-      if (!detected.includes(id) || !this.isHealthy(id)) {
-        this.disconnect(id);
-      }
-    }
-  }
-}
-```
+- **Connection**: When the WebSocket opens, the bridge is active.
+- **Disconnection**: When the WebSocket closes, it auto-reconnects in 2 seconds.
+- **Reconnection**: Indefinite — no max attempt limit, no backoff cap.
+- **Health**: Not polled. If the WebSocket is open, the CLI is alive.
 
 ### 6. Configuration Integration
 
@@ -388,35 +311,12 @@ class AutoModelConfigurator {
 
 ```ts
 // Silent initialization on app load
-class AppInitializer {
-  async initialize(): Promise<void> {
-    // Phase 1: Background detection (0-2 seconds, silent)
-    console.log('[Init] Starting CLI detection...');
-    const detector = new BackgroundCLIDetector();
-    const detected = await detector.detectInstalledCLIs();
-
-    // Phase 2: Connect silently
-    console.log('[Init] Connecting to detected agents...');
-    const bridgeService = new CLIBridgeService();
-
-    for (const cliType of detected) {
-      try {
-        const bridge = await bridgeService.connectToCLI(cliType);
-        console.log(`[Init] Connected to ${cliType}`);
-      } catch (error) {
-        console.log(`[Init] Failed to connect to ${cliType}:`, error);
-      }
-    }
-
-    // Phase 3: Auto-configure models
-    await this.configureFromConnectedCLIs();
-
-    // Phase 4: Start background maintenance
-    this.startBackgroundMaintenance();
-
-    console.log('[Init] Ready - Connected to', detected.length, 'AI agents');
-  }
-}
+// Just try to open a WebSocket — no detection, no polling, no timeouts
+const bridge = new OpenCodeBridge();
+bridge.connect().then(() => {
+  console.log('[CLI] Connected to opencode');
+});
+// If the server isn't running yet, the WebSocket will connect when it appears.
 ```
 
 ---

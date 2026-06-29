@@ -4,6 +4,8 @@ import Layout from './components/layout/Layout';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { isTauri } from './lib/tauri';
 import UpdateModal from './components/ui/UpdateModal';
+import { CLIBridgeService } from './services/CLIBridgeService';
+import { CLIModelInjector } from './services/CLIModelInjector';
 
 const ChatPage = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })));
 const ChatsPage = lazy(() => import('./pages/ChatsPage').then(m => ({ default: m.ChatsPage })));
@@ -21,6 +23,10 @@ export default function App() {
   } | null>(null);
 
   useEffect(() => {
+    // CLI bridges connect passively — no polling, no timeouts
+    CLIModelInjector.loadPersisted();
+    CLIBridgeService.connect();
+
     if (!isTauri()) return;
 
     let cancelled = false;

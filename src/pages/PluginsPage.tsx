@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PluginTabs } from '../components/plugins/PluginTabs';
 
 const CARDS = [
   { title: 'Web Search', description: 'Browse the web for real-time information and data.', color: 'from-blue-500 to-cyan-500' },
@@ -9,8 +10,12 @@ const CARDS = [
 export const PluginsPage = () => {
   const [current, setCurrent] = useState(0);
 
-  const prev = () => setCurrent((c) => (c === 0 ? CARDS.length - 1 : c - 1));
   const next = () => setCurrent((c) => (c === CARDS.length - 1 ? 0 : c + 1));
+
+  useEffect(() => {
+    const id = setInterval(next, 4000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="flex-1 bg-white overflow-y-auto thin-scrollbar">
@@ -34,14 +39,6 @@ export const PluginsPage = () => {
           </div>
 
           <button
-            onClick={prev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all backdrop-blur-sm"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 13L5 8L10 3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
             onClick={next}
             className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-all backdrop-blur-sm"
           >
@@ -61,6 +58,10 @@ export const PluginsPage = () => {
               />
             ))}
           </div>
+        </div>
+
+        <div className="mt-8">
+          <PluginTabs />
         </div>
       </div>
     </div>

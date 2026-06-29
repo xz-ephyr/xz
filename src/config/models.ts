@@ -4,13 +4,15 @@ export type Provider =
   | 'mistral'
   | 'openrouter'
   | 'cerebras'
-  | 'opencodezen';
+  | 'opencodezen'
+  | 'cli';
 
 export interface ModelDefinition {
   id: string;
   provider: Provider;
   label: string;
   supportsThinking?: boolean;
+  cliId?: string;
 }
 
 export const ALLOWED_PROVIDERS: Provider[] = [
@@ -68,12 +70,16 @@ export const MODELS: ModelDefinition[] = [
   { id: 'deepSeek-r1-distill-llama-70B', provider: 'cerebras', label: 'DeepSeek R1 Distill 70B', supportsThinking: true },
 ];
 
-export const AI_MODELS = MODELS.map(m => m.id);
+export const CLI_MODELS: ModelDefinition[] = [];
+
+export function getAIModels(): string[] {
+  return [...MODELS.map(m => m.id), ...CLI_MODELS.map(m => m.id)];
+}
 export type AIModel = string;
 
 export const DEFAULT_MODEL: AIModel = 'gemini-3.5-flash';
 
-export const THINKING_MODELS = MODELS.filter(m => m.supportsThinking).map(m => m.id);
+export const THINKING_MODELS = [...MODELS.filter(m => m.supportsThinking).map(m => m.id)];
 
 export const MODEL_MODES = {
   fixed: 'fixed',
@@ -85,7 +91,6 @@ export type ModelMode = (typeof MODEL_MODES)[keyof typeof MODEL_MODES];
 export const MODEL_MODE_STORAGE_KEY = 'model-mode';
 export const SELECTED_MODEL_STORAGE_KEY = 'selected-model';
 
-// API Key Storage Keys
 export const API_KEYS = {
   google: 'api-key',
   groq: 'groq-api-key',
@@ -96,7 +101,7 @@ export const API_KEYS = {
 } as const;
 
 export function isAIModel(model: string | null): model is AIModel {
-  return AI_MODELS.includes(model as string);
+  return getAIModels().includes(model as string);
 }
 
 export function isModelMode(mode: string | null): mode is ModelMode {
@@ -138,7 +143,7 @@ export function markModelUsed(sessionId: string | undefined, model: AIModel) {
 
 export function getUnusedModels(sessionId: string | undefined): AIModel[] {
   const used = getUsedModels(sessionId);
-  return AI_MODELS.filter(m => !used.includes(m));
+  return getAIModels().filter(m => !used.includes(m));
 }
 
 export function resetUsedModels(sessionId: string | undefined) {
@@ -173,5 +178,5 @@ export function getModelForChatRequest(sessionId: string | undefined): AIModel {
 }
 
 export function getModelDefinition(modelId: string): ModelDefinition | undefined {
-  return MODELS.find(m => m.id === modelId);
+  return MODELS.find(m => m.id === modelId) || CLI_MODELS.find(m => m.id === modelId);
 }
