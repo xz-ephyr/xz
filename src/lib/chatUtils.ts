@@ -1,7 +1,7 @@
 import type { Artifact } from '../types/artifact';
 import { parseArtifacts } from './artifactParser';
 
-const artifactMetadataRegex = /^\s*\*\s*(?:Type|Identifier|Title):\s*`[^`]+`\s*$/gim;
+const artifactMetadataRegex = /^\s*\*\s*(?:Type|Identifier|Title):\s*`[^`]+`\s*$/im;
 const artifactInlineRegex = /^\s*`identifier`:\s*`[^`]+`\s*\*\s*`type`:\s*`[^`]+`\s*\*\s*`title`:\s*`[^`]+`/i;
 
 // Strip search result content that leaks into reasoning
