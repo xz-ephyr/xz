@@ -48,24 +48,24 @@ export const MODELS: ModelDefinition[] = [
 
   // OpenRouter (:free models)
   { id: 'openrouter/owl-alpha', provider: 'openrouter', label: 'OWL Alpha' },
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', provider: 'openrouter', label: 'Nemotron 3 Ultra 550B (free)' },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', provider: 'openrouter', label: 'Nemotron 3 Ultra 550B (free)', supportsThinking: true },
   { id: 'nousresearch/hermes-3-llama-3.1-405b:free', provider: 'openrouter', label: 'Hermes 3 405B (free)' },
   { id: 'google/gemma-4-26b-a4b-it:free', provider: 'openrouter', label: 'Gemma 4 26B (free)' },
-  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', provider: 'openrouter', label: 'Nemotron Nano 30B Reasoning (free)' },
+  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', provider: 'openrouter', label: 'Nemotron Nano 30B Reasoning (free)', supportsThinking: true },
   { id: 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free', provider: 'openrouter', label: 'Dolphin Mistral 24B (free)' },
-  { id: 'nvidia/nemotron-nano-12b-v2-vl:free', provider: 'openrouter', label: 'Nemotron Nano 12B VL (free)' },
-  { id: 'poolside/laguna-xs.2:free', provider: 'openrouter', label: 'Laguna XS (free)' },
-  { id: 'nvidia/nemotron-nano-9b-v2:free', provider: 'openrouter', label: 'Nemotron Nano 9B (free)' },
+  { id: 'nvidia/nemotron-nano-12b-v2-vl:free', provider: 'openrouter', label: 'Nemotron Nano 12B VL (free)', supportsThinking: true },
+  { id: 'poolside/laguna-xs.2:free', provider: 'openrouter', label: 'Laguna XS (free)', supportsThinking: true },
+  { id: 'nvidia/nemotron-nano-9b-v2:free', provider: 'openrouter', label: 'Nemotron Nano 9B (free)', supportsThinking: true },
   { id: 'liquid/lfm-2.5-1.2b-instruct:free', provider: 'openrouter', label: 'LFM 2.5 1.2B Instruct (free)' },
-  { id: 'liquid/lfm-2.5-1.2b-thinking:free', provider: 'openrouter', label: 'LFM 2.5 1.2B Thinking (free)' },
+  { id: 'liquid/lfm-2.5-1.2b-thinking:free', provider: 'openrouter', label: 'LFM 2.5 1.2B Thinking (free)', supportsThinking: true },
   { id: 'meta-llama/llama-3.2-3b-instruct:free', provider: 'openrouter', label: 'Llama 3.2 3B (free)' },
 
   // Cerebras
-  { id: 'gpt-oss-120b', provider: 'cerebras', label: 'GPT OSS 120B' },
+  { id: 'gpt-oss-120b', provider: 'cerebras', label: 'GPT OSS 120B', supportsThinking: true },
   { id: 'llama-3-3-70b', provider: 'cerebras', label: 'Llama 3.3 70B' },
   { id: 'llama4-scout-17b-16e-instruct', provider: 'cerebras', label: 'Llama 4 Scout' },
-  { id: 'qwen-3-32b', provider: 'cerebras', label: 'Qwen 3 32B' },
-  { id: 'deepSeek-r1-distill-llama-70B', provider: 'cerebras', label: 'DeepSeek R1 Distill 70B' },
+  { id: 'qwen-3-32b', provider: 'cerebras', label: 'Qwen 3 32B', supportsThinking: true },
+  { id: 'deepSeek-r1-distill-llama-70B', provider: 'cerebras', label: 'DeepSeek R1 Distill 70B', supportsThinking: true },
 ];
 
 export const AI_MODELS = MODELS.map(m => m.id);

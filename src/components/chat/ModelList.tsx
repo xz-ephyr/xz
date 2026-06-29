@@ -16,9 +16,10 @@ const PROVIDER_ORDER = ['google', 'groq', 'opencodezen', 'mistral', 'openrouter'
 
 interface ModelListProps {
   currentModel: string;
+  showThinkingOnly?: boolean;
 }
 
-export default function ModelList({ currentModel }: ModelListProps) {
+export default function ModelList({ currentModel, showThinkingOnly }: ModelListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,11 +42,13 @@ export default function ModelList({ currentModel }: ModelListProps) {
 
   const currentDef = getModelDefinition(currentModel);
 
+  const filteredModels = showThinkingOnly ? MODELS.filter(m => m.supportsThinking) : MODELS;
+
   const groups = PROVIDER_ORDER
     .map(provider => ({
       provider,
       label: PROVIDER_LABELS[provider] || provider,
-      models: MODELS.filter(m => m.provider === provider),
+      models: filteredModels.filter(m => m.provider === provider),
     }))
     .filter(g => g.models.length > 0);
 

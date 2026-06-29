@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowUp02Icon, Add01Icon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon, Atom02Icon } from '@hugeicons/core-free-icons';
+import { ArrowUp02Icon, Add01Icon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon, Atom02Icon, HandBag01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { ThinScrollbar } from '../ui/ThinScrollbar';
 import ModelList from './ModelList';
 
@@ -16,7 +16,9 @@ interface ChatInputProps {
 
 function ToolbarDropdown({ isThinkingEnabled, onToggleThinking, isIdle }: { isThinkingEnabled: boolean; onToggleThinking: () => void; isIdle?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSkillsOpen, setIsSkillsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const skillsRef = useRef<HTMLDivElement>(null);
   const items = [
     { icon: Attachment01Icon, label: 'Add file or photos', title: 'Upload file or photos' },
     { icon: CameraAdd01Icon, label: 'Take a Screenshots', title: 'Take a screenshot' },
@@ -33,6 +35,17 @@ function ToolbarDropdown({ isThinkingEnabled, onToggleThinking, isIdle }: { isTh
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isSkillsOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (skillsRef.current && !skillsRef.current.contains(e.target as Node)) {
+        setIsSkillsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSkillsOpen]);
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -45,7 +58,7 @@ function ToolbarDropdown({ isThinkingEnabled, onToggleThinking, isIdle }: { isTh
         <HugeiconsIcon icon={Add01Icon} size={18} />
       </button>
       {isOpen && (
-        <div className={`absolute ${isIdle ? 'top-full mt-1' : 'bottom-full mb-1'} left-0 w-[213px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden`}>
+        <div className={`absolute ${isIdle ? 'top-full mt-1' : 'bottom-full mb-1'} left-0 w-[213px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999]`}>
           {items.map((item, i) => (
             <button
               key={i}
@@ -67,6 +80,22 @@ function ToolbarDropdown({ isThinkingEnabled, onToggleThinking, isIdle }: { isTh
             >
               <span className={`absolute top-[3px] left-[3px] w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform ${isThinkingEnabled ? 'translate-x-4' : ''}`} />
             </button>
+          </div>
+          <div className="h-px bg-neutral-200 mx-3" />
+          <div className="relative" ref={skillsRef}>
+            <div
+              className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 rounded-md cursor-pointer hover:bg-neutral-50"
+              onClick={() => setIsSkillsOpen(!isSkillsOpen)}
+            >
+              <HugeiconsIcon icon={HandBag01Icon} size={16} />
+              <span className="flex-1">Skills and templates</span>
+              <HugeiconsIcon icon={ArrowRight01Icon} size={14} className="text-neutral-400" />
+            </div>
+            {isSkillsOpen && (
+              <div className="absolute left-full ml-1 top-0 w-[180px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden">
+                <div className="px-3 py-2 text-xs text-neutral-400">Skills and templates</div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -184,7 +213,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
               {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
             </div>
             <div className="flex items-center gap-1">
-              {currentModel && <ModelList currentModel={currentModel} />}
+              {currentModel && <ModelList currentModel={currentModel} showThinkingOnly={isThinkingEnabled} />}
               <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
             </div>
           </div>
