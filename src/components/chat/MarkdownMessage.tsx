@@ -209,4 +209,14 @@ const markdownComponents = {
   hr() {
     return <hr className="my-6 border-neutral-200" />;
   },
+  img({ src, alt }: any) {
+    return (
+      <img
+        src={src}
+        alt={alt || ''}
+        className="inline-block max-h-48 w-auto rounded border border-neutral-200 my-1 mr-2"
+        loading="lazy"
+      />
+    );
+  },
 };

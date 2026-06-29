@@ -1,11 +1,7 @@
-import React, { useEffect, useCallback, useState, useRef, useMemo, memo } from 'react';
+import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import ChatInput from '../components/chat/ChatInput';
-import ChatInputContainer from '../components/chat/ChatInputContainer';
-import { UserBubble } from '../components/chat/UserBubble';
-import { AssistantBubble } from '../components/chat/AssistantBubble';
 import { ChatSessionManager } from '../services/ChatSessionManager';
 import { getModelForChatRequest } from '../config/models';
 import { chatCompletion, getAIErrorMessage, generateSessionTitle } from '../services/aiService';
@@ -14,132 +10,37 @@ import { FileSystemService } from '../services/FileSystemService';
 import { DatabaseService } from '../services/DatabaseService';
 import { useToast } from '../components/ui/Toast';
 import { mapUIMessageToLegacyMessage } from '../lib/chatUtils';
-import { HugeiconRenderer } from '../components/ui/HugeiconRenderer';
-import { ArrowDown02Icon } from '@hugeicons/core-free-icons';
 import { ArtifactPanel } from '../components/artifact/ArtifactPanel';
 import type { Artifact } from '../types/artifact';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { useSessionTitle } from '../hooks/useSessionTitle';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useResizablePanel } from '../hooks/useResizablePanel';
+import { MessageList } from '../components/chat/MessageList';
 import TitleBar from '../components/layout/TitleBar';
 import { isTauri } from '../lib/tauri';
 import type { Project } from '../types/chat';
 
 const MOBILE_BREAKPOINT = 768;
 
-const PANEL_MIN_WIDTH = 320;
-const PANEL_MAX_WIDTH = 960;
-const CHAT_MIN_WIDTH = 320;
-const DEFAULT_PANEL_WIDTH = 480;
-const PANEL_STORAGE_KEY = 'artifact-panel-width';
-
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [query]);
-  return matches;
-}
-
-const ChatMessageRow = memo(function ChatMessageRow({
-  role,
-  content,
-  artifacts,
-  toolInvocations,
-  reasoning,
-  parts,
-  contentBeforeTool,
-  contentAfterTool,
-  currentModel,
-  isStreaming,
-  prevUserContent,
-  onOpenArtifact,
-  onCopy,
-  onThumbsUp,
-  onThumbsDown,
-  handleSend,
-}: {
-  role: string;
-  content: string;
-  artifacts?: any[];
-  toolInvocations?: any[];
-  reasoning?: string;
-  parts?: any[];
-  contentBeforeTool?: string;
-  contentAfterTool?: string;
-  currentModel: string | undefined;
-  isStreaming: boolean;
-  prevUserContent?: string;
-  onOpenArtifact: (artifact: any) => void;
-  onCopy: (content: string) => void;
-  onThumbsUp: () => void;
-  onThumbsDown: () => void;
-  handleSend: (content: string) => void;
-}) {
-  const handleMsgCopy = useCallback(() => onCopy(content), [content, onCopy]);
-  const handleThumbsUp = useCallback(() => onThumbsUp(), [onThumbsUp]);
-  const handleThumbsDown = useCallback(() => onThumbsDown(), [onThumbsDown]);
-  const handleMsgRegenerate = useCallback(() => {
-    if (prevUserContent) {
-      handleSend(prevUserContent);
-    }
-  }, [prevUserContent, handleSend]);
-
-  const handleOpenMsgArtifact = useCallback(() => {
-    if (artifacts && artifacts.length > 0) {
-      onOpenArtifact(artifacts[0]);
-    }
-  }, [artifacts, onOpenArtifact]);
-
-  return (
-    <React.Fragment>
-      {role === 'user' ? (
-        <UserBubble content={content} />
-      ) : (
-        <AssistantBubble
-          content={content}
-          model={currentModel}
-          isStreaming={isStreaming}
-          toolInvocations={toolInvocations}
-          reasoning={reasoning}
-          parts={parts}
-          artifacts={artifacts}
-          contentBeforeTool={contentBeforeTool}
-          contentAfterTool={contentAfterTool}
-          onOpenArtifact={
-            artifacts && artifacts.length > 0 ? handleOpenMsgArtifact : undefined
-          }
-          onCopy={handleMsgCopy}
-          onThumbsUp={handleThumbsUp}
-          onThumbsDown={handleThumbsDown}
-          onRegenerate={handleMsgRegenerate}
-        />
-      )}
-    </React.Fragment>
-  );
-});
-
 export const ChatPage = () => {
   const { uuid, folder } = useParams();
   const navigate = useNavigate();
   const [isThinkingEnabled, setIsThinkingEnabled] = useState(false);
-  const [panelWidth, setPanelWidth] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem(PANEL_STORAGE_KEY);
-      if (saved) {
-        return Math.max(PANEL_MIN_WIDTH, Math.min(PANEL_MAX_WIDTH, parseInt(saved, 10)));
-      }
-    } catch { /* ignore */ }
-    return DEFAULT_PANEL_WIDTH;
-  });
   const previousModelRef = useRef<string | null>(null);
   const isThinkingEnabledRef = useRef(false);
   const currentModelRef = useRef<string | null>(null);
   const { addToast } = useToast();
   const { setTitle: setSessionTitle, setSessionId, setIsTitleGenerating } = useSessionTitle();
   const isMobile = useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+  const {
+    panelWidth,
+    startResize,
+    handleTouchStart,
+    handleDividerKeyDown,
+    PANEL_MIN_WIDTH,
+    PANEL_MAX_WIDTH,
+  } = useResizablePanel();
 
   const currentProjectName = useMemo(() => {
     if (!folder) return undefined;
@@ -160,12 +61,6 @@ export const ChatPage = () => {
     clearArtifacts,
   } = useArtifacts();
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const isNearBottomRef = useRef(true);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-
-  const SCROLL_THRESHOLD = 150;
-
   const handleCopyMessage = useCallback((content: string) => {
     navigator.clipboard.writeText(content);
   }, []);
@@ -176,20 +71,6 @@ export const ChatPage = () => {
 
   const handleThumbsDown = useCallback(() => {
     console.log('Thumbs down');
-  }, []);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      const hasOverflow = el.scrollHeight > el.clientHeight;
-      if (!hasOverflow) {
-        setShowScrollButton(false);
-        return;
-      }
-      const near = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
-      isNearBottomRef.current = near;
-      setShowScrollButton(!near);
-    }
   }, []);
 
   const handleChatFinish = useCallback(
@@ -377,24 +258,6 @@ export const ChatPage = () => {
   }, [messages, isLoading]);
 
   useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-
-    const scrollToBottom = () => {
-      if (isNearBottomRef.current) {
-        el.scrollTop = el.scrollHeight;
-      }
-    };
-
-    scrollToBottom();
-
-    const observer = new ResizeObserver(scrollToBottom);
-    observer.observe(el);
-
-    return () => observer.disconnect();
-  }, [messages.length]);
-
-  useEffect(() => {
     const handleResetChat = () => {
       setMessages([]);
     };
@@ -414,7 +277,6 @@ export const ChatPage = () => {
         return;
       }
 
-      // If uuid is not a valid session, it's a project reference — create a session
       if (uuid) {
         const existingSession = await ChatSessionManager.getSession(uuid).catch(() => null);
         if (!existingSession) {
@@ -446,7 +308,6 @@ export const ChatPage = () => {
 
       sendMessage({ text: content });
 
-      // Generate AI title if still placeholder and not already generating
       if (!titleGeneratedRef.current && uuid && uuid !== 'new') {
         const session = await ChatSessionManager.getSession(uuid).catch(() => null);
         const sessionTitle = session?.title || '';
@@ -521,13 +382,6 @@ export const ChatPage = () => {
     }
   }, [uuid, handleSend]);
 
-  const scrollToBottom = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-    }
-  }, []);
-
   const handleOpenArtifact = useCallback(
     (artifact: Artifact) => {
       addArtifacts([artifact]);
@@ -537,92 +391,7 @@ export const ChatPage = () => {
     [addArtifacts, selectArtifact, openPanel]
   );
 
-  const isResizing = useRef(false);
   const panelRef = useRef<HTMLDivElement>(null);
-
-  const startResize = useCallback(() => {
-    isResizing.current = true;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const onMove = (clientX: number) => {
-      if (!isResizing.current) return;
-      const newWidth = window.innerWidth - clientX;
-      const clamped = Math.max(
-        PANEL_MIN_WIDTH,
-        Math.min(
-          PANEL_MAX_WIDTH,
-          window.innerWidth - CHAT_MIN_WIDTH,
-          newWidth
-        )
-      );
-      setPanelWidth(clamped);
-    };
-
-    const onUp = () => {
-      if (!isResizing.current) return;
-      isResizing.current = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('touchend', onTouchEnd);
-      setPanelWidth((prev) => {
-        localStorage.setItem(PANEL_STORAGE_KEY, String(prev));
-        return prev;
-      });
-    };
-
-    const onMouseMove = (e: MouseEvent) => onMove(e.clientX);
-    const onMouseUp = () => onUp();
-    const onTouchMove = (e: TouchEvent) => onMove(e.touches[0].clientX);
-    const onTouchEnd = () => onUp();
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-    document.addEventListener('touchmove', onTouchMove, { passive: false });
-    document.addEventListener('touchend', onTouchEnd);
-  }, []);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    startResize();
-  }, [startResize]);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    startResize();
-  }, [startResize]);
-
-  const handleDividerKeyDown = useCallback((e: React.KeyboardEvent) => {
-    const step = e.shiftKey ? 50 : 20;
-    let newWidth = panelWidth;
-    let handled = true;
-
-    switch (e.key) {
-      case 'ArrowLeft':
-        newWidth = Math.max(PANEL_MIN_WIDTH, panelWidth - step);
-        break;
-      case 'ArrowRight':
-        newWidth = Math.min(PANEL_MAX_WIDTH, panelWidth + step);
-        break;
-      case 'Home':
-        newWidth = PANEL_MIN_WIDTH;
-        break;
-      case 'End':
-        newWidth = PANEL_MAX_WIDTH;
-        break;
-      default:
-        handled = false;
-    }
-
-    if (handled) {
-      e.preventDefault();
-      setPanelWidth(newWidth);
-      localStorage.setItem(PANEL_STORAGE_KEY, String(newWidth));
-    }
-  }, [panelWidth]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-[#111110] relative">
@@ -635,86 +404,22 @@ export const ChatPage = () => {
               : 'flex-1'
           }`}
         >
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className={`flex-1 overflow-y-auto thin-scrollbar ${messages.length === 0 ? 'flex flex-col items-center justify-start pt-[15vh] p-4' : ''}`}
-          >
-            {messages.length > 0 && <div className="h-[8px] bg-white dark:bg-[#111110] w-full shrink-0" />}
-            <div className="w-full mx-auto px-4 pb-24" style={{ maxWidth: 'min(880px, 100%)' }}>
-              {messages.map((m: any, i: number) => {
-                const prevUserContent = i > 0 && messages[i - 1]?.role === 'user'
-                  ? messages[i - 1]?.content
-                  : undefined;
-                return (
-                  <ChatMessageRow
-                    key={m.id || i}
-                    role={m.role}
-                    content={m.content}
-                    artifacts={m.artifacts}
-                    toolInvocations={m.toolInvocations}
-                    reasoning={m.reasoning}
-                    parts={m.parts}
-                    contentBeforeTool={m.contentBeforeTool}
-                    contentAfterTool={m.contentAfterTool}
-                    currentModel={currentModel}
-                    isStreaming={i === lastAssistantIndex}
-                    prevUserContent={prevUserContent}
-                    onOpenArtifact={handleOpenArtifact}
-                    onCopy={handleCopyMessage}
-                    onThumbsUp={handleThumbsUp}
-                    onThumbsDown={handleThumbsDown}
-                    handleSend={handleSend}
-                  />
-                );
-              })}
-
-              {messages.length === 0 && (
-                <div className="w-full mt-4 flex flex-col items-center overflow-visible pb-10">
-                  <h1 className="text-[38px] font-serif-source mb-[10px] text-neutral-800 dark:text-neutral-200 text-center">
-                    Hello, how can I help?
-                  </h1>
-                  <ChatInputContainer
-                    onSend={handleSend}
-                    isLoading={isLoading}
-                    onStop={stop}
-                    isThinkingEnabled={isThinkingEnabled}
-                    onToggleThinking={toggleThinking}
-                    onCreateProject={handleAddProject}
-                    currentProjectName={currentProjectName}
-                    currentModel={currentModel}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {showScrollButton && messages.length > 0 && (
-            <div className="shrink-0 flex justify-center w-full mx-auto bg-white dark:bg-[#111110] relative" style={{ height: 0 }}>
-              <button
-                onClick={scrollToBottom}
-                className="absolute left-1/2 -translate-x-1/2 bottom-8 flex items-center justify-center w-9 h-9 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-black dark:text-white transition-all shadow-sm z-10"
-                title="Scroll to bottom"
-              >
-                <HugeiconRenderer icon={ArrowDown02Icon} size={18} />
-              </button>
-            </div>
-          )}
-
-          {messages.length > 0 && (
-            <div className="shrink-0 w-full mx-auto px-4 bg-white dark:bg-[#111110]">
-              <ChatInputContainer
-                onSend={handleSend}
-                isLoading={isLoading}
-                onStop={stop}
-                isThinkingEnabled={isThinkingEnabled}
-                onToggleThinking={toggleThinking}
-                onCreateProject={handleAddProject}
-                currentProjectName={currentProjectName}
-                currentModel={currentModel}
-              />
-            </div>
-          )}
+          <MessageList
+            messages={messages}
+            currentModel={currentModel}
+            isLoading={isLoading}
+            lastAssistantIndex={lastAssistantIndex}
+            isThinkingEnabled={isThinkingEnabled}
+            onToggleThinking={toggleThinking}
+            onOpenArtifact={handleOpenArtifact}
+            onCopy={handleCopyMessage}
+            onThumbsUp={handleThumbsUp}
+            onThumbsDown={handleThumbsDown}
+            onSend={handleSend}
+            onStop={stop}
+            onAddProject={handleAddProject}
+            currentProjectName={currentProjectName}
+          />
         </div>
 
         {isPanelOpen && artifacts.length > 0 && (
@@ -724,7 +429,7 @@ export const ChatPage = () => {
             style={{ width: panelWidth, flex: 'none' }}
           >
             <div
-              onMouseDown={handleMouseDown}
+              onMouseDown={startResize}
               onTouchStart={handleTouchStart}
               onKeyDown={handleDividerKeyDown}
               tabIndex={0}

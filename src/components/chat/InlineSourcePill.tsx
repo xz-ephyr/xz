@@ -50,17 +50,13 @@ export function InlineSourcePill({ url, title, snippet }: InlineSourcePillProps)
         <span
           onMouseEnter={show}
           onMouseLeave={hide}
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-auto"
+          className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 pointer-events-auto"
         >
           <span className="block bg-white border border-neutral-200 rounded-lg shadow-lg p-3 min-w-[220px] max-w-[320px]">
             <span className="block text-xs font-medium text-neutral-800 truncate mb-0.5">{title || domain}</span>
-            {domain && <span className="block text-[11px] text-neutral-400 truncate mb-1">{domain}</span>}
-            {snippet && (
-              <span className="block text-[11px] text-neutral-600 leading-relaxed border-t border-neutral-100 pt-1 mt-1">
-                {snippet}
-              </span>
-            )}
-            <span className="block absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-white border-r border-b border-neutral-200" />
+            {snippet && <span className="block text-[11px] text-neutral-500 truncate mb-0.5">{snippet}</span>}
+            {domain && <span className="block text-[11px] text-neutral-400 truncate">{domain}</span>}
+            <span className="block absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45 w-2 h-2 bg-white border-l border-b border-neutral-200" />
           </span>
         </span>
       )}
