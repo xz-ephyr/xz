@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface CLIIconProps {
   cliId: string;
   size?: number;
@@ -59,7 +61,7 @@ function DefaultCLIIcon({ size }: { size: number }) {
   );
 }
 
-const ICONS: Record<string, (size: number) => JSX.Element> = {
+const ICONS: Record<string, (size: number) => React.ReactElement> = {
   opencode: (s) => <OpenCodeIcon size={s} />,
   codex: (s) => <CodexIcon size={s} />,
   claude: (s) => <ClaudeIcon size={s} />,

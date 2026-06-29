@@ -541,66 +541,32 @@ If opencode is running locally, use it as a router — it spawns the other CLIs 
 ```
 
 ```ts
-// Web-mode bridge that proxies through opencode
+// Web-mode bridge — pure HTTP, no WebSocket needed
+// Just calls the opencode server API. If it's not running, call fails gracefully.
 class WebOpenCodeProxyBridge implements CLIBridge {
   private baseUrl = 'http://localhost:3080';
 
   async connect(): Promise<void> {
-    // Same as OpenCodeBridge but HTTP-only (no WebSocket needed)
-    const res = await fetch(`${this.baseUrl}/health`);
-    if (!res.ok) throw new Error('OpenCode server not available');
+    // No health check — just try the first API call when needed
   }
 
   async execute(command: string, args?: string[]): Promise<CommandResult> {
-    const res = await fetch(`${this.baseUrl}/api/v1/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tool: command, args })
-    });
-    return res.json();
+    try {
+      const res = await fetch(`${this.baseUrl}/api/v1/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool: command, args })
+      });
+      return res.json();
+    } catch {
+      return { success: false, error: 'OpenCode server not available' };
+    }
   }
 
   async getModels(): Promise<ModelInfo[]> {
-    const res = await fetch(`${this.baseUrl}/api/v1/models`);
-    return res.json();
-  }
-}
-
-// Web-mode detector — no shell commands, only HTTP checks
-class WebBackgroundCLIDetector {
-  async detectInstalledCLIs(): Promise<string[]> {
-    const found: string[] = [];
-
-    // HTTP-based detection only
-    if (await this.checkOpenCodeServer()) {
-      found.push('opencode');
-      // opencode can report what other CLIs it can proxy
-      const proxied = await this.getProxiedCLIs();
-      found.push(...proxied);
-    }
-
-    return found;
-  }
-
-  private async checkOpenCodeServer(): Promise<boolean> {
     try {
-      const res = await fetch('http://localhost:3080/health', {
-        signal: AbortSignal.timeout(1000)
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  private async getProxiedCLIs(): Promise<string[]> {
-    try {
-      const res = await fetch('http://localhost:3080/api/v1/available-tools', {
-        signal: AbortSignal.timeout(1000)
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data.tools || [];
+      const res = await fetch(`${this.baseUrl}/api/v1/models`);
+      return res.json();
     } catch {
       return [];
     }
@@ -625,10 +591,7 @@ class CompanionDaemonBridge implements CLIBridge {
   private daemonUrl = 'http://localhost:9300';
 
   async connect(): Promise<void> {
-    const res = await fetch(`${this.daemonUrl}/health`, {
-      signal: AbortSignal.timeout(2000)
-    });
-    if (!res.ok) throw new Error('Daemon not running');
+    // No health checks — just try API calls when needed
   }
 
   async execute(command: string, args?: string[]): Promise<CommandResult> {
@@ -686,25 +649,12 @@ The user can add a JSON block in settings:
 }
 ```
 
-### Detection Logic
+### Connection Logic
 
 ```ts
-function createBridgeService(): CLIBridgeService {
-  const service = new CLIBridgeService();
-
-  if (isDesktopApp()) {
-    // Desktop: full shell access
-    service.registerDetector(new BackgroundCLIDetector());
-  } else if (await opencodeServerRunning()) {
-    // Web + opencode server running
-    service.registerDetector(new WebBackgroundCLIDetector());
-  } else {
-    // Pure web: only localStorage
-    service.registerDetector(new LocalStorageDetector());
-  }
-
-  return service;
-}
+// No detection logic needed. Just try to open a WebSocket.
+// If the server is there, it connects. If not, it waits and retries.
+CLIBridgeService.connect();
 ```
 
 ---
@@ -713,46 +663,12 @@ function createBridgeService(): CLIBridgeService {
 
 ### Process Lifecycle
 
-CLIs need proper lifecycle management — start, health check, crash recovery, cleanup.
+No polling, no health checks. The WebSocket connection itself is the lifecycle signal:
 
-```ts
-class CLIProcessManager {
-  private processes = new Map<string, ManagedProcess>();
-
-  async ensureRunning(cliId: string): Promise<void> {
-    if (!this.processes.has(cliId)) {
-      await this.start(cliId);
-      return;
-    }
-    const proc = this.processes.get(cliId)!;
-    if (!(await proc.isAlive())) {
-      await proc.restart();
-    }
-  }
-
-  private async start(cliId: string): Promise<void> {
-    const proc = new ManagedProcess(cliId);
-    // Start silently — no terminal window, no UI
-    proc.on('crash', () => this.scheduleRestart(cliId, { backoff: true }));
-    proc.on('zombie', () => proc.kill());
-    await proc.launch();
-    this.processes.set(cliId, proc);
-  }
-
-  async shutdownAll(): Promise<void> {
-    for (const proc of this.processes.values()) {
-      await proc.gracefulShutdown(5000); // 5s timeout then SIGKILL
-    }
-  }
-}
-```
-
-| State | Handling |
-|-------|----------|
-| **Crash** | Auto-restart with exponential backoff (1s, 2s, 4s, max 30s) |
-| **Zombie** | Detect orphaned processes via PID check, kill and restart |
-| **Hang** | Health check timeout (10s) → SIGTERM → SIGKILL after 3s |
-| **Stale** | Restart every 24h to clear memory leaks |
+- **Connected**: WebSocket is open → CLI is alive
+- **Disconnected**: WebSocket closed → auto-reconnect in 2s (indefinite retries)
+- **Never connected**: WebSocket pending → CLI not running yet, will connect when available
+- **Crash recovery**: Handled entirely by WebSocket's built-in reconnection
 
 ### Capability Registry
 
@@ -1056,6 +972,7 @@ class ProjectCLIManager {
 - **No version checking** — only binary existence matters
 - **Automatic on new devices** — no setup needed
 - **Background only** — no terminal window opens
+- **No polling, no health checks** — WebSocket passive connection handles everything
 - **Unified model access** — all CLI models in your app's UI
 - **Direct tool calling** — raw-code AI invokes CLI tools as needed
 
@@ -1063,18 +980,21 @@ class ProjectCLIManager {
 
 ## Testing
 
-### Background Detection Tests
+### Connection Tests
 
 ```ts
-test('Background detector finds opencode', async () => {
-  const detector = new BackgroundCLIDetector();
-  const detected = await detector.detectInstalledCLIs();
-  expect(detected).toContain('opencode');
-});
-
-test('Silent connection establishes', async () => {
+test('WebSocket connects when server is running', async () => {
   const bridge = new OpenCodeBridge();
   await bridge.connect();
+  expect(bridge.isConnected()).toBe(true);
+});
+
+test('Bridge auto-reconnects on close', async () => {
+  const bridge = new OpenCodeBridge();
+  await bridge.connect();
+  await bridge.disconnect();
+  // Should reconnect automatically within 2 seconds
+  await new Promise(r => setTimeout(r, 3000));
   expect(bridge.isConnected()).toBe(true);
 });
 ```
@@ -1082,11 +1002,12 @@ test('Silent connection establishes', async () => {
 ### Integration Tests
 
 ```ts
-test('All CLI models appear in unified catalog', async () => {
-  const service = new CLIBridgeService();
-  await service.detectAndConnect();
-  const allModels = await service.getAllModels();
-  expect(allModels.some(m => m.source === 'cli')).toBe(true);
+test('CLI models appear after connection', async () => {
+  const bridge = new OpenCodeBridge();
+  await bridge.connect();
+  const models = await bridge.getModels();
+  expect(models.length).toBeGreaterThan(0);
+  expect(models.every(m => m.free)).toBe(true);
 });
 ```
 

@@ -13,7 +13,7 @@ import {
   imageSearchTool,
   newsSearchTool,
 } from './ai/tools/webSearchTool';
-import { API_KEYS, getModelDefinition, getUsedModels, markModelUsed, AI_MODELS, type Provider } from '../config/models';
+import { API_KEYS, getModelDefinition, getUsedModels, markModelUsed, getAIModels, type Provider } from '../config/models';
 import { getSmartSystemPrompt, type ProjectContext } from './ai/contextController';
 import { contractContext } from './ai/contextContractor';
 
@@ -106,7 +106,7 @@ function buildFallbackChain(primaryModelName: string, sessionId?: string): strin
   const configuredProviders = getConfiguredProviders();
   return [
     primaryModelName,
-    ...AI_MODELS.filter(m => {
+    ...getAIModels().filter((m: string) => {
       if (m === primaryModelName) return false;
       if (used.includes(m)) return false;
       const def = getModelDefinition(m);

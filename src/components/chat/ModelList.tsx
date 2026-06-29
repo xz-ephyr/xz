@@ -25,6 +25,7 @@ interface ModelListProps {
 
 export default function ModelList({ currentModel, showThinkingOnly, isIdle }: ModelListProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [cliModels, setCliModels] = useState<typeof CLI_MODELS>([]);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,13 +63,15 @@ export default function ModelList({ currentModel, showThinkingOnly, isIdle }: Mo
 
   const currentDef = getModelDefinition(currentModel);
 
+  const effectiveCLIModels = cliModels.length > 0 ? cliModels : CLI_MODELS;
+
   const filteredModels = showThinkingOnly
-    ? [...MODELS.filter(m => m.supportsThinking), ...CLI_MODELS]
+    ? [...MODELS.filter(m => m.supportsThinking), ...effectiveCLIModels]
     : MODELS;
 
   const groups = [
-    ...(CLI_MODELS.length > 0
-      ? [{ provider: 'cli' as const, label: PROVIDER_LABELS.cli, models: CLI_MODELS }]
+    ...(effectiveCLIModels.length > 0
+      ? [{ provider: 'cli' as const, label: PROVIDER_LABELS.cli, models: effectiveCLIModels }]
       : []),
     ...PROVIDER_ORDER.map((provider) => ({
       provider,
