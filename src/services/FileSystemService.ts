@@ -25,171 +25,208 @@ export interface ProjectContent {
 const treeCache = new Map<string, { result: FileEntry[]; timestamp: number }>();
 const TREE_CACHE_TTL = 2_000;
 
+const webVirtualFS: Record<string, string> = {};
+const SKIP_DIRS = new Set(['node_modules', '.git']);
+
+function initVirtualFS() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('vfs:')) {
+        const content = localStorage.getItem(key);
+        if (content !== null) webVirtualFS[key.slice(4)] = content;
+      }
+    }
+  } catch { /* localStorage not available */ }
+}
+initVirtualFS();
+
+function getCachedTree(key: string): FileEntry[] | null {
+  const cached = treeCache.get(key);
+  if (cached && Date.now() - cached.timestamp < TREE_CACHE_TTL) return cached.result;
+  return null;
+}
+
+function setCachedTree(key: string, result: FileEntry[]) {
+  treeCache.set(key, { result, timestamp: Date.now() });
+}
+
 function clearTreeCache() {
   treeCache.clear();
 }
 
-// In-memory virtual filesystem for web-browser mode (fallback when no server available)
-const webVirtualFS: Record<string, string> = {};
-
-// Restore previously saved files from localStorage on initialisation
-try {
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('vfs:')) {
-      const path = key.slice(4);
-      const content = localStorage.getItem(key);
-      if (content !== null) {
-        webVirtualFS[path] = content;
-      }
-    }
-  }
-} catch {
-  // localStorage not available
+function isHidden(name: string) {
+  return name.startsWith('.') || SKIP_DIRS.has(name);
 }
 
-// Recursively read all files from a FileSystemDirectoryHandle
+function normalizePrefix(prefix: string) {
+  return prefix.endsWith('/') ? prefix : prefix + '/';
+}
+
+function collectChildNames(keys: string[], prefix: string): string[] {
+  const p = normalizePrefix(prefix);
+  const names = new Set<string>();
+  for (const key of keys) {
+    if (key.startsWith(p)) {
+      const seg = key.slice(p.length).split('/')[0];
+      if (seg) names.add(seg);
+    }
+  }
+  return Array.from(names).filter((n) => !isHidden(n));
+}
+
 async function readDirectoryHandle(
   dirHandle: FileSystemDirectoryHandle,
   basePath: string,
 ): Promise<{ path: string; content: string }[]> {
   const results: { path: string; content: string }[] = [];
   for await (const [name, handle] of (dirHandle as any).entries()) {
-    const fullPath = basePath + '/' + name;
+    const fullPath = `${basePath}/${name}`;
     if (handle.kind === 'directory') {
       results.push(...await readDirectoryHandle(handle as FileSystemDirectoryHandle, fullPath));
     } else {
       try {
         const file = await (handle as FileSystemFileHandle).getFile();
         results.push({ path: fullPath, content: await file.text() });
-      } catch {
-        // skip files that can't be read
-      }
+      } catch { /* skip */ }
     }
   }
   return results;
 }
 
-// Build a tree structure from a flat list of file paths
-function buildTreeFromPaths(paths: string[], basePrefix: string): FileEntry[] {
-  const prefix = basePrefix.endsWith('/') ? basePrefix : basePrefix + '/';
-  const childNames = new Set<string>();
+const getTauriFs = () => import('@tauri-apps/plugin-fs');
+const getTauriPath = () => import('@tauri-apps/api/path');
 
-  for (const p of paths) {
-    if (p.startsWith(prefix)) {
-      const rest = p.slice(prefix.length);
-      const seg = rest.split('/')[0];
-      if (seg) childNames.add(seg);
+function serializeTree(entries: FileEntry[], indent = ''): string {
+  return entries
+    .map((e) => {
+      const icon = e.isDirectory ? '📁' : '📄';
+      const children = e.children ? serializeTree(e.children, indent + '  ') : '';
+      return `${indent}${icon} ${e.name}${children ? '\n' + children : ''}`;
+    })
+    .join('\n');
+}
+
+async function readProjectFiles(
+  entries: FileEntry[],
+  projectId: string | undefined,
+  maxTotal: number,
+  maxFile: number,
+): Promise<{ contents: FileContent[]; truncated: boolean; skippedBinary: number; skippedSize: number }> {
+  const contents: FileContent[] = [];
+  let totalChars = 0;
+  let skippedBinary = 0;
+  let skippedSize = 0;
+  let truncated = false;
+
+  const walk = async (list: FileEntry[]) => {
+    const jobs: Promise<void>[] = [];
+    for (const entry of list) {
+      if (entry.isDirectory && entry.children) {
+        jobs.push(walk(entry.children));
+      } else if (!entry.isDirectory) {
+        jobs.push((async () => {
+          if (totalChars >= maxTotal) { truncated = true; return; }
+          const raw = await FileSystemService.getFileContent(entry.path, projectId);
+          if (!raw) return;
+          if (FileSystemService.isLikelyBinary(raw)) { skippedBinary++; return; }
+          if (raw.length > maxFile) { skippedSize++; return; }
+          totalChars += raw.length;
+          if (totalChars > maxTotal) { truncated = true; return; }
+          contents.push({ path: entry.path, size: raw.length, text: raw });
+        })());
+      }
     }
-  }
+    await Promise.all(jobs);
+  };
 
-  const result: FileEntry[] = [];
-  for (const name of childNames) {
-    if (name.startsWith('.') || name === 'node_modules') continue;
+  await walk(entries);
+  return { contents, truncated, skippedBinary, skippedSize };
+}
+
+const TreeBuilders = {
+  async tauri(basePath: string, depth: number, projectId?: string): Promise<FileEntry[]> {
+    const { readDir } = await getTauriFs();
+    const { join } = await getTauriPath();
+    const entries = await readDir(basePath);
+    const result: FileEntry[] = [];
+
+    for (const entry of entries) {
+      if (isHidden(entry.name)) continue;
+      const fullPath = await join(basePath, entry.name);
+      result.push({
+        name: entry.name,
+        path: fullPath,
+        isDirectory: entry.isDirectory,
+        children: entry.isDirectory
+          ? await FileSystemService.getTree(fullPath, depth + 1, projectId)
+          : undefined,
+      });
+    }
+    return result;
+  },
+
+  async fromDatabase(basePath: string, projectId: string): Promise<FileEntry[]> {
+    const prefix = normalizePrefix(basePath);
+    const files = await DatabaseService.getProjectFiles(projectId);
+    const paths = files.map(f => f.path);
+    return buildTreeFromPaths(paths, prefix);
+  },
+
+  async fromVirtualFS(basePath: string): Promise<FileEntry[]> {
+    const prefix = normalizePrefix(basePath);
+    const names = collectChildNames(Object.keys(webVirtualFS), prefix);
+
+    return names.map((name) => {
+      const fullPath = prefix + name;
+      const isDirectory = Object.keys(webVirtualFS).some((k) => k.startsWith(fullPath + '/'));
+      return { name, path: fullPath, isDirectory, children: undefined };
+    });
+  },
+};
+
+function buildTreeFromPaths(paths: string[], prefix: string): FileEntry[] {
+  return collectChildNames(paths, prefix).map((name) => {
     const fullPath = prefix + name;
-    const isDirectory = paths.some(p => p.startsWith(fullPath + '/'));
-    result.push({
+    const isDirectory = paths.some((p) => p.startsWith(fullPath + '/'));
+    return {
       name,
       path: fullPath,
       isDirectory,
       children: isDirectory ? buildTreeFromPaths(paths, fullPath) : undefined,
-    });
-  }
-  return result;
+    };
+  });
 }
-
-// ------------------------------------------------------------------
-// Tauri-only dynamic imports (to avoid crashing in a browser build)
-// ------------------------------------------------------------------
-const getTauriFs = async () => {
-  return import('@tauri-apps/plugin-fs');
-};
-
-const getTauriPath = async () => {
-  return import('@tauri-apps/api/path');
-};
 
 export const FileSystemService = {
   getTree: async (basePath: string, depth = 0, projectId?: string): Promise<FileEntry[]> => {
     if (depth > 20) return [];
 
-    const cached = treeCache.get(basePath);
-    if (cached && Date.now() - cached.timestamp < TREE_CACHE_TTL) {
-      return cached.result;
-    }
+    const cached = getCachedTree(basePath);
+    if (cached) return cached;
 
-    if (isTauri()) {
-      try {
-        const { readDir } = await getTauriFs();
-        const { join } = await getTauriPath();
-        const entries = await readDir(basePath);
-        const result: FileEntry[] = [];
-
-        for (const entry of entries) {
-          if (entry.name === 'node_modules' || entry.name === '.git') continue;
-          const fullPath = await join(basePath, entry.name);
-          const isDirectory = entry.isDirectory;
-          result.push({
-            name: entry.name,
-            path: fullPath,
-            isDirectory,
-            children: isDirectory
-              ? await FileSystemService.getTree(fullPath, depth + 1, projectId)
-              : undefined,
-          });
-        }
-        treeCache.set(basePath, { result, timestamp: Date.now() });
-        return result;
-      } catch (e) {
-        console.error('Error reading dir:', e);
-        return [];
-      }
-    }
-
-    // Web with projectId: fetch file listing from server DB
-    if (projectId) {
-      try {
-        const prefix = basePath.endsWith('/') ? basePath : basePath + '/';
-        const files = await DatabaseService.getProjectFiles(projectId);
-        const paths = files.map(f => f.path);
-        const result = buildTreeFromPaths(paths, prefix);
-        treeCache.set(basePath, { result, timestamp: Date.now() });
-        return result;
-      } catch (e) {
-        console.error('Error reading files from server:', e);
-        return [];
-      }
-    }
-
-    // Web fallback: derive tree structure from in-memory virtual FS keys
     try {
-      const prefix = basePath.endsWith('/') ? basePath : basePath + '/';
-      const childNames = new Set<string>();
+      let result: FileEntry[];
+      if (isTauri()) {
+        result = await TreeBuilders.tauri(basePath, depth, projectId);
+        // Resolve virtual entries (children were fetched recursively above)
+      } else if (projectId) {
+        result = await TreeBuilders.fromDatabase(basePath, projectId);
+      } else {
+        result = await TreeBuilders.fromVirtualFS(basePath);
+      }
 
-      for (const key of Object.keys(webVirtualFS)) {
-        if (key.startsWith(prefix)) {
-          const rest = key.slice(prefix.length);
-          const firstSegment = rest.split('/')[0];
-          if (firstSegment) childNames.add(firstSegment);
+      // Resolve children for VFS entries (non-recursive builder)
+      for (const entry of result) {
+        if (entry.isDirectory && !entry.children) {
+          entry.children = await FileSystemService.getTree(entry.path, depth + 1, projectId);
         }
       }
 
-      const result: FileEntry[] = [];
-      for (const name of childNames) {
-        if (name.startsWith('.') || name === 'node_modules') continue;
-        const fullPath = prefix + name;
-        const isDirectory = Object.keys(webVirtualFS).some((k) => k.startsWith(fullPath + '/'));
-        result.push({
-          name,
-          path: fullPath,
-          isDirectory,
-          children: isDirectory ? await FileSystemService.getTree(fullPath, depth + 1, projectId) : undefined,
-        });
-      }
-      treeCache.set(basePath, { result, timestamp: Date.now() });
+      setCachedTree(basePath, result);
       return result;
     } catch (e) {
-      console.error('Error reading virtual dir:', e);
+      console.error('Error reading dir:', e);
       return [];
     }
   },
@@ -251,51 +288,15 @@ export const FileSystemService = {
     const MAX_FILE_CHARS = 30_000;
     const tree = await FileSystemService.getTree(basePath, 0, projectId);
 
-    const lines: string[] = [];
-    const contents: FileContent[] = [];
-    let totalChars = 0;
-    let skippedBinary = 0;
-    let skippedSize = 0;
-    let truncated = false;
-
-    const walk = (entries: FileEntry[], indent = '') => {
-      for (const entry of entries) {
-        lines.push(`${indent}${entry.isDirectory ? '📁' : '📄'} ${entry.name}`);
-        if (entry.children) {
-          walk(entry.children, indent + '  ');
-        }
-      }
-    };
-    walk(tree);
-
-    const readFiles = async (entries: FileEntry[]) => {
-      const jobs: Promise<void>[] = [];
-      for (const entry of entries) {
-        if (entry.isDirectory && entry.children) {
-          jobs.push(readFiles(entry.children));
-        } else if (!entry.isDirectory) {
-          jobs.push((async () => {
-            if (totalChars >= MAX_TOTAL_CHARS) { truncated = true; return; }
-            const raw = await FileSystemService.getFileContent(entry.path, projectId);
-            if (!raw) return;
-            if (FileSystemService.isLikelyBinary(raw)) { skippedBinary++; return; }
-            if (raw.length > MAX_FILE_CHARS) { skippedSize++; return; }
-            totalChars += raw.length;
-            if (totalChars > MAX_TOTAL_CHARS) { truncated = true; return; }
-            contents.push({ path: entry.path, size: raw.length, text: raw });
-          })());
-        }
-      }
-      await Promise.all(jobs);
-    };
-    await readFiles(tree);
+    const treeText = serializeTree(tree);
+    const result = await readProjectFiles(tree, projectId, MAX_TOTAL_CHARS, MAX_FILE_CHARS);
 
     return {
-      tree: lines.join('\n'),
-      contents,
-      truncated,
-      skippedBinary,
-      skippedSize,
+      tree: treeText,
+      contents: result.contents,
+      truncated: result.truncated,
+      skippedBinary: result.skippedBinary,
+      skippedSize: result.skippedSize,
     };
   },
 
