@@ -1,11 +1,45 @@
 import { memo, Fragment, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { visit } from 'unist-util-visit';
 import { CodeBlock } from './CodeBlock';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from './Table';
 import { InlineSourcePill } from './InlineSourcePill';
 
-const REMARK_PLUGINS = [remarkGfm];
+/**
+ * Custom remark plugin to identify and tag citations in the markdown tree.
+ * It transforms text containing 【...】 into custom 'citation' nodes.
+ */
+function remarkCitations() {
+  return (tree: any) => {
+    visit(tree, 'text', (node, index, parent) => {
+      const parts = node.value.split(citationRegex);
+      if (parts.length <= 1) return;
+
+      const newNodes: any[] = [];
+      for (let i = 0; i < parts.length; i++) {
+        if (i % 2 === 0) {
+          if (parts[i]) {
+            newNodes.push({ type: 'text', value: parts[i] });
+          }
+        } else {
+          newNodes.push({
+            type: 'citation',
+            data: {
+              hName: 'citation',
+              hProperties: { citation: parts[i] },
+            },
+          });
+        }
+      }
+
+      parent.children.splice(index as number, 1, ...newNodes);
+      return (index as number) + newNodes.length;
+    });
+  };
+}
+
+const REMARK_PLUGINS = [remarkGfm, remarkCitations];
 
 interface SourceInfo {
   url: string;
@@ -54,33 +88,20 @@ export const MarkdownMessage = memo(function MarkdownMessage({ content, sources 
 
     return {
       ...markdownComponents,
-      text({ children }: any) {
-        const text = String(children);
-        const parts = text.split(citationRegex);
-        if (parts.length === 1) return <>{text}</>;
-        const result: React.ReactNode[] = [];
-        for (let i = 0; i < parts.length; i++) {
-          if (i % 2 === 0) {
-            if (parts[i]) result.push(<Fragment key={i}>{parts[i]}</Fragment>);
-          } else {
-            const matched = matchCitation(parts[i], sources);
-            if (matched) {
-              result.push(
-                <InlineSourcePill
-                  key={`cite-${i}`}
-                  url={matched.url}
-                  title={matched.title}
-                  snippet={matched.snippet}
-                />
-              );
-            } else {
-              result.push(<Fragment key={i}>【{parts[i]}】</Fragment>);
-            }
-          }
+      citation({ citation }: { citation: string }) {
+        const matched = matchCitation(citation, sources);
+        if (matched) {
+          return (
+            <InlineSourcePill
+              url={matched.url}
+              title={matched.title}
+              snippet={matched.snippet}
+            />
+          );
         }
-        return <>{result}</>;
+        return <Fragment>【{citation}】</Fragment>;
       },
-    };
+    } as any;
   }, [hasCitations, sources]);
 
   return (

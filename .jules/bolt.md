@@ -5,3 +5,7 @@
 ## 2025-05-16 - [ReactMarkdown Optimization]
 **Learning:** Passing unstable object literals to the `components` prop or unstable arrays to `remarkPlugins` in `ReactMarkdown` causes the entire markdown tree to re-render on every update. This is particularly expensive during streaming.
 **Action:** Move `remarkPlugins` to a module-level constant and wrap the `components` prop in `useMemo` to ensure stable references and prevent redundant tree re-renders.
+
+## 2025-05-17 - [Citations in ReactMarkdown v10]
+**Learning:** Customizing text nodes in `react-markdown` v10 via the `text` renderer is unsupported.
+**Action:** Use a custom `remark` plugin with `unist-util-visit` to transform text into custom nodes (e.g., using `hName`), then render those nodes via the `components` prop.
