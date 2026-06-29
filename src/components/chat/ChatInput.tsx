@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowUp02Icon, Add01Icon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon, Atom02Icon, HandBag01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { ArrowUp02Icon, Add01Icon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon, Atom02Icon, HandBag01Icon, ArrowRight01Icon, ListViewIcon, TeamWorkIcon, HandsClappingIcon, QuillWrite02Icon, CursorMagicSelection04Icon, Bug02Icon } from '@hugeicons/core-free-icons';
 import { ThinScrollbar } from '../ui/ThinScrollbar';
 import ModelList from './ModelList';
 
@@ -12,6 +12,58 @@ interface ChatInputProps {
   isThinkingEnabled: boolean;
   onToggleThinking: () => void;
   currentModel?: string;
+}
+
+const NTABS = [
+  { icon: CursorMagicSelection04Icon, label: 'pLAN' },
+  { icon: Bug02Icon, label: 'DEBUGS' },
+  { icon: TeamWorkIcon, label: 'TEAMWORK' },
+  { icon: HandsClappingIcon, label: 'GRILL ME' },
+  { icon: QuillWrite02Icon, label: 'SUpER MODE' },
+];
+
+function NTabDropdown({ isIdle }: { isIdle?: boolean }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-neutral-200/60 transition-colors text-black"
+        aria-label="NTabs"
+        title="NTabs"
+      >
+        <HugeiconsIcon icon={ListViewIcon} size={18} />
+      </button>
+      {isOpen && (
+        <div className={`absolute ${isIdle ? 'top-full mt-1' : 'bottom-full mb-1'} left-0 w-[180px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden`}>
+          {NTABS.map((tab, i) => (
+            <button
+              key={i}
+              type="button"
+              className="w-full text-left px-3 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center gap-2 rounded-md"
+            >
+              <HugeiconsIcon icon={tab.icon} size={16} />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ToolbarDropdown({ isThinkingEnabled, onToggleThinking, isIdle }: { isThinkingEnabled: boolean; onToggleThinking: () => void; isIdle?: boolean }) {
@@ -29,22 +81,16 @@ function ToolbarDropdown({ isThinkingEnabled, onToggleThinking, isIdle }: { isTh
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setIsOpen(false);
+        setIsSkillsOpen(false);
+        return;
       }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isSkillsOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (skillsRef.current && !skillsRef.current.contains(e.target as Node)) {
+      if (isSkillsOpen && skillsRef.current && !skillsRef.current.contains(e.target as Node)) {
         setIsSkillsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isSkillsOpen]);
+  }, [isOpen, isSkillsOpen]);
 
   return (
     <div className="relative" ref={ref}>
@@ -213,7 +259,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkin
               {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
             </div>
             <div className="flex items-center gap-1">
-              {currentModel && <ModelList currentModel={currentModel} showThinkingOnly={isThinkingEnabled} />}
+              {currentModel && <ModelList currentModel={currentModel} showThinkingOnly={isThinkingEnabled} isIdle={isIdle} />}
               <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
             </div>
           </div>

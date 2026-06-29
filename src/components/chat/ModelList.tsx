@@ -17,9 +17,10 @@ const PROVIDER_ORDER = ['google', 'groq', 'opencodezen', 'mistral', 'openrouter'
 interface ModelListProps {
   currentModel: string;
   showThinkingOnly?: boolean;
+  isIdle?: boolean;
 }
 
-export default function ModelList({ currentModel, showThinkingOnly }: ModelListProps) {
+export default function ModelList({ currentModel, showThinkingOnly, isIdle }: ModelListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -64,7 +65,7 @@ export default function ModelList({ currentModel, showThinkingOnly }: ModelListP
         <HugeiconsIcon icon={ArrowDown01Icon} size={12} />
       </button>
       {isOpen && (
-        <div className="absolute bottom-full mb-1 right-0 w-[229px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden">
+        <div className={`absolute ${isIdle ? 'top-full mt-1' : 'bottom-full mb-1'} right-0 w-[229px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden`}>
           <div className="overflow-y-auto thin-scrollbar" style={{ maxHeight: '190px' }}>
             {groups.map(group => (
               <div key={group.provider}>

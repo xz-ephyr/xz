@@ -8,12 +8,12 @@
 
 ## Motivation
 
-Instead of just detecting CLI binaries, xz should establish persistent connections with installed AI coding agents. This enables:
+Instead of just detecting CLI binaries, raw-code should establish persistent connections with installed AI coding agents. This enables:
 
 - **Direct model access**: Use opencode, codex, claude, aider, and other agents' models directly
 - **Background operation**: CLIs run silently in background (like opencode desktop)
 - **Automatic reconnection**: Re-establish connections on new devices without manual setup
-- **Tool calling**: Let xz AI invoke CLI commands as native tools
+- **Tool calling**: Let raw-code AI invoke CLI commands as native tools
 - **Unified model catalog**: Show all available models from installed CLIs in one place
 - **Session persistence**: Continue working across devices via CLI agents
 
@@ -25,7 +25,7 @@ Instead of just detecting CLI binaries, xz should establish persistent connectio
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                 xz Core                            │
+│                 raw-code Core                            │
 ├─────────────────────────────────────────────────────┤
 │  AI Service                                        │
 │  - Unified model adapter                          │
@@ -388,7 +388,7 @@ class AutoModelConfigurator {
 
 ```ts
 // Silent initialization on app load
-class XZAppInitializer {
+class AppInitializer {
   async initialize(): Promise<void> {
     // Phase 1: Background detection (0-2 seconds, silent)
     console.log('[Init] Starting CLI detection...');
@@ -502,7 +502,7 @@ function ConnectedCLIIcons({ bridges }: { bridges: CLIBridge[] }) {
 ```
 ┌─────────────────────────────────────────────────┐
 │  ┌──────────────────────────────────────────┐   │
-│  │  xz (logo)                                │   │
+│  │  raw-code (logo)                                │   │
 │  │                                           │   │
 │  │  What can I help you build today?         │   │
 │  │                                           │   │
@@ -611,7 +611,7 @@ Only `{ free: true }` models from each connected CLI are surfaced — no paid ti
 
 ## Web Mode
 
-When xz runs in a browser (dev mode or web app), shell access is unavailable — no `which`, no subprocess spawning. Here's what works and what doesn't:
+When raw-code runs in a browser (dev mode or web app), shell access is unavailable — no `which`, no subprocess spawning. Here's what works and what doesn't:
 
 ### What Works in Web Mode
 
@@ -628,7 +628,7 @@ If opencode is running locally, use it as a router — it spawns the other CLIs 
 ```
 ┌──────────────────────────────────────────────────┐
 │                  Browser (Web Mode)              │
-│  xz Web App                                     │
+│  raw-code Web App                                     │
 │    ↓                                            │
 │  fetch('http://localhost:3080/api/v1/...')      │
 ├──────────────────────────────────────────────────┤
@@ -713,7 +713,7 @@ class WebBackgroundCLIDetector {
 Bundle a lightweight HTTP daemon (a single binary, ~2MB) that runs as a background process alongside the browser:
 
 ```
-xz-daemon.exe / xz-daemon
+raw-code-daemon.exe / raw-code-daemon
   - Listens on localhost:9300
   - Exposes REST API for CLI detection and execution
   - Spawns CLIs as subprocesses
@@ -757,7 +757,7 @@ class CompanionDaemonBridge implements CLIBridge {
 Manual declaration for users who want CLI features but run purely in browser:
 
 ```ts
-const CLI_DECLARATION_KEY = 'xz-declared-clis';
+const CLI_DECLARATION_KEY = 'raw-code-declared-clis';
 
 class LocalStorageBridge implements CLIBridge {
   async connect(): Promise<void> {
@@ -856,7 +856,7 @@ class CLIProcessManager {
 
 ### Capability Registry
 
-Each CLI exposes what it can do so xz routes tasks intelligently instead of guessing.
+Each CLI exposes what it can do so raw-code routes tasks intelligently instead of guessing.
 
 ```ts
 interface CLICapability {
@@ -899,7 +899,7 @@ class CapabilityRegistry {
 
 ### Streaming
 
-CLIs emit tokens, diffs, and progress incrementally — xz should forward these to the UI in real time instead of waiting for full responses.
+CLIs emit tokens, diffs, and progress incrementally — raw-code should forward these to the UI in real time instead of waiting for full responses.
 
 ```ts
 interface CLIStreamEvent {
@@ -919,7 +919,7 @@ abstract class StreamingBridge implements CLIBridge {
       yield event;
 
       if (event.type === 'tool_call') {
-        // Route sub-tool calls back through xz's tool system
+        // Route sub-tool calls back through raw-code's tool system
         const result = await this.handleToolCall(event.data);
         yield { type: 'tool_result', data: result, timestamp: Date.now() };
       }
@@ -948,7 +948,7 @@ class OpenCodeStreamingBridge extends StreamingBridge {
 
 ### Context Transfer
 
-When xz delegates to a CLI, it should pass relevant context so the CLI isn't starting from zero.
+When raw-code delegates to a CLI, it should pass relevant context so the CLI isn't starting from zero.
 
 ```ts
 interface CLIContext {
@@ -977,7 +977,7 @@ class ContextPrepper {
 
 ### Conflict Resolution
 
-When two CLIs offer the same model, xz needs a tiebreaker.
+When two CLIs offer the same model, raw-code needs a tiebreaker.
 
 | Conflict | Resolution |
 |----------|-----------|
@@ -1074,7 +1074,7 @@ class ConsentManager {
     // Returns a promise that resolves to true/false
     // UI: small toast-like bar above chat input
     return new Promise((resolve) => {
-      dispatchEvent(new CustomEvent('xz:consent', {
+      dispatchEvent(new CustomEvent('raw-code:consent', {
         detail: { cliId, action, details, resolve }
       }));
     });
@@ -1103,7 +1103,7 @@ class ProjectCLIManager {
   }>();
 
   async switchToProject(projectPath: string): Promise<void> {
-    // Load per-project CLI config from .xz/cli.json
+    // Load per-project CLI config from .raw-code/cli.json
     const config = await this.loadProjectConfig(projectPath);
     this.projectConfigs.set(projectPath, config);
 
@@ -1130,7 +1130,7 @@ class ProjectCLIManager {
     preferredModel: string;
   }> {
     try {
-      const content = await readFile(path.join(projectPath, '.xz', 'cli.json'), 'utf-8');
+      const content = await readFile(path.join(projectPath, '.raw-code', 'cli.json'), 'utf-8');
       return JSON.parse(content);
     } catch {
       // Default: use all connected CLIs
@@ -1141,7 +1141,7 @@ class ProjectCLIManager {
 ```
 
 ```
-.xz/cli.json (per-project config)
+.raw-code/cli.json (per-project config)
 {
   "cliConnections": ["opencode", "codex"],
   "preferredModel": "opencode/deepseek-v4-flash-free"
@@ -1157,7 +1157,7 @@ class ProjectCLIManager {
 - **Automatic on new devices** — no setup needed
 - **Background only** — no terminal window opens
 - **Unified model access** — all CLI models in your app's UI
-- **Direct tool calling** — xz AI invokes CLI tools as needed
+- **Direct tool calling** — raw-code AI invokes CLI tools as needed
 
 ---
 
@@ -1238,4 +1238,4 @@ This approach shifts from **detection** to **integration**:
 4. **Direct tool execution** — AI calls CLI commands without intermediate UI
 5. **Automatic device continuity** — Works on new devices out of box
 
-The result is a seamless experience where xz connects to available CLI agents automatically and lets the user work with all their AI tools through a single interface — just like how opencode desktop works.
+The result is a seamless experience where raw-code connects to available CLI agents automatically and lets the user work with all their AI tools through a single interface — just like how opencode desktop works.
