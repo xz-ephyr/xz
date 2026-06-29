@@ -1,9 +1,11 @@
-import { memo, Fragment } from 'react';
+import { memo, Fragment, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from './Table';
 import { InlineSourcePill } from './InlineSourcePill';
+
+const REMARK_PLUGINS = [remarkGfm];
 
 interface SourceInfo {
   url: string;
@@ -47,49 +49,45 @@ export const MarkdownMessage = memo(function MarkdownMessage({ content, sources 
   const hasCitations = citationRegex.test(sanitized);
   citationRegex.lastIndex = 0;
 
-  if (!hasCitations) {
-    return (
-      <div className="text-[15px] leading-relaxed break-words text-neutral-900 [&>p]:my-0">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-          {sanitized}
-        </ReactMarkdown>
-      </div>
-    );
-  }
+  const components = useMemo(() => {
+    if (!hasCitations) return markdownComponents;
+
+    return {
+      ...markdownComponents,
+      text({ children }: any) {
+        const text = String(children);
+        const parts = text.split(citationRegex);
+        if (parts.length === 1) return <>{text}</>;
+        const result: React.ReactNode[] = [];
+        for (let i = 0; i < parts.length; i++) {
+          if (i % 2 === 0) {
+            if (parts[i]) result.push(<Fragment key={i}>{parts[i]}</Fragment>);
+          } else {
+            const matched = matchCitation(parts[i], sources);
+            if (matched) {
+              result.push(
+                <InlineSourcePill
+                  key={`cite-${i}`}
+                  url={matched.url}
+                  title={matched.title}
+                  snippet={matched.snippet}
+                />
+              );
+            } else {
+              result.push(<Fragment key={i}>【{parts[i]}】</Fragment>);
+            }
+          }
+        }
+        return <>{result}</>;
+      },
+    };
+  }, [hasCitations, sources]);
 
   return (
     <div className="text-[15px] leading-relaxed break-words text-neutral-900 [&>p]:my-0">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          ...markdownComponents,
-          text({ children }) {
-            const text = String(children);
-            const parts = text.split(citationRegex);
-            if (parts.length === 1) return <>{text}</>;
-            const result: React.ReactNode[] = [];
-            for (let i = 0; i < parts.length; i++) {
-              if (i % 2 === 0) {
-                if (parts[i]) result.push(<Fragment key={i}>{parts[i]}</Fragment>);
-              } else {
-                const matched = matchCitation(parts[i], sources);
-                if (matched) {
-                  result.push(
-                    <InlineSourcePill
-                      key={`cite-${i}`}
-                      url={matched.url}
-                      title={matched.title}
-                      snippet={matched.snippet}
-                    />
-                  );
-                } else {
-                  result.push(<Fragment key={i}>【{parts[i]}】</Fragment>);
-                }
-              }
-            }
-            return <>{result}</>;
-          },
-        }}
+        remarkPlugins={REMARK_PLUGINS}
+        components={components}
       >
         {sanitized}
       </ReactMarkdown>
