@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowUp02Icon, PlusSignIcon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon } from '@hugeicons/core-free-icons';
+import { ArrowUp02Icon, Add01Icon, Idea01Icon, Cancel01Icon, StopIcon, Attachment01Icon, CameraAdd01Icon, Atom02Icon } from '@hugeicons/core-free-icons';
 import { ThinScrollbar } from '../ui/ThinScrollbar';
 import ModelList from './ModelList';
 
@@ -14,7 +14,7 @@ interface ChatInputProps {
   currentModel?: string;
 }
 
-function ToolbarDropdown() {
+function ToolbarDropdown({ isThinkingEnabled, onToggleThinking, isIdle }: { isThinkingEnabled: boolean; onToggleThinking: () => void; isIdle?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const items = [
@@ -42,10 +42,10 @@ function ToolbarDropdown() {
         aria-label="Add content"
         title="Add content"
       >
-        <HugeiconsIcon icon={PlusSignIcon} size={18} />
+        <HugeiconsIcon icon={Add01Icon} size={18} />
       </button>
       {isOpen && (
-        <div className="absolute bottom-full mb-1 left-0 w-[213px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden">
+        <div className={`absolute ${isIdle ? 'top-full mt-1' : 'bottom-full mb-1'} left-0 w-[213px] bg-white border border-neutral-200 rounded-xl shadow-xl z-[9999] overflow-hidden`}>
           {items.map((item, i) => (
             <button
               key={i}
@@ -57,6 +57,17 @@ function ToolbarDropdown() {
               <span>{item.label}</span>
             </button>
           ))}
+          <div className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 rounded-md cursor-pointer hover:bg-neutral-50" onClick={onToggleThinking}>
+            <HugeiconsIcon icon={Atom02Icon} size={16} />
+            <span className="flex-1">Reasoning</span>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleThinking(); }}
+              className={`relative w-9 h-5 rounded-full transition-colors ${isThinkingEnabled ? 'bg-blue-500' : 'bg-neutral-300'}`}
+            >
+              <span className={`absolute top-[3px] left-[3px] w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform ${isThinkingEnabled ? 'translate-x-4' : ''}`} />
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -74,15 +85,15 @@ function ThinkingPill({
     <button
       type="button"
       onClick={onToggleThinking}
-      className={`group flex items-center gap-2 bg-blue-100 text-blue-900 ${size === 'normal' ? 'px-4 py-1.5 text-sm' : 'px-3 py-1 text-xs'} rounded-full font-medium cursor-pointer transition-all active:scale-95`}
+      className={`group flex items-center gap-2 bg-blue-100 text-blue-900 ${size === 'normal' ? 'px-4 py-1.5 text-sm' : 'px-3 py-1 text-xs'} rounded-md font-medium cursor-pointer transition-all active:scale-95`}
       aria-label="Disable thinking mode"
       title="Disable thinking mode"
     >
       <div className={`relative flex items-center justify-center ${size === 'normal' ? 'w-4 h-4' : 'w-3.5 h-3.5'}`}>
-        <HugeiconsIcon icon={Idea01Icon} size={size === 'normal' ? 16 : 14} className="group-hover:hidden" />
+        <HugeiconsIcon icon={Atom02Icon} size={size === 'normal' ? 16 : 14} className="group-hover:hidden" />
         <HugeiconsIcon icon={Cancel01Icon} size={size === 'normal' ? 16 : 14} className="hidden group-hover:block" />
       </div>
-      Think
+      Reasoning
     </button>
   );
 }
@@ -118,7 +129,7 @@ function SendButton({
   );
 }
 
-export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled, onToggleThinking, currentModel }: ChatInputProps) {
+export default function ChatInput({ onSend, onStop, isLoading, isIdle, isThinkingEnabled, onToggleThinking, currentModel }: ChatInputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -157,7 +168,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled
 
   return (
     <div className="relative w-full mx-auto" style={{ maxWidth: 'min(880px, 100%)' }}>
-      <div className="bg-white/70 rounded-[12px] relative z-10 border border-neutral-200/60 shadow-sm">
+      <div className="bg-neutral-50 rounded-[12px] relative z-10 border border-neutral-200/60 shadow-sm">
         <ThinScrollbar className="max-h-[145px]">
           <textarea
             {...commonTextareaProps}
@@ -169,18 +180,14 @@ export default function ChatInput({ onSend, onStop, isLoading, isThinkingEnabled
         <div className="flex flex-col px-3 py-1.5 bg-transparent gap-1">
             <div className="flex items-center justify-between">
             <div className="flex items-center gap-0.5">
-              <ToolbarDropdown />
+              <ToolbarDropdown isThinkingEnabled={isThinkingEnabled} onToggleThinking={onToggleThinking} isIdle={isIdle} />
+              {isThinkingEnabled && <ThinkingPill onToggleThinking={onToggleThinking} size="small" />}
             </div>
             <div className="flex items-center gap-1">
               {currentModel && <ModelList currentModel={currentModel} />}
               <SendButton isLoading={isLoading} onStop={onStop} onSend={handleSend} hasValue={!!value.trim()} />
             </div>
           </div>
-          {isThinkingEnabled && (
-            <div className="flex justify-end">
-              <ThinkingPill onToggleThinking={onToggleThinking} size="small" />
-            </div>
-          )}
         </div>
       </div>
     </div>

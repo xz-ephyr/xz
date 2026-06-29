@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { ArrowDown01Icon, CheckmarkCircle01Icon } from '@hugeicons/core-free-icons';
 import { MODELS, getModelDefinition, SELECTED_MODEL_STORAGE_KEY } from '../../config/models';
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -80,6 +80,9 @@ export default function ModelList({ currentModel }: ModelListProps) {
                     }`}
                   >
                     <span className="truncate">{model.label}</span>
+                    {model.supportsThinking && (
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} className="text-blue-500 shrink-0 ml-auto" />
+                    )}
                   </button>
                 ))}
               </div>

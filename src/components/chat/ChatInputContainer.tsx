@@ -129,6 +129,7 @@ export default function ChatInputContainer({
             onSend={onSend}
             onStop={onStop}
             isLoading={isLoading}
+            isIdle={true}
             isThinkingEnabled={isThinkingEnabled}
             onToggleThinking={onToggleThinking}
             currentModel={currentModel}
@@ -140,7 +141,8 @@ export default function ChatInputContainer({
           onSend={onSend}
           onStop={onStop}
           isLoading={isLoading}
-          isThinkingEnabled={isThinkingEnabled}
+          isIdle={false}
+            isThinkingEnabled={isThinkingEnabled}
           onToggleThinking={onToggleThinking}
           currentModel={currentModel}
         />

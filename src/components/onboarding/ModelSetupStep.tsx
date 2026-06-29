@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ViewIcon, ViewOffSlashIcon, Key01Icon, ZapIcon, GlobeIcon } from '@hugeicons/core-free-icons';
+import { ViewIcon, ViewOffSlashIcon, Key01Icon, ZapIcon, GlobeIcon, CheckmarkCircle01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import {
   MODEL_MODE_STORAGE_KEY,
   MODEL_MODES,
@@ -26,6 +26,20 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 export function ModelSetupStep({ onComplete, onSkip }: ModelSetupStepProps) {
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isModelDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target as Node)) {
+        setIsModelDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isModelDropdownOpen]);
+
   const [keys, setKeys] = useState(() => {
     const initial: any = {};
     Object.keys(API_KEYS).forEach((key) => {
@@ -125,17 +139,44 @@ export function ModelSetupStep({ onComplete, onSkip }: ModelSetupStepProps) {
             <HugeiconsIcon icon={GlobeIcon} size={16} />
             Default Model
           </label>
-          <select
-            className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-          >
-            {MODELS.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.label} ({PROVIDER_LABELS[model.provider] || model.provider})
-              </option>
-            ))}
-          </select>
+          <div className="relative" ref={modelDropdownRef}>
+            <div
+              className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 flex items-center cursor-pointer"
+              onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+            >
+              <span className="flex-1 truncate">
+                {(() => {
+                  const def = MODELS.find(m => m.id === selectedModel);
+                  return def ? `${def.label} (${PROVIDER_LABELS[def.provider] || def.provider})` : selectedModel;
+                })()}
+              </span>
+              <HugeiconsIcon icon={ArrowDown01Icon} size={16} className="text-neutral-400 shrink-0" />
+            </div>
+            {isModelDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-neutral-200 rounded-[10px] shadow-lg overflow-hidden">
+                <div className="overflow-y-auto thin-scrollbar" style={{ maxHeight: 190 }}>
+                  {MODELS.map((model) => (
+                    <button
+                      key={model.id}
+                      className={`w-full px-3 py-2 text-sm text-left hover:bg-neutral-50 transition-colors flex items-center gap-2 ${
+                        selectedModel === model.id ? 'bg-neutral-100 font-medium' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedModel(model.id);
+                        setIsModelDropdownOpen(false);
+                      }}
+                    >
+                      <span className="flex-1 truncate">{model.label}</span>
+                      <span className="text-[11px] text-neutral-400 shrink-0">{PROVIDER_LABELS[model.provider] || model.provider}</span>
+                      {model.supportsThinking && (
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} className="text-blue-500 shrink-0 ml-auto" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

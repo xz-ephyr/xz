@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ZapIcon, GlobeIcon } from '@hugeicons/core-free-icons';
+import { ZapIcon, GlobeIcon, CheckmarkCircle01Icon } from '@hugeicons/core-free-icons';
 import {
   MODEL_MODE_STORAGE_KEY,
   MODEL_MODES,
@@ -126,6 +126,9 @@ export function ApiKeysTab() {
                     >
                       <span className="flex-1 truncate">{model.label}</span>
                       <span className="text-[11px] text-neutral-400 shrink-0">{PROVIDER_LABELS[model.provider] || model.provider}</span>
+                      {model.supportsThinking && (
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} className="text-blue-500 shrink-0 ml-auto" />
+                      )}
                     </button>
                   ))}
                 </div>

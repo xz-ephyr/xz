@@ -18,31 +18,31 @@ export const ALLOWED_PROVIDERS: Provider[] = [
 ];
 
 export const MODELS: ModelDefinition[] = [
-  // Google (untouched)
-  { id: 'gemini-3.5-flash', provider: 'google', label: 'Gemini 3.5 Flash' },
-  { id: 'gemini-3-flash-preview', provider: 'google', label: 'Gemini 3 Flash Preview' },
+  // Google
+  { id: 'gemini-3.5-flash', provider: 'google', label: 'Gemini 3.5 Flash', supportsThinking: true },
+  { id: 'gemini-3-flash-preview', provider: 'google', label: 'Gemini 3 Flash Preview', supportsThinking: true },
   { id: 'gemma-4-31b-it', provider: 'google', label: 'Gemma 4 31B IT' },
-  { id: 'gemini-2.5-flash', provider: 'google', label: 'Gemini 2.5 Flash' },
+  { id: 'gemini-2.5-flash', provider: 'google', label: 'Gemini 2.5 Flash', supportsThinking: true },
   { id: 'gemma-4-26b-a4b-it', provider: 'google', label: 'Gemma 4 26B A4B IT' },
-  { id: 'gemini-2.5-flash-lite', provider: 'google', label: 'Gemini 2.5 Flash Lite' },
+  { id: 'gemini-2.5-flash-lite', provider: 'google', label: 'Gemini 2.5 Flash Lite', supportsThinking: true },
 
   // Groq
-  { id: 'groq/compound', provider: 'groq', label: 'Compound (Groq)' },
-  { id: 'groq/compound-mini', provider: 'groq', label: 'Compound Mini (Groq)' },
-  { id: 'qwen/qwen3-32b', provider: 'groq', label: 'Qwen 3 32B (Groq)' },
+  { id: 'groq/compound', provider: 'groq', label: 'Compound (Groq)', supportsThinking: true },
+  { id: 'groq/compound-mini', provider: 'groq', label: 'Compound Mini (Groq)', supportsThinking: true },
+  { id: 'qwen/qwen3-32b', provider: 'groq', label: 'Qwen 3 32B (Groq)', supportsThinking: true },
   { id: 'llama-3.1-8b-instant', provider: 'groq', label: 'Llama 3.1 8B (Groq)' },
-  { id: 'openai/gpt-oss-safeguard-20b', provider: 'groq', label: 'GPT OSS Safeguard 20B (Groq)' },
+  { id: 'openai/gpt-oss-safeguard-20b', provider: 'groq', label: 'GPT OSS Safeguard 20B (Groq)', supportsThinking: true },
 
   // OpenCode Zen
-  { id: 'deepseek-v4-flash-free', provider: 'opencodezen', label: 'DeepSeek V4 Flash Free' },
-  { id: 'big-pickle', provider: 'opencodezen', label: 'Big Pickle' },
-  { id: 'mimo-v2.5-free', provider: 'opencodezen', label: 'Mimo v2.5 Free' },
+  { id: 'deepseek-v4-flash-free', provider: 'opencodezen', label: 'DeepSeek V4 Flash Free', supportsThinking: true },
+  { id: 'big-pickle', provider: 'opencodezen', label: 'Big Pickle', supportsThinking: true },
+  { id: 'mimo-v2.5-free', provider: 'opencodezen', label: 'Mimo v2.5 Free', supportsThinking: true },
 
   // Mistral
   { id: 'mistral-large-latest', provider: 'mistral', label: 'Mistral Large' },
-  { id: 'mistral-medium-latest', provider: 'mistral', label: 'Mistral Medium' },
-  { id: 'mistral-small-latest', provider: 'mistral', label: 'Mistral Small' },
-  { id: 'magistral-medium-latest', provider: 'mistral', label: 'Magistral Medium' },
+  { id: 'mistral-medium-latest', provider: 'mistral', label: 'Mistral Medium', supportsThinking: true },
+  { id: 'mistral-small-latest', provider: 'mistral', label: 'Mistral Small', supportsThinking: true },
+  { id: 'magistral-medium-latest', provider: 'mistral', label: 'Magistral Medium', supportsThinking: true },
   { id: 'devstral-latest', provider: 'mistral', label: 'Devstral' },
   { id: 'codestral-latest', provider: 'mistral', label: 'Codestral' },
 

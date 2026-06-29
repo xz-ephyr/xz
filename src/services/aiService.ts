@@ -236,12 +236,12 @@ export async function generateSessionTitle(userMessage: string): Promise<string>
     const model = providers.groq('llama-3.1-8b-instant');
     const { text } = await generateText({
       model,
-      system: 'You are a title generator. Respond with ONLY a short title (3–6 words, no quotes, no punctuation at the end) that summarises the user\'s intent or question.',
+      system: 'You are a title generator. Respond with ONLY a concise descriptive title (5–15 words, no quotes) that summarises the user\'s intent or question.',
       messages: [{ role: 'user', content: userMessage }],
       maxRetries: 1,
     });
     const cleaned = text.replace(/["'']/g, '').trim();
-    return cleaned.length > 60 ? cleaned.slice(0, 60) : cleaned || 'New conversation';
+    return cleaned.length > 150 ? cleaned.slice(0, 150) : cleaned || 'New conversation';
   } catch {
     return 'New conversation';
   }
