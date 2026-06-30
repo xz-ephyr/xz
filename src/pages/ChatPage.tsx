@@ -6,6 +6,7 @@ import ChatInput from '../components/chat/ChatInput';
 import ChatInputContainer from '../components/chat/ChatInputContainer';
 import { UserBubble } from '../components/chat/UserBubble';
 import { AssistantBubble } from '../components/chat/AssistantBubble';
+import { ChatMessageRow } from '../components/chat/ChatMessageRow';
 import { ChatSessionManager } from '../services/ChatSessionManager';
 import { getModelForChatRequest } from '../config/models';
 import { chatCompletion, getAIErrorMessage, generateSessionTitle } from '../services/aiService';
@@ -32,94 +33,8 @@ const CHAT_MIN_WIDTH = 320;
 const DEFAULT_PANEL_WIDTH = 480;
 const PANEL_STORAGE_KEY = 'artifact-panel-width';
 
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
-  useEffect(() => {
-    const mq = window.matchMedia(query);
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [query]);
-  return matches;
-}
 
-const ChatMessageRow = memo(function ChatMessageRow({
-  role,
-  content,
-  artifacts,
-  toolInvocations,
-  reasoning,
-  parts,
-  contentBeforeTool,
-  contentAfterTool,
-  currentModel,
-  isStreaming,
-  prevUserContent,
-  onOpenArtifact,
-  onCopy,
-  onThumbsUp,
-  onThumbsDown,
-  handleSend,
-}: {
-  role: string;
-  content: string;
-  artifacts?: any[];
-  toolInvocations?: any[];
-  reasoning?: string;
-  parts?: any[];
-  contentBeforeTool?: string;
-  contentAfterTool?: string;
-  currentModel: string | undefined;
-  isStreaming: boolean;
-  prevUserContent?: string;
-  onOpenArtifact: (artifact: any) => void;
-  onCopy: (content: string) => void;
-  onThumbsUp: () => void;
-  onThumbsDown: () => void;
-  handleSend: (content: string) => void;
-}) {
-  const handleMsgCopy = useCallback(() => onCopy(content), [content, onCopy]);
-  const handleThumbsUp = useCallback(() => onThumbsUp(), [onThumbsUp]);
-  const handleThumbsDown = useCallback(() => onThumbsDown(), [onThumbsDown]);
-  const handleMsgRegenerate = useCallback(() => {
-    if (prevUserContent) {
-      handleSend(prevUserContent);
-    }
-  }, [prevUserContent, handleSend]);
 
-  const handleOpenMsgArtifact = useCallback(() => {
-    if (artifacts && artifacts.length > 0) {
-      onOpenArtifact(artifacts[0]);
-    }
-  }, [artifacts, onOpenArtifact]);
-
-  return (
-    <React.Fragment>
-      {role === 'user' ? (
-        <UserBubble content={content} />
-      ) : (
-        <AssistantBubble
-          content={content}
-          model={currentModel}
-          isStreaming={isStreaming}
-          toolInvocations={toolInvocations}
-          reasoning={reasoning}
-          parts={parts}
-          artifacts={artifacts}
-          contentBeforeTool={contentBeforeTool}
-          contentAfterTool={contentAfterTool}
-          onOpenArtifact={
-            artifacts && artifacts.length > 0 ? handleOpenMsgArtifact : undefined
-          }
-          onCopy={handleMsgCopy}
-          onThumbsUp={handleThumbsUp}
-          onThumbsDown={handleThumbsDown}
-          onRegenerate={handleMsgRegenerate}
-        />
-      )}
-    </React.Fragment>
-  );
-});
 
 export const ChatPage = () => {
   const { uuid, folder } = useParams();

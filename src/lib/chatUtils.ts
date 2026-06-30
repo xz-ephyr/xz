@@ -16,7 +16,7 @@ const retryPhraseRegex = /(?:Try\s+(?:a|the|again|one)|Retry|Attempt\s+\d|Again,
 export function cleanReasoning(reasoning: string): string {
   let cleaned = reasoning
     .split('\n')
-    .filter((line) => !artifactMetadataRegex.test(line) && !artifactInlineRegex.test(line))
+    .filter((line) => !line.match(artifactMetadataRegex) && !artifactInlineRegex.test(line))
     .join('\n');
   cleaned = cleaned.replace(searchResultRegex, '');
   cleaned = cleaned.replace(urlInReasoningRegex, '');

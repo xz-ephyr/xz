@@ -109,6 +109,77 @@ const getTauriPath = async () => {
   return import('@tauri-apps/api/path');
 };
 
+async function getTauriTree(basePath: string, depth: number, projectId?: string): Promise<FileEntry[]> {
+  try {
+    const { readDir } = await getTauriFs();
+    const { join } = await getTauriPath();
+    const entries = await readDir(basePath);
+    const result: FileEntry[] = [];
+
+    for (const entry of entries) {
+      if (entry.name === 'node_modules' || entry.name === '.git') continue;
+      const fullPath = await join(basePath, entry.name);
+      const isDirectory = entry.isDirectory;
+      result.push({
+        name: entry.name,
+        path: fullPath,
+        isDirectory,
+        children: isDirectory
+          ? await FileSystemService.getTree(fullPath, depth + 1, projectId)
+          : undefined,
+      });
+    }
+    return result;
+  } catch (e) {
+    console.error('Error reading dir:', e);
+    return [];
+  }
+}
+
+async function getProjectTreeFromServer(basePath: string, projectId: string): Promise<FileEntry[]> {
+  try {
+    const prefix = basePath.endsWith('/') ? basePath : basePath + '/';
+    const files = await DatabaseService.getProjectFiles(projectId);
+    const paths = files.map(f => f.path);
+    return buildTreeFromPaths(paths, prefix);
+  } catch (e) {
+    console.error('Error reading files from server:', e);
+    return [];
+  }
+}
+
+async function getVirtualTree(basePath: string, depth: number, projectId?: string): Promise<FileEntry[]> {
+  try {
+    const prefix = basePath.endsWith('/') ? basePath : basePath + '/';
+    const childNames = new Set<string>();
+
+    for (const key of Object.keys(webVirtualFS)) {
+      if (key.startsWith(prefix)) {
+        const rest = key.slice(prefix.length);
+        const firstSegment = rest.split('/')[0];
+        if (firstSegment) childNames.add(firstSegment);
+      }
+    }
+
+    const result: FileEntry[] = [];
+    for (const name of childNames) {
+      if (name.startsWith('.') || name === 'node_modules') continue;
+      const fullPath = prefix + name;
+      const isDirectory = Object.keys(webVirtualFS).some((k) => k.startsWith(fullPath + '/'));
+      result.push({
+        name,
+        path: fullPath,
+        isDirectory,
+        children: isDirectory ? await FileSystemService.getTree(fullPath, depth + 1, projectId) : undefined,
+      });
+    }
+    return result;
+  } catch (e) {
+    console.error('Error reading virtual dir:', e);
+    return [];
+  }
+}
+
 export const FileSystemService = {
   getTree: async (basePath: string, depth = 0, projectId?: string): Promise<FileEntry[]> => {
     if (depth > 20) return [];
@@ -118,80 +189,18 @@ export const FileSystemService = {
       return cached.result;
     }
 
+    let result: FileEntry[];
+
     if (isTauri()) {
-      try {
-        const { readDir } = await getTauriFs();
-        const { join } = await getTauriPath();
-        const entries = await readDir(basePath);
-        const result: FileEntry[] = [];
-
-        for (const entry of entries) {
-          if (entry.name === 'node_modules' || entry.name === '.git') continue;
-          const fullPath = await join(basePath, entry.name);
-          const isDirectory = entry.isDirectory;
-          result.push({
-            name: entry.name,
-            path: fullPath,
-            isDirectory,
-            children: isDirectory
-              ? await FileSystemService.getTree(fullPath, depth + 1, projectId)
-              : undefined,
-          });
-        }
-        treeCache.set(basePath, { result, timestamp: Date.now() });
-        return result;
-      } catch (e) {
-        console.error('Error reading dir:', e);
-        return [];
-      }
+      result = await getTauriTree(basePath, depth, projectId);
+    } else if (projectId) {
+      result = await getProjectTreeFromServer(basePath, projectId);
+    } else {
+      result = await getVirtualTree(basePath, depth, projectId);
     }
 
-    // Web with projectId: fetch file listing from server DB
-    if (projectId) {
-      try {
-        const prefix = basePath.endsWith('/') ? basePath : basePath + '/';
-        const files = await DatabaseService.getProjectFiles(projectId);
-        const paths = files.map(f => f.path);
-        const result = buildTreeFromPaths(paths, prefix);
-        treeCache.set(basePath, { result, timestamp: Date.now() });
-        return result;
-      } catch (e) {
-        console.error('Error reading files from server:', e);
-        return [];
-      }
-    }
-
-    // Web fallback: derive tree structure from in-memory virtual FS keys
-    try {
-      const prefix = basePath.endsWith('/') ? basePath : basePath + '/';
-      const childNames = new Set<string>();
-
-      for (const key of Object.keys(webVirtualFS)) {
-        if (key.startsWith(prefix)) {
-          const rest = key.slice(prefix.length);
-          const firstSegment = rest.split('/')[0];
-          if (firstSegment) childNames.add(firstSegment);
-        }
-      }
-
-      const result: FileEntry[] = [];
-      for (const name of childNames) {
-        if (name.startsWith('.') || name === 'node_modules') continue;
-        const fullPath = prefix + name;
-        const isDirectory = Object.keys(webVirtualFS).some((k) => k.startsWith(fullPath + '/'));
-        result.push({
-          name,
-          path: fullPath,
-          isDirectory,
-          children: isDirectory ? await FileSystemService.getTree(fullPath, depth + 1, projectId) : undefined,
-        });
-      }
-      treeCache.set(basePath, { result, timestamp: Date.now() });
-      return result;
-    } catch (e) {
-      console.error('Error reading virtual dir:', e);
-      return [];
-    }
+    treeCache.set(basePath, { result, timestamp: Date.now() });
+    return result;
   },
 
   getCompressedTree: (tree: FileEntry[]): string => {

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   ViewIcon, ViewOffSlashIcon, Settings02Icon, Key01Icon, ZapIcon, Cancel01Icon,
@@ -46,6 +46,190 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]['id'];
 
+// ── Sub-components ─────────────────────────────────────────────────
+
+const GeneralTab = () => (
+  <div className="space-y-6">
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-semibold text-neutral-700">Default Page</label>
+      <select
+        className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+        defaultValue={localStorage.getItem('default_page') || 'chats'}
+        onChange={(e) => localStorage.setItem('default_page', e.target.value)}
+      >
+        <option value="chats">Chats list</option>
+        <option value="thread">New thread</option>
+        <option value="last">Last open session</option>
+      </select>
+      <p className="text-xs text-neutral-500">Which page to show on launch.</p>
+    </div>
+
+    <div className="flex items-center justify-between">
+      <div>
+        <label className="text-sm font-semibold text-neutral-700">Message Timestamps</label>
+        <p className="text-xs text-neutral-500 mt-0.5">Show time stamps below chat messages.</p>
+      </div>
+      <label className="relative inline-flex items-center cursor-pointer">
+        <input
+          type="checkbox"
+          className="sr-only peer"
+          defaultChecked={localStorage.getItem('show_timestamps') !== 'false'}
+          onChange={(e) => localStorage.setItem('show_timestamps', String(e.target.checked))}
+        />
+        <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
+      </label>
+    </div>
+
+    <div className="flex items-center justify-between">
+      <div>
+        <label className="text-sm font-semibold text-neutral-700">Auto-save Drafts</label>
+        <p className="text-xs text-neutral-500 mt-0.5">Automatically save unsent messages as drafts.</p>
+      </div>
+      <label className="relative inline-flex items-center cursor-pointer">
+        <input
+          type="checkbox"
+          className="sr-only peer"
+          defaultChecked={localStorage.getItem('auto_drafts') !== 'false'}
+          onChange={(e) => localStorage.setItem('auto_drafts', String(e.target.checked))}
+        />
+        <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
+      </label>
+    </div>
+  </div>
+);
+
+const AppearanceTab = () => (
+  <div className="space-y-6">
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-semibold text-neutral-700">Sidebar on Startup</label>
+      <select
+        className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
+        defaultValue={localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true' ? 'collapsed' : 'expanded'}
+        onChange={(e) => {
+          localStorage.setItem(SIDEBAR_STORAGE_KEY, String(e.target.value === 'collapsed'));
+        }}
+      >
+        <option value="expanded">Expanded</option>
+        <option value="collapsed">Collapsed</option>
+      </select>
+      <p className="text-xs text-neutral-500">
+        Changes apply immediately on next load.
+      </p>
+    </div>
+
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-semibold text-neutral-700">Zoom Level</label>
+      <ZoomControl />
+    </div>
+  </div>
+);
+
+const BehaviorTab = () => (
+  <div className="space-y-6">
+    <div className="flex items-center justify-between">
+      <div>
+        <label className="text-sm font-semibold text-neutral-700">Enable Thinking by Default</label>
+        <p className="text-xs text-neutral-500 mt-0.5">Show reasoning traces on supported models.</p>
+      </div>
+      <label className="relative inline-flex items-center cursor-pointer">
+        <input
+          type="checkbox"
+          className="sr-only peer"
+          defaultChecked={localStorage.getItem('thinking_default') === 'true'}
+          onChange={(e) => {
+            localStorage.setItem('thinking_default', String(e.target.checked));
+          }}
+        />
+        <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
+      </label>
+    </div>
+
+    <div className="flex items-center justify-between">
+      <div>
+        <label className="text-sm font-semibold text-neutral-700">Auto-create Artifacts</label>
+        <p className="text-xs text-neutral-500 mt-0.5">Automatically preview UI code as artifacts.</p>
+      </div>
+      <label className="relative inline-flex items-center cursor-pointer">
+        <input
+          type="checkbox"
+          className="sr-only peer"
+          defaultChecked={localStorage.getItem('auto_artifacts') !== 'false'}
+          onChange={(e) => {
+            localStorage.setItem('auto_artifacts', String(e.target.checked));
+          }}
+        />
+        <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
+      </label>
+    </div>
+  </div>
+);
+
+const StorageTab = () => {
+  const { confirmAsync } = useToast();
+  return (
+    <div className="space-y-6">
+      <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100">
+        <h4 className="text-sm font-semibold text-neutral-700 mb-2">Local Database</h4>
+        <p className="text-xs text-neutral-500">
+          Your projects, chats, and messages are stored locally in SQLite. This data never leaves your machine.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            const data: Record<string, string> = {};
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key) data[key] = localStorage.getItem(key) || '';
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'raw-code-backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="w-full px-4 py-2.5 text-sm font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-[10px] transition-colors text-left"
+        >
+          Export All Data
+        </button>
+
+        <button
+          type="button"
+          onClick={async () => {
+            if (await confirmAsync('Clear all chat history? This cannot be undone.')) {
+              if (await confirmAsync('Are you sure? All messages and sessions will be permanently deleted.')) {
+                const keysToRemove = ['chat_sessions', 'project_chat_sessions', 'projects'];
+                keysToRemove.forEach(k => localStorage.removeItem(k));
+              }
+            }
+          }}
+          className="w-full px-4 py-2.5 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-[14px] transition-colors text-left"
+        >
+          Clear Chat History
+        </button>
+
+        <button
+          type="button"
+          onClick={async () => {
+            if (await confirmAsync('Reset onboarding tour? You will see the welcome screens again on next launch.')) {
+              localStorage.removeItem('onboarding_completed');
+            }
+          }}
+          className="w-full px-4 py-2.5 text-sm font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-[10px] transition-colors text-left"
+        >
+          Reset Onboarding
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ── Main component ─────────────────────────────────────────────────
+
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [keys, setKeys] = useState(() => {
     const initialKeys: any = {};
@@ -64,13 +248,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [searchConfig, setSearchConfig] = useState<Record<string, string>>({});
   const [searchKeysLoaded, setSearchKeysLoaded] = useState(false);
   const [showSearchKeys, setShowSearchKeys] = useState<Record<string, boolean>>({});
-  const { confirmAsync } = useToast();
 
   useEffect(() => {
-    if (activeTab !== 'web-search') return;
-    if (searchKeysLoaded) return;
-    const keys = ['search-provider', 'search-api-key', 'search-exa-api-key', 'search-firecrawl-api-key', 'search-google-api-key', 'search-google-cx'];
-    Promise.all(keys.map(k => DatabaseService.getConfig(k).then(v => ({ key: k, value: v || '' }))))
+    if (activeTab !== 'web-search' || searchKeysLoaded) return;
+    const configKeys = ['search-provider', 'search-api-key', 'search-exa-api-key', 'search-firecrawl-api-key', 'search-google-api-key', 'search-google-cx'];
+    Promise.all(configKeys.map(k => DatabaseService.getConfig(k).then(v => ({ key: k, value: v || '' }))))
       .then((entries) => {
         const map: Record<string, string> = {};
         entries.forEach(e => { map[e.key] = e.value; });
@@ -79,6 +261,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       })
       .catch(() => setSearchKeysLoaded(true));
   }, [activeTab, searchKeysLoaded]);
+
   const toggleShowKey = (provider: string) => {
     setShowKeys(prev => ({ ...prev, [provider]: !prev[provider] }));
   };
@@ -108,6 +291,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             Settings
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
           >
@@ -115,15 +299,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </button>
         </div>
 
-        {/* Two-pane body */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Left nav */}
           <nav className="w-64 border-r border-neutral-100 p-3 space-y-1 shrink-0 overflow-y-auto thin-scrollbar">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTab;
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center px-3 py-2.5 rounded-[8px] cursor-pointer active:scale-[0.99] transition-transform w-full gap-3 ${
                     isActive ? 'bg-[#e5e5e5]' : 'hover:bg-[#f2f3f6]'
@@ -138,57 +321,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             })}
           </nav>
 
-          {/* Right content */}
           <div className="flex-1 p-6 overflow-y-auto thin-scrollbar">
-            {activeTab === 'general' && (
-              <div className="space-y-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-neutral-700">Default Page</label>
-                  <select
-                    className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
-                    defaultValue={localStorage.getItem('default_page') || 'chats'}
-                    onChange={(e) => localStorage.setItem('default_page', e.target.value)}
-                  >
-                    <option value="chats">Chats list</option>
-                    <option value="thread">New thread</option>
-                    <option value="last">Last open session</option>
-                  </select>
-                  <p className="text-xs text-neutral-500">Which page to show on launch.</p>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-semibold text-neutral-700">Message Timestamps</label>
-                    <p className="text-xs text-neutral-500 mt-0.5">Show time stamps below chat messages.</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      defaultChecked={localStorage.getItem('show_timestamps') !== 'false'}
-                      onChange={(e) => localStorage.setItem('show_timestamps', String(e.target.checked))}
-                    />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-semibold text-neutral-700">Auto-save Drafts</label>
-                    <p className="text-xs text-neutral-500 mt-0.5">Automatically save unsent messages as drafts.</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      defaultChecked={localStorage.getItem('auto_drafts') !== 'false'}
-                      onChange={(e) => localStorage.setItem('auto_drafts', String(e.target.checked))}
-                    />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
-                  </label>
-                </div>
-              </div>
-            )}
+            {activeTab === 'general' && <GeneralTab />}
 
             {activeTab === 'api-keys' && (
               <div className="space-y-5">
@@ -269,6 +403,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             {MODELS.map((model) => (
                               <button
                                 key={model.id}
+                                type="button"
                                 className={`w-full px-3 py-2 text-sm text-left hover:bg-neutral-50 transition-colors flex items-center gap-2 ${
                                   selectedModel === model.id ? 'bg-neutral-100 font-medium' : ''
                                 }`}
@@ -290,6 +425,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                 <div className="flex justify-end pt-2">
                   <button
+                    type="button"
                     onClick={handleSaveApiKeys}
                     disabled={isSaving}
                     className="px-6 py-2 text-sm font-bold text-white bg-black hover:bg-neutral-800 rounded-[10px] transition-all flex items-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98] disabled:opacity-50"
@@ -338,7 +474,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <label className="text-[12px] font-medium text-neutral-600 ml-1">Tavily API Key</label>
                         <div className="relative">
                           <input
-                          type={showSearchKeys['tavily'] ? 'text' : 'password'}
+                             type={showSearchKeys['tavily'] ? 'text' : 'password'}
                              className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                              placeholder={searchConfig['search-api-key'] ? '••••••••••••••••' : 'Enter Tavily API Key'}
                              value={searchConfig['search-api-key'] || ''}
@@ -380,7 +516,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <label className="text-[12px] font-medium text-neutral-600 ml-1">Firecrawl API Key <span className="text-neutral-400">(for page scraping)</span></label>
                         <div className="relative">
                           <input
-                            type={showSearchKeys['firecrawl'] ? 'text' : 'password'}
+                             type={showSearchKeys['firecrawl'] ? 'text' : 'password'}
                              className="h-9 bg-neutral-50 rounded-[8px] pl-3 pr-9 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
                              placeholder={searchConfig['search-firecrawl-api-key'] ? '••••••••••••••••' : 'Enter Firecrawl API Key'}
                              value={searchConfig['search-firecrawl-api-key'] || ''}
@@ -396,8 +532,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         </div>
                         <p className="text-xs text-neutral-400">Best for fetching full page content. Get a key at <span className="font-mono">firecrawl.dev</span></p>
                       </div>
-
-
 
                       <div className="border-t border-neutral-100 pt-4">
                         <details className="group">
@@ -444,6 +578,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                     <div className="flex justify-end pt-2 border-t border-neutral-100">
                       <button
+                        type="button"
                         onClick={async () => {
                           setIsSaving(true);
                           await Promise.all(
@@ -451,16 +586,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                               DatabaseService.setConfig(key, value)
                             )
                           );
-                          await new Promise((r) => setTimeout(r, 200));
                           setIsSaving(false);
                         }}
                         disabled={isSaving}
-                        className="mt-4 px-6 py-2 text-sm font-bold text-white bg-black hover:bg-neutral-800 rounded-[10px] transition-all flex items-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98] disabled:opacity-50"
+                        className="px-6 py-2 text-sm font-bold text-white bg-black hover:bg-neutral-800 rounded-[10px] transition-all flex items-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98] disabled:opacity-50"
                       >
                         {isSaving ? (
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : null}
-                        Save Search Settings
+                        Save Search Config
                       </button>
                     </div>
                   </>
@@ -468,137 +602,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
 
-            {activeTab === 'appearance' && (
-              <div className="space-y-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-neutral-700">Sidebar on Startup</label>
-                  <select
-                    className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
-                    defaultValue={localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true' ? 'collapsed' : 'expanded'}
-                    onChange={(e) => {
-                      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(e.target.value === 'collapsed'));
-                    }}
-                  >
-                    <option value="expanded">Expanded</option>
-                    <option value="collapsed">Collapsed</option>
-                  </select>
-                  <p className="text-xs text-neutral-500">
-                    Changes apply immediately on next load.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-neutral-700">Zoom Level</label>
-                  <ZoomControl />
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'behavior' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-semibold text-neutral-700">Enable Thinking by Default</label>
-                    <p className="text-xs text-neutral-500 mt-0.5">Show reasoning traces on supported models.</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      defaultChecked={localStorage.getItem('thinking_default') === 'true'}
-                      onChange={(e) => {
-                        localStorage.setItem('thinking_default', String(e.target.checked));
-                      }}
-                    />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-semibold text-neutral-700">Auto-create Artifacts</label>
-                    <p className="text-xs text-neutral-500 mt-0.5">Automatically preview UI code as artifacts.</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      defaultChecked={localStorage.getItem('auto_artifacts') !== 'false'}
-                      onChange={(e) => {
-                        localStorage.setItem('auto_artifacts', String(e.target.checked));
-                      }}
-                    />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black" />
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'storage' && (
-              <div className="space-y-6">
-                <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100">
-                  <h4 className="text-sm font-semibold text-neutral-700 mb-2">Local Database</h4>
-                  <p className="text-xs text-neutral-500">
-                    Your projects, chats, and messages are stored locally in SQLite. This data never leaves your machine.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <button
-                    onClick={() => {
-                      // Export all data as JSON
-                      const data: Record<string, string> = {};
-                      for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key) data[key] = localStorage.getItem(key) || '';
-                      }
-                      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = 'raw-code-backup.json';
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                    className="w-full px-4 py-2.5 text-sm font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-[10px] transition-colors text-left"
-                  >
-                    Export All Data
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      if (await confirmAsync('Clear all chat history? This cannot be undone.')) {
-                        if (await confirmAsync('Are you sure? All messages and sessions will be permanently deleted.')) {
-                          const keysToRemove = ['chat_sessions', 'project_chat_sessions', 'projects'];
-                          keysToRemove.forEach(k => localStorage.removeItem(k));
-                        }
-                      }
-                    }}
-                    className="w-full px-4 py-2.5 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-[14px] transition-colors text-left"
-                  >
-                    Clear Chat History
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      if (await confirmAsync('Reset onboarding tour? You will see the welcome screens again on next launch.')) {
-                        localStorage.removeItem('onboarding_completed');
-                      }
-                    }}
-                    className="w-full px-4 py-2.5 text-sm font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-[10px] transition-colors text-left"
-                  >
-                    Reset Onboarding
-                  </button>
-                </div>
-              </div>
-            )}
+            {activeTab === 'appearance' && <AppearanceTab />}
+            {activeTab === 'behavior' && <BehaviorTab />}
+            {activeTab === 'storage' && <StorageTab />}
           </div>
         </div>
       </div>
     </div>
   );
 }
-
 
 const ZOOM_PRESETS = [0.5, 0.65, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 2];
 
@@ -622,6 +634,7 @@ function ZoomControl() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-[10px] text-sm border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors"
       >
@@ -642,6 +655,7 @@ function ZoomControl() {
             {ZOOM_PRESETS.map((level) => (
               <button
                 key={level}
+                type="button"
                 onClick={() => {
                   setZoomLevel(level);
                   setIsOpen(false);
@@ -658,6 +672,7 @@ function ZoomControl() {
           </div>
           <div className="border-t border-neutral-100 mt-1 pt-1 px-2">
             <button
+              type="button"
               onClick={() => {
                 resetZoom();
                 setIsOpen(false);
