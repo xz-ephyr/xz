@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Search01Icon,
   ArchiveIcon,
@@ -16,17 +16,19 @@ import { cn } from '../lib/utils';
 import { useToast } from '../components/ui/Toast';
 import { HugeiconRenderer } from '../components/ui/HugeiconRenderer';
 
+interface ChatListItemProps {
+  chat: ChatSession;
+  onDelete: (id: string) => void;
+  onArchive: (id: string) => void;
+  onRename: (id: string, newTitle: string) => void;
+}
+
 const ChatListItem = React.memo(({
   chat,
   onDelete,
   onArchive,
   onRename,
-}: {
-  chat: ChatSession;
-  onDelete: (id: string) => void;
-  onArchive: (id: string) => void;
-  onRename: (id: string, newTitle: string) => void;
-}) => {
+}: ChatListItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,7 +51,6 @@ const ChatListItem = React.memo(({
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMenuOpen]);
 
   const handleRename = (e: React.MouseEvent) => {
@@ -125,6 +126,7 @@ const ChatListItem = React.memo(({
 
       <div className="shrink-0" ref={menuRef}>
         <button
+          type="button"
           onClick={toggleMenu}
           className={cn(
             'p-1.5 hover:bg-neutral-200 rounded-md text-neutral-500 transition-all opacity-0 group-hover:opacity-100',
@@ -141,6 +143,7 @@ const ChatListItem = React.memo(({
             style={{ top: menuPos.top, left: menuPos.left }}
           >
             <button
+              type="button"
               onClick={handleRename}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
             >
@@ -148,6 +151,7 @@ const ChatListItem = React.memo(({
               <span>Rename</span>
             </button>
             <button
+              type="button"
               onClick={handleArchive}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
             >
@@ -156,6 +160,7 @@ const ChatListItem = React.memo(({
             </button>
             <div className="h-px bg-neutral-100 my-1.5" />
             <button
+              type="button"
               onClick={handleDelete}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
             >
@@ -168,6 +173,84 @@ const ChatListItem = React.memo(({
     </div>
   );
 });
+
+const ChatsHeader = ({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (val: string) => void }) => (
+  <div className="flex flex-col gap-6 mb-8">
+    <div className="flex items-center justify-between">
+      <h1 className="text-3xl font-semibold text-neutral-900 tracking-tight">Chats</h1>
+    </div>
+    <div className="relative flex-1">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">
+        <HugeiconRenderer icon={Search01Icon} size={20} />
+      </div>
+      <input
+        type="text"
+        placeholder="Search conversations..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full bg-neutral-50 rounded-[8px] py-3 pl-12 pr-4 text-sm focus:outline-none placeholder:text-neutral-400"
+      />
+    </div>
+  </div>
+);
+
+const ChatsFilter = ({
+  filter,
+  setFilter,
+  isFilterOpen,
+  setIsFilterOpen,
+  filterMenuPos,
+  setFilterMenuPos,
+  filterRef
+}: any) => (
+  <div ref={filterRef} className="absolute right-6 top-[138px]">
+    <button
+      type="button"
+      onClick={(e) => {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        setFilterMenuPos({ top: rect.bottom + 8, left: rect.right - 208 });
+        setIsFilterOpen(!isFilterOpen);
+      }}
+      className={cn(
+        'p-3 rounded-2xl transition-all flex items-center justify-center h-[46px] w-[46px] bg-transparent text-neutral-600 active:scale-95 active:bg-neutral-100',
+        isFilterOpen && 'bg-neutral-100 text-neutral-900'
+      )}
+      aria-label="Filter chats"
+    >
+      <HugeiconRenderer icon={FilterMailIcon} size={20} />
+    </button>
+
+    {isFilterOpen && filterMenuPos && (
+      <div
+        className="fixed w-52 bg-white border border-neutral-200 rounded-2xl shadow-xl py-2 z-[9999]"
+        style={{ top: filterMenuPos.top, left: filterMenuPos.left }}
+      >
+        <div className="px-4 py-2 text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
+          Filter by
+        </div>
+        {(['active', 'archived'] as const).map(f => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => {
+              setFilter(f);
+              setIsFilterOpen(false);
+              setFilterMenuPos(null);
+            }}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+          >
+            <span className={cn('font-medium', filter === f ? 'text-neutral-900' : 'text-neutral-600')}>
+              {f === 'active' ? 'Active Chats' : 'Archived Chats'}
+            </span>
+            {filter === f && (
+              <HugeiconRenderer icon={CheckmarkCircle02Icon} size={18} className="text-neutral-900" />
+            )}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
 
 export const ChatsPage = () => {
   const [chats, setChats] = useState<ChatSession[]>([]);
@@ -205,9 +288,7 @@ export const ChatsPage = () => {
         const matchesSearch =
           chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase());
-
-        if (filter === 'archived') return chat.archived && matchesSearch;
-        return !chat.archived && matchesSearch;
+        return filter === 'archived' ? chat.archived && matchesSearch : !chat.archived && matchesSearch;
       })
       .sort((a, b) => b.createdAt - a.createdAt);
   }, [chats, searchQuery, filter]);
@@ -228,107 +309,19 @@ export const ChatsPage = () => {
   }, [refreshChats]);
 
   return (
-    <div className="flex-1 bg-white overflow-y-auto thin-scrollbar">
+    <div className="flex-1 bg-white overflow-y-auto thin-scrollbar relative">
       <div className="mx-auto px-6 py-12" style={{ maxWidth: 'min(800px, 100%)' }}>
-        {/* Header */}
-        <div className="flex flex-col gap-6 mb-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-semibold text-neutral-900 tracking-tight">Chats</h1>
-          </div>
+        <ChatsHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <ChatsFilter
+          filter={filter}
+          setFilter={setFilter}
+          isFilterOpen={isFilterOpen}
+          setIsFilterOpen={setIsFilterOpen}
+          filterMenuPos={filterMenuPos}
+          setFilterMenuPos={setFilterMenuPos}
+          filterRef={filterRef}
+        />
 
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">
-                <HugeiconRenderer icon={Search01Icon} size={20} />
-              </div>
-              <input
-                type="text"
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-neutral-50 rounded-[8px] py-3 pl-12 pr-4 text-sm focus:outline-none placeholder:text-neutral-400"
-              />
-            </div>
-
-            <div ref={filterRef}>
-              <button
-                onClick={(e) => {
-                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                  setFilterMenuPos({ top: rect.bottom + 8, left: rect.right - 208 });
-                  setIsFilterOpen(!isFilterOpen);
-                }}
-                className={cn(
-                  'p-3 rounded-2xl transition-all flex items-center justify-center h-[46px] w-[46px] bg-transparent text-neutral-600 active:scale-95 active:bg-neutral-100',
-                  isFilterOpen && 'bg-neutral-100 text-neutral-900'
-                )}
-                aria-label="Filter chats"
-              >
-                <HugeiconRenderer icon={FilterMailIcon} size={20} />
-              </button>
-
-              {isFilterOpen && filterMenuPos && (
-                <div
-                  className="fixed w-52 bg-white border border-neutral-200 rounded-2xl shadow-xl py-2 z-[9999]"
-                  style={{ top: filterMenuPos.top, left: filterMenuPos.left }}
-                >
-                  <div className="px-4 py-2 text-[11px] font-bold text-neutral-400 uppercase tracking-widest">
-                    Filter by
-                  </div>
-                  <button
-                    onClick={() => {
-                      setFilter('active');
-                      setIsFilterOpen(false);
-                      setFilterMenuPos(null);
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                  >
-                    <span
-                      className={cn(
-                        'font-medium',
-                        filter === 'active' ? 'text-neutral-900' : 'text-neutral-600'
-                      )}
-                    >
-                      Active Chats
-                    </span>
-                    {filter === 'active' && (
-                      <HugeiconRenderer
-                        icon={CheckmarkCircle02Icon}
-                        size={18}
-                        className="text-neutral-900"
-                      />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setFilter('archived');
-                      setIsFilterOpen(false);
-                      setFilterMenuPos(null);
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                  >
-                    <span
-                      className={cn(
-                        'font-medium',
-                        filter === 'archived' ? 'text-neutral-900' : 'text-neutral-600'
-                      )}
-                    >
-                      Archived Chats
-                    </span>
-                    {filter === 'archived' && (
-                      <HugeiconRenderer
-                        icon={CheckmarkCircle02Icon}
-                        size={18}
-                        className="text-neutral-900"
-                      />
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* List Section */}
         <div className="space-y-0.5 overflow-visible">
           {filteredChats.length > 0 ? (
             filteredChats.map((chat) => (
@@ -346,22 +339,13 @@ export const ChatsPage = () => {
                 <HugeiconRenderer icon={searchQuery ? Search01Icon : Folder01Icon} size={36} />
               </div>
               <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                {searchQuery
-                  ? 'No matches found'
-                  : filter === 'archived'
-                    ? 'No archived conversations'
-                    : 'Your chat list is empty'}
+                {searchQuery ? 'No matches found' : filter === 'archived' ? 'No archived conversations' : 'Your chat list is empty'}
               </h3>
               <p className="text-sm text-neutral-500 max-w-[320px] leading-relaxed">
-                {searchQuery
-                  ? `We couldn't find any results for "${searchQuery}". Try a different search term.`
-                  : 'Every conversation you start will appear here for easy access and organization.'}
+                {searchQuery ? `We couldn't find any results for "${searchQuery}". Try a different search term.` : 'Every conversation you start will appear here for easy access and organization.'}
               </p>
               {!searchQuery && filter === 'active' && (
-                <Link
-                  to="/thread/new"
-                  className="mt-8 px-6 py-2.5 bg-neutral-900 text-white text-sm font-semibold rounded-full hover:bg-neutral-800 transition-all hover:shadow-lg active:scale-95"
-                >
+                <Link to="/thread/new" className="mt-8 px-6 py-2.5 bg-neutral-900 text-white text-sm font-semibold rounded-full hover:bg-neutral-800 transition-all hover:shadow-lg active:scale-95">
                   Start a new thread
                 </Link>
               )}

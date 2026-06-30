@@ -54,6 +54,40 @@ function loadPreferences(): Preferences {
   return DEFAULT_PREFERENCES;
 }
 
+interface PreferenceOptionGroupProps {
+  label: string;
+  icon: any;
+  options: { id: string; label: string; desc: string }[];
+  currentValue: string;
+  onChange: (id: string) => void;
+}
+
+const PreferenceOptionGroup = ({ label, icon, options, currentValue, onChange }: PreferenceOptionGroupProps) => (
+  <div className="space-y-3">
+    <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+      <HugeiconsIcon icon={icon} size={16} />
+      {label}
+    </label>
+    <div className="grid grid-cols-3 gap-2">
+      {options.map(opt => (
+        <button
+          key={opt.id}
+          type="button"
+          onClick={() => onChange(opt.id)}
+          className={`p-3 rounded-xl border text-left transition-all ${
+            currentValue === opt.id
+              ? 'border-black bg-neutral-50'
+              : 'border-neutral-100 hover:border-neutral-200'
+          }`}
+        >
+          <div className="text-sm font-semibold text-neutral-800">{opt.label}</div>
+          <div className="text-[11px] text-neutral-500 mt-0.5">{opt.desc}</div>
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
 export function PreferencesStep({ onComplete, onSkip }: PreferencesStepProps) {
   const [prefs, setPrefs] = useState<Preferences>(loadPreferences);
   const [showCustom, setShowCustom] = useState(prefs.customInstructions.length > 0);
@@ -82,51 +116,21 @@ export function PreferencesStep({ onComplete, onSkip }: PreferencesStepProps) {
       </div>
 
       <div className="space-y-6">
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
-            <HugeiconsIcon icon={PencilEdit02Icon} size={16} />
-            Communication Style
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {STYLE_OPTIONS.map(opt => (
-              <button
-                key={opt.id}
-                onClick={() => setPrefs(prev => ({ ...prev, style: opt.id }))}
-                className={`p-3 rounded-xl border text-left transition-all ${
-                  prefs.style === opt.id
-                    ? 'border-black bg-neutral-50'
-                    : 'border-neutral-100 hover:border-neutral-200'
-                }`}
-              >
-                <div className="text-sm font-semibold text-neutral-800">{opt.label}</div>
-                <div className="text-[11px] text-neutral-500 mt-0.5">{opt.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
+        <PreferenceOptionGroup
+          label="Communication Style"
+          icon={PencilEdit02Icon}
+          options={STYLE_OPTIONS}
+          currentValue={prefs.style}
+          onChange={(id) => setPrefs(prev => ({ ...prev, style: id }))}
+        />
 
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
-            <HugeiconsIcon icon={Settings02Icon} size={16} />
-            Expertise Level
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {EXPERTISE_OPTIONS.map(opt => (
-              <button
-                key={opt.id}
-                onClick={() => setPrefs(prev => ({ ...prev, expertise: opt.id }))}
-                className={`p-3 rounded-xl border text-left transition-all ${
-                  prefs.expertise === opt.id
-                    ? 'border-black bg-neutral-50'
-                    : 'border-neutral-100 hover:border-neutral-200'
-                }`}
-              >
-                <div className="text-sm font-semibold text-neutral-800">{opt.label}</div>
-                <div className="text-[11px] text-neutral-500 mt-0.5">{opt.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
+        <PreferenceOptionGroup
+          label="Expertise Level"
+          icon={Settings02Icon}
+          options={EXPERTISE_OPTIONS}
+          currentValue={prefs.expertise}
+          onChange={(id) => setPrefs(prev => ({ ...prev, expertise: id }))}
+        />
 
         <div className="space-y-3">
           <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
