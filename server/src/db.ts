@@ -14,21 +14,30 @@ const db = new Database(path.join(DATA_DIR, 'raw-code.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+const STMT_CACHE_LIMIT = 100;
 const stmtCache = new Map<string, Database.Statement>();
 
 function prepare(sql: string): Database.Statement {
   let stmt = stmtCache.get(sql);
   if (!stmt) {
+    if (stmtCache.size >= STMT_CACHE_LIMIT) {
+      const firstKey = stmtCache.keys().next().value;
+      if (firstKey !== undefined) stmtCache.delete(firstKey);
+    }
     stmt = db.prepare(sql);
     stmtCache.set(sql, stmt);
   }
   return stmt;
 }
 
-export async function query<T = Record<string, unknown>>(
+export function transaction<T>(fn: () => T): T {
+  return db.transaction(fn)();
+}
+
+export function querySync<T = Record<string, unknown>>(
   text: string,
   params?: any[],
-): Promise<{ rows: T[] }> {
+): { rows: T[] } {
   const sql = text.replace(/\$(\d+)/g, '?');
   const trimmed = text.trimStart().toUpperCase();
   const returnsRows = trimmed.startsWith('SELECT')
@@ -48,6 +57,13 @@ export async function query<T = Record<string, unknown>>(
     stmt.run();
   }
   return { rows: [] as T[] };
+}
+
+export async function query<T = Record<string, unknown>>(
+  text: string,
+  params?: any[],
+): Promise<{ rows: T[] }> {
+  return querySync<T>(text, params);
 }
 
 export async function migrate() {
