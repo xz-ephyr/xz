@@ -1,11 +1,21 @@
 import express from 'express';
 import cors from 'cors';
+import { rateLimit } from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
 import { query, migrate } from './db.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
 
 const PORT = process.env.PORT || 3001;
 const API_KEY = process.env.API_KEY;

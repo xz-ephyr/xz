@@ -1,0 +1,720 @@
+npm warn exec The following package was not found and will be installed: fallow@2.103.0
+[2m   0.020841949s[0m [33m WARN[0m node_modules directory not found. Run `npm install` / `pnpm install` first for accurate results.
+Warning: shallow clone detected. Hotspot analysis may be incomplete. Use `git fetch --unshallow` for full history.
+
+■ Metrics: dead files 0.0% (0 of 119) · dead exports 0.5% (1 of 203) · MI 92.4 (good)
+  119 files analyzed
+  117 entry points detected (115 plugin, 1 default index, 1 package.json)
+  9 refactoring targets — start with src/lib/tauri/index.ts (high impact)
+
+── Dead Code ──────────────────────────────────────
+
+── Unused Code ─────────────────────────────────────
+
+● Unused exports (1)
+  server/src/searchService.ts
+    :464 cleanupExpiredCache
+  Exported symbols with no known consumers — https://docs.fallow.tools/explanations/dead-code#unused-exports
+
+── Dependencies ─────────────────────────────────────
+
+● Unused devDependencies (1)
+  @tauri-apps/cli
+  Listed in devDependencies but never imported or referenced — https://docs.fallow.tools/explanations/dead-code#unused-dependencies
+
+● Unlisted dependencies (1)
+  @codemirror/language
+  Packages imported in code but missing from package.json — https://docs.fallow.tools/explanations/dead-code#unlisted-dependencies
+
+✗ 1 export · 1 dev/optional dependency · 1 unlisted dependency (0.18s)
+
+── Duplication ────────────────────────────────────
+note: skipped 2 files matching default duplicates ignores (use --explain-skipped for the list)
+note: module wiring excluded from clone detection (--no-ignore-imports to include it)
+
+● Duplicates (28 clone groups)
+
+     26 lines  2 instances  dup:22c44c80
+    server/src/searchService.ts:55-79
+    server/src/searchService.ts:397-422
+
+     24 lines  2 instances  dup:f766f7de
+    src/components/artifact/MarkdownPreview.tsx:18-40
+    src/components/chat/MarkdownMessage.tsx:121-144
+
+     23 lines  2 instances  dup:e5e406cd
+    src/services/tools/code/codeSearch.ts:28-50
+    src/services/tools/code/grepFiles.ts:29-45
+
+     17 lines  2 instances  dup:8a373f65
+    src/components/settings/SettingsModal.tsx:169-184
+    src/components/settings/SettingsModal.tsx:510-526
+
+     15 lines  2 instances  dup:f3beec5d
+    src/components/onboarding/ModelSetupStep.tsx:107-121
+    src/components/settings/SettingsModal.tsx:228-242
+
+     15 lines  2 instances  dup:fe764f17
+    src/components/onboarding/PreferencesStep.tsx:96-110
+    src/components/onboarding/PreferencesStep.tsx:119-133
+
+     15 lines  2 instances  dup:f41eeec6
+    src/services/ai/tools/webSearchTool.ts:11-25
+    src/services/tools/web/webSearch.ts:13-27
+
+     14 lines  2 instances  dup:fbcb6c03
+    src/components/artifact/ArtifactPanel.tsx:227-240
+    src/components/chat/ArtifactsPreviewCard.tsx:54-67
+
+     14 lines  2 instances  dup:4f63fd2b
+    src/services/ai/tools/webSearchTool.ts:51-64
+    src/services/tools/web/imageSearch.ts:13-26
+
+     14 lines  2 instances  dup:6e675ba8
+    src/services/ai/tools/webSearchTool.ts:74-87
+    src/services/tools/web/newsSearch.ts:13-26
+
+  ... and 18 more clone groups
+  Identical code blocks detected via suffix-array analysis — https://docs.fallow.tools/explanations/duplication#clone-groups
+
+● Clone families (5 with multiple groups)
+
+  4 groups, 59 lines across server/src/searchService.ts
+    → Extract 4 shared clone groups (59 lines) from searchService.ts into server/src
+
+  2 groups, 20 lines across src/components/onboarding/ModelSetupStep.tsx, src/components/settings/SettingsModal.tsx
+    → Extract shared function (15 lines) from ModelSetupStep.tsx, SettingsModal.tsx
+    → Extract shared function (5 lines) from ModelSetupStep.tsx, SettingsModal.tsx
+
+  2 groups, 17 lines across src/components/onboarding/ProjectSetupStep.tsx, src/components/sidebar/Sidebar.tsx
+    → Extract shared function (11 lines) from ProjectSetupStep.tsx, Sidebar.tsx
+    → Extract shared function (6 lines) from ProjectSetupStep.tsx, Sidebar.tsx
+
+  2 groups, 28 lines across src/components/settings/SettingsModal.tsx
+    → Extract shared function (17 lines) from SettingsModal.tsx, SettingsModal.tsx
+    → Extract shared function (11 lines) from SettingsModal.tsx, SettingsModal.tsx
+
+  2 groups, 29 lines across src/services/tools/code/codeSearch.ts, src/services/tools/code/grepFiles.ts
+    → Extract shared function (23 lines) from codeSearch.ts, grepFiles.ts
+    → Extract shared function (6 lines) from codeSearch.ts, grepFiles.ts
+
+  Groups of related clones across the same files — https://docs.fallow.tools/explanations/duplication#clone-families
+
+✗ 664 lines (6.0%) duplicated across 31 files (0.09s)
+
+── Complexity ─────────────────────────────────────
+
+■ Metrics: 11,612 LOC · dead files 0.0% · dead exports 0.5% · avg cyclomatic 2.5 · p90 cyclomatic 5 · maintainability 92.4 (good) · 0 churn hotspots (since 6 months) · 1 unused dep
+
+  Function size: 80% low · 10% medium · 6% high · 4% very high  (1-15 / 16-30 / 31-60 / >60 LOC)
+
+  Render fan-in: <HugeiconRenderer> 7 parents (34 incl. repeats) · <CodeBlock> 2 parents (4 incl. repeats) · <Table> 2 parents (2 incl. repeats) · <TableBody> 2 parents (2 incl. repeats) · <TableCell> 2 parents (2 incl. repeats)
+
+● Large functions (10 shown, 40 total)
+  src/pages/ChatPage.tsx
+    :124 ChatPage  639 lines
+  src/components/settings/SettingsModal.tsx
+    :49 SettingsModal  552 lines
+  src/components/sidebar/Sidebar.tsx
+    :34 Sidebar  262 lines
+  src/components/chat/AssistantBubble.tsx
+    :84 AssistantBubble  239 lines
+  src/components/sidebar/ProjectItem.tsx
+    :24 ProjectItem  228 lines
+  src/pages/ChatsPage.tsx
+    :172 ChatsPage  203 lines
+  src/components/artifact/ArtifactPanel.tsx
+    :22 ArtifactPanel  192 lines
+  src/pages/ChatsPage.tsx
+    :19 ChatListItem  152 lines
+  src/components/chat/ThinkingTimeline.tsx
+    :224 useTimelineSteps  142 lines
+  src/components/onboarding/PreferencesStep.tsx
+    :57 PreferencesStep  140 lines
+  Functions exceeding 60 lines of code (very high risk): https://docs.fallow.tools/explanations/health#unit-size
+  use --top 40 to see all
+
+● High complexity functions (118)
+  CRAP scores are estimated from export references; run `fallow health --coverage <coverage-final.json>` for exact scores.
+  src/components/chat/ThinkingTimeline.tsx
+    :231 <arrow> CRITICAL
+          56 cyclomatic   92 cognitive  134 lines
+         3192.0 CRAP
+  src/components/settings/SettingsModal.tsx
+    :49 SettingsModal CRITICAL
+          35 cyclomatic   60 cognitive  552 lines
+         react: 2 props, 12 hooks (10 state, 1 effect, 1 custom), max effect deps 2, JSX depth 14
+         1260.0 CRAP
+  src/components/chat/AssistantBubble.tsx
+    :84 AssistantBubble CRITICAL
+          25 cyclomatic   42 cognitive  239 lines
+         react: 14 props, 15 hooks (5 state, 5 effect, 5 custom), max effect deps 5, JSX depth 7
+         650.0 CRAP
+  src/lib/chatUtils.ts
+    :61 mapUIMessageToLegacyMessage CRITICAL
+          24 cyclomatic   27 cognitive  130 lines
+         600.0 CRAP
+  src/services/FileSystemService.ts
+    :113 getTree CRITICAL
+          22 cyclomatic   34 cognitive   83 lines
+         506.0 CRAP
+  src/components/chat/CodeBlock.tsx
+    :19 getLanguage CRITICAL
+          18 cyclomatic    1 cognitive   30 lines
+         blast radius: <CodeBlock> rendered in 4 places
+         342.0 CRAP
+  server/src/searchService.ts
+    :246 webSearch CRITICAL
+          16 cyclomatic   14 cognitive   53 lines
+         272.0 CRAP
+  src/pages/ChatPage.tsx
+    :124 ChatPage CRITICAL
+          15 cyclomatic   57 cognitive  639 lines
+         react: 46 hooks (4 state, 8 effect, 5 memo, 14 callback, 15 custom), max effect deps 5, JSX depth 7
+         240.0 CRAP
+  src/pages/ChatsPage.tsx
+    :172 ChatsPage CRITICAL
+          15 cyclomatic   30 cognitive  203 lines
+         react: 13 hooks (5 state, 2 effect, 1 memo, 4 callback, 1 custom), max effect deps 1, JSX depth 8
+         240.0 CRAP
+  src/services/aiService.ts
+    :39 getProviders CRITICAL
+          15 cyclomatic    9 cognitive   39 lines
+         240.0 CRAP
+    :119 chatCompletion CRITICAL
+          14 cyclomatic   21 cognitive  111 lines
+         react: 7 props
+         210.0 CRAP
+  src/services/tools/code/codeSearch.ts
+    :43 walk CRITICAL
+          14 cyclomatic   24 cognitive   32 lines
+         210.0 CRAP
+  src/services/tools/code/globFiles.ts
+    :72 walk CRITICAL
+          14 cyclomatic   29 cognitive   37 lines
+         210.0 CRAP
+  src/components/chat/ThinkingTimeline.tsx
+    :346 <arrow> CRITICAL
+          13 cyclomatic   10 cognitive   16 lines
+         182.0 CRAP
+  src/pages/ChatPage.tsx
+    :408 handleSend CRITICAL
+          13 cyclomatic   15 cognitive   66 lines
+         182.0 CRAP
+  src/services/tools/code/globFiles.ts
+    :14 patternToRegex CRITICAL
+          12 cyclomatic   18 cognitive   40 lines
+         156.0 CRAP
+  src/services/tools/code/grepFiles.ts
+    :38 walk CRITICAL
+          12 cyclomatic   23 cognitive   29 lines
+         156.0 CRAP
+  src/components/chat/ThinkingTimeline.tsx
+    :119 <arrow> CRITICAL
+          12 cyclomatic   11 cognitive   88 lines
+         react: JSX depth 4
+         156.0 CRAP
+  server/src/searchService.ts
+    :300 fetchPage CRITICAL
+          12 cyclomatic   11 cognitive   57 lines
+         156.0 CRAP
+  src/pages/ChatPage.tsx
+    :238 getProjectContext CRITICAL
+          12 cyclomatic   10 cognitive   26 lines
+         156.0 CRAP
+    :477 handleAddProject CRITICAL
+          11 cyclomatic   16 cognitive   36 lines
+         132.0 CRAP
+  src/components/sidebar/Sidebar.tsx
+    :34 Sidebar CRITICAL
+          10 cyclomatic   18 cognitive  262 lines
+         react: 10 hooks (4 state, 1 effect, 1 callback, 4 custom), max effect deps 0, JSX depth 6
+         110.0 CRAP
+  src/services/FileSystemService.ts
+    :349 saveFile CRITICAL
+          10 cyclomatic   15 cognitive   43 lines
+         110.0 CRAP
+    :74 buildTreeFromPaths HIGH
+           9 cyclomatic   13 cognitive   26 lines
+          90.0 CRAP
+  server/src/searchService.ts
+    :110 results HIGH
+           9 cyclomatic    4 cognitive    8 lines
+          90.0 CRAP
+    :372 results HIGH
+           9 cyclomatic    5 cognitive    7 lines
+          90.0 CRAP
+  src/components/sidebar/Sidebar.tsx
+    :107 handleAddProject HIGH
+           9 cyclomatic   14 cognitive   47 lines
+          90.0 CRAP
+  src/pages/ChatPage.tsx
+    :196 handleChatFinish HIGH
+           9 cyclomatic    7 cognitive   26 lines
+          90.0 CRAP
+  src/components/onboarding/ProjectSetupStep.tsx
+    :23 handleCreateProject HIGH
+           9 cyclomatic   14 cognitive   40 lines
+          90.0 CRAP
+  src/pages/ChatsPage.tsx
+    :19 ChatListItem HIGH
+           9 cyclomatic   14 cognitive  152 lines
+         react: 4 props, 7 hooks (4 state, 1 effect, 2 custom), max effect deps 1, JSX depth 5
+          90.0 CRAP
+  src/services/tools/network/httpRequest.ts
+    :15 execute HIGH
+           9 cyclomatic   11 cognitive   45 lines
+         react: 5 props
+          90.0 CRAP
+  src/components/artifact/ArtifactPanel.tsx
+    :22 ArtifactPanel HIGH
+           8 cyclomatic   18 cognitive  192 lines
+         react: 6 props, 9 hooks (1 state, 2 memo, 6 callback), JSX depth 6
+          72.0 CRAP
+  src/components/chat/ThinkingTimeline.tsx
+    :372 <arrow> HIGH
+           8 cyclomatic    9 cognitive   19 lines
+          72.0 CRAP
+  src/services/FileSystemService.ts
+    :332 uploadProjectFiles HIGH
+           8 cyclomatic    9 cognitive   16 lines
+          72.0 CRAP
+  src/services/aiService.ts
+    :138 getLanguageModel HIGH
+           8 cyclomatic    7 cognitive   12 lines
+          72.0 CRAP
+  server/src/searchService.ts
+    :48 tavilySearch HIGH
+           8 cyclomatic    6 cognitive   37 lines
+          72.0 CRAP
+    :191 results HIGH
+           8 cyclomatic    6 cognitive    8 lines
+          72.0 CRAP
+    :358 googleImageSearch HIGH
+           8 cyclomatic    6 cognitive   24 lines
+          72.0 CRAP
+    :383 tavilyNewsSearch HIGH
+           8 cyclomatic    6 cognitive   45 lines
+          72.0 CRAP
+  src/components/chat/ArtifactsPreviewCard.tsx
+    :58 getFileExtension HIGH
+           8 cyclomatic    2 cognitive   11 lines
+          72.0 CRAP
+  src/pages/ChatPage.tsx
+    :267 fetch HIGH
+           8 cyclomatic    5 cognitive   23 lines
+          72.0 CRAP
+  src/services/tools/code/findFiles.ts
+    :35 walk HIGH
+           8 cyclomatic    9 cognitive   17 lines
+          72.0 CRAP
+  src/components/artifact/ArtifactPanel.tsx
+    :231 getFileExtension HIGH
+           8 cyclomatic    2 cognitive   11 lines
+          72.0 CRAP
+  src/components/onboarding/ProgressBar.tsx
+    :12 <arrow> HIGH
+           8 cyclomatic    9 cognitive   37 lines
+         react: JSX depth 5
+          72.0 CRAP
+  src/components/chat/AssistantBubble.tsx
+    :119 <arrow> HIGH
+           8 cyclomatic   10 cognitive   18 lines
+          72.0 CRAP
+  server/src/index.ts
+    :149 <arrow> HIGH
+           8 cyclomatic    7 cognitive   25 lines
+          72.0 CRAP
+  src/components/chat/MarkdownMessage.tsx
+    :57 matchCitation HIGH
+           8 cyclomatic    6 cognitive   22 lines
+         blast radius: <MarkdownMessage> rendered in 3 places
+          72.0 CRAP
+  src/lib/artifactParser.ts
+    :16 resolveType HIGH
+           8 cyclomatic    7 cognitive   13 lines
+          72.0 CRAP
+  src/components/artifact/MermaidPreview.tsx
+    :16 renderDiagram HIGH
+           8 cyclomatic    7 cognitive   28 lines
+          72.0 CRAP
+  src/services/tools/network/checkUrl.ts
+    :13 execute HIGH
+           7 cyclomatic    7 cognitive   36 lines
+         react: 3 props
+          56.0 CRAP
+  server/src/searchService.ts
+    :143 googleSearch HIGH
+           7 cyclomatic    5 cognitive   25 lines
+          56.0 CRAP
+    :204 exaNewsSearch HIGH
+           7 cyclomatic    5 cognitive   41 lines
+          56.0 CRAP
+  src/hooks/useOnboarding.ts
+    :45 load HIGH
+           7 cyclomatic    7 cognitive   25 lines
+          56.0 CRAP
+  src/pages/ChatPage.tsx
+    :598 handleDividerKeyDown HIGH
+           7 cyclomatic    3 cognitive   28 lines
+          56.0 CRAP
+  src/components/layout/ZoomProvider.tsx
+    :74 handleKeyDown HIGH
+           7 cyclomatic    6 cognitive   15 lines
+          56.0 CRAP
+  src/components/artifact/ArtifactPanel.tsx
+    :93 renderPreview HIGH
+           7 cyclomatic    1 cognitive   18 lines
+         react: JSX depth 1
+          56.0 CRAP
+  src/components/chat/AssistantBubble.tsx
+    :138 <arrow> HIGH
+           7 cyclomatic    6 cognitive   15 lines
+          56.0 CRAP
+    :161 <arrow> HIGH
+           7 cyclomatic    6 cognitive   15 lines
+          56.0 CRAP
+  server/src/index.ts
+    :129 <arrow> HIGH
+           7 cyclomatic    6 cognitive   19 lines
+          56.0 CRAP
+    :260 <arrow> HIGH
+           7 cyclomatic    3 cognitive   30 lines
+          56.0 CRAP
+  src/components/chat/ChatInputContainer.tsx
+    :21 ChatInputContainer
+           6 cyclomatic   17 cognitive  117 lines
+         react: 9 props, 8 hooks (3 state, 2 effect, 1 callback, 2 custom), max effect deps 2, JSX depth 8
+         blast radius: <ChatInputContainer> rendered in 2 places
+          42.0 CRAP
+  src/hooks/useZoom.ts
+    :12 <arrow>
+           6 cyclomatic    5 cognitive   14 lines
+          42.0 CRAP
+  src/services/FileSystemService.ts
+    :213 getFileContent
+           6 cyclomatic    7 cognitive   25 lines
+          42.0 CRAP
+    :277 <arrow>
+           6 cyclomatic    5 cognitive   10 lines
+          42.0 CRAP
+    :302 importDirectory
+           6 cyclomatic    8 cognitive   28 lines
+          42.0 CRAP
+  server/src/searchService.ts
+    :73 results
+           6 cyclomatic    5 cognitive    8 lines
+          42.0 CRAP
+    :86 firecrawlSearch
+           6 cyclomatic    4 cognitive   36 lines
+          42.0 CRAP
+    :169 exaSearch
+           6 cyclomatic    4 cognitive   34 lines
+          42.0 CRAP
+    :416 results
+           6 cyclomatic    5 cognitive    8 lines
+          42.0 CRAP
+  src/components/chat/ThinkingIndicator.tsx
+    :11 ThinkingIndicator
+           6 cyclomatic    8 cognitive   64 lines
+         react: 2 props, 3 hooks (1 state, 1 effect, 1 custom), max effect deps 1, JSX depth 6
+          42.0 CRAP
+  src/hooks/useTypewriter.ts
+    :25 interval
+           6 cyclomatic    7 cognitive   23 lines
+          42.0 CRAP
+  src/pages/ChatPage.tsx
+    :645 <arrow>
+           6 cyclomatic    3 cognitive   26 lines
+         react: JSX depth 1
+          42.0 CRAP
+  src/services/tools/code/countLines.ts
+    :22 execute
+           6 cyclomatic    8 cognitive   17 lines
+         react: 2 props
+          42.0 CRAP
+  server/src/db.ts
+    :28 query
+           6 cyclomatic    6 cognitive   24 lines
+          42.0 CRAP
+  src/components/artifact/MarkdownPreview.tsx
+    :20 code
+           6 cyclomatic    5 cognitive   20 lines
+         react: 3 props, JSX depth 1
+          42.0 CRAP
+  src/pages/OnboardingPage.tsx
+    :88 renderStep
+           6 cyclomatic    1 cognitive   38 lines
+         react: JSX depth 1
+          42.0 CRAP
+  src/components/chat/InlineSourcePill.tsx
+    :13 InlineSourcePill
+           6 cyclomatic    9 cognitive   57 lines
+         react: 3 props, 4 hooks (1 state, 1 effect, 2 custom), max effect deps 0, JSX depth 4
+          42.0 CRAP
+  src/components/chat/MarkdownMessage.tsx
+    :123 code
+           6 cyclomatic    5 cognitive   21 lines
+         react: 3 props, JSX depth 1
+         blast radius: <MarkdownMessage> rendered in 3 places
+          42.0 CRAP
+  src/lib/artifactParser.ts
+    :35 parseArtifacts
+           6 cyclomatic    5 cognitive   39 lines
+          42.0 CRAP
+  src/lib/chatUtils.ts
+    :159 writeToolPartIdx
+           6 cyclomatic    5 cognitive    6 lines
+          42.0 CRAP
+  src/components/chat/ThinkingTimeline.tsx
+    :49 SearchingHeader
+           5 cyclomatic    4 cognitive   45 lines
+         react: 3 props, JSX depth 3
+          30.0 CRAP
+  src/services/FileSystemService.ts
+    :271 readFiles
+           5 cyclomatic    5 cognitive   20 lines
+          30.0 CRAP
+  src/components/onboarding/ReadyStep.tsx
+    :38 <arrow>
+           5 cyclomatic    4 cognitive   27 lines
+         react: JSX depth 3
+          30.0 CRAP
+  src/services/aiService.ts
+    :79 getAIErrorMessage
+           5 cyclomatic    4 cognitive   11 lines
+          30.0 CRAP
+  src/components/chat/CodeBlock.tsx
+    :57 CodeBlock
+           5 cyclomatic    5 cognitive   43 lines
+         react: 2 props, 1 hooks (1 state), JSX depth 3
+         blast radius: <CodeBlock> rendered in 4 places
+          30.0 CRAP
+  server/src/searchService.ts
+    :233 results
+           5 cyclomatic    4 cognitive    8 lines
+          30.0 CRAP
+    :438 newsSearch
+           5 cyclomatic    5 cognitive   25 lines
+          30.0 CRAP
+  src/services/tools/git/gitShow.ts
+    :12 execute
+           5 cyclomatic    5 cognitive   17 lines
+         react: 2 props
+          30.0 CRAP
+  src/components/sidebar/ProjectItem.tsx
+    :164 <arrow>
+           5 cyclomatic    3 cognitive   83 lines
+         react: JSX depth 5
+          30.0 CRAP
+    :24 ProjectItem
+           5 cyclomatic   14 cognitive  228 lines
+         react: 2 props, 11 hooks (8 state, 1 effect, 2 custom), max effect deps 1, JSX depth 5
+          30.0 CRAP
+  src/services/tools/git/gitLog.ts
+    :14 execute
+           5 cyclomatic    5 cognitive   17 lines
+         react: 4 props
+          30.0 CRAP
+  src/pages/ChatPage.tsx
+    :337 loadSession
+           5 cyclomatic    5 cognitive   15 lines
+          30.0 CRAP
+  src/components/layout/ZoomProvider.tsx
+    :53 handleWheel
+           5 cyclomatic    5 cognitive   14 lines
+          30.0 CRAP
+  src/config/models.ts
+    :148 getNextExploringModel
+           5 cyclomatic    6 cognitive   20 lines
+          30.0 CRAP
+  src/pages/ChatsPage.tsx
+    :204 <arrow>
+           5 cyclomatic    4 cognitive    8 lines
+          30.0 CRAP
+  src/services/tools/system/listProcesses.ts
+    :9 execute
+           5 cyclomatic    5 cognitive   17 lines
+          30.0 CRAP
+  src/components/chat/ChatInput.tsx
+    :53 ThinkingPill
+           5 cyclomatic    4 cognitive   23 lines
+         react: 2 props, JSX depth 3
+          30.0 CRAP
+    :77 SendButton
+           5 cyclomatic    4 cognitive   30 lines
+         react: 4 props, JSX depth 2
+          30.0 CRAP
+  src/components/artifact/HtmlPreview.tsx
+    :22 buildSrcdoc
+           5 cyclomatic    2 cognitive    9 lines
+          30.0 CRAP
+    :46 handleLoad
+           5 cyclomatic    4 cognitive   13 lines
+          30.0 CRAP
+  src/services/tools/git/gitDiff.ts
+    :14 execute
+           5 cyclomatic    5 cognitive   17 lines
+         react: 4 props
+          30.0 CRAP
+  src/services/tools/code/listDirectory.ts
+    :27 list
+           5 cyclomatic    4 cognitive   12 lines
+          30.0 CRAP
+  src/pages/OnboardingPage.tsx
+    :55 handleStepComplete
+           5 cyclomatic    3 cognitive   10 lines
+          30.0 CRAP
+  server/src/index.ts
+    :204 <arrow>
+           5 cyclomatic    4 cognitive   31 lines
+          30.0 CRAP
+  src/services/DatabaseService.ts
+    :115 getMessages
+           5 cyclomatic    2 cognitive   13 lines
+          30.0 CRAP
+    :130 messagesToSave
+           5 cyclomatic    4 cognitive    9 lines
+          30.0 CRAP
+  src/services/tools/code/fileStats.ts
+    :21 execute
+           5 cyclomatic    4 cognitive   16 lines
+         react: 1 props
+          30.0 CRAP
+  src/services/tools/system/runCommand.ts
+    :13 execute
+           5 cyclomatic    5 cognitive   17 lines
+         react: 3 props
+          30.0 CRAP
+  src/hooks/useArtifacts.ts
+    :18 <arrow>
+           5 cyclomatic    6 cognitive   40 lines
+          30.0 CRAP
+    :66 <arrow>
+           5 cyclomatic    4 cognitive   30 lines
+          30.0 CRAP
+  src/components/chat/MarkdownMessage.tsx
+    :15 <arrow>
+           5 cyclomatic    8 cognitive   24 lines
+         blast radius: <MarkdownMessage> rendered in 3 places
+          30.0 CRAP
+  src/lib/artifactParser.ts
+    :79 canPreviewType
+           5 cyclomatic    1 cognitive    3 lines
+          30.0 CRAP
+  src/lib/chatUtils.ts
+    :107 <arrow>
+           5 cyclomatic    5 cognitive   16 lines
+          30.0 CRAP
+    :127 writeArtifactCalls
+           5 cyclomatic    1 cognitive    1 lines
+          30.0 CRAP
+  src/services/tools/git/gitBranches.ts
+    :12 execute
+           5 cyclomatic    5 cognitive   17 lines
+         react: 2 props
+          30.0 CRAP
+  src/components/sidebar/SidebarTab.tsx
+    :15 SidebarTab
+           5 cyclomatic    6 cognitive   26 lines
+         react: 6 props, JSX depth 2
+         blast radius: <SidebarTab> rendered in 8 places
+          30.0 CRAP
+  src/services/tools/git/gitStatus.ts
+    :11 execute
+           5 cyclomatic    5 cognitive   17 lines
+         react: 1 props
+          30.0 CRAP
+  src/pages/ChatPage.tsx
+    :46 ChatMessageRow
+           4 cyclomatic   21 cognitive   77 lines
+         react: 16 props, 5 hooks (5 callback), JSX depth 2
+  Functions exceeding cyclomatic, cognitive, or CRAP thresholds (https://docs.fallow.tools/explanations/health#complexity-metrics)
+  To suppress: // fallow-ignore-next-line complexity
+
+● File health scores (102 files) · sorted by triage concern
+
+   91.3    src/components/chat/ThinkingTimeline.tsx        risk
+            392 LOC    1 fan-in    0 fan-out    0% dead  0.29 density  >999 risk
+
+   87.7    src/components/settings/SettingsModal.tsx       risk
+            675 LOC    1 fan-in    5 fan-out    0% dead  0.17 density  >999 risk
+
+   84.7    src/components/chat/AssistantBubble.tsx         risk
+            324 LOC    1 fan-in    5 fan-out    0% dead  0.27 density  650.0 risk
+
+   86.0    src/lib/chatUtils.ts                            risk
+            191 LOC    1 fan-in    2 fan-out    0% dead  0.32 density  600.0 risk
+
+   88.4    src/services/FileSystemService.ts               risk
+            393 LOC    3 fan-in    2 fan-out    0% dead  0.24 density  506.0 risk
+
+   92.5    src/components/chat/CodeBlock.tsx               risk
+            100 LOC    2 fan-in    0 fan-out    0% dead  0.25 density  342.0 risk
+
+   83.9    server/src/searchService.ts                     risk
+            470 LOC    1 fan-in    1 fan-out   20% dead  0.31 density  272.0 risk
+
+   80.9    src/pages/ChatPage.tsx                          risk
+            763 LOC    2 fan-in   20 fan-out    0% dead  0.23 density  240.0 risk
+
+   84.1    src/services/aiService.ts                       risk
+            249 LOC    2 fan-in    6 fan-out    0% dead  0.27 density  240.0 risk
+
+   87.7    src/pages/ChatsPage.tsx                         risk
+            375 LOC    2 fan-in    5 fan-out    0% dead  0.17 density  240.0 risk
+
+  ... and 92 more files (--format json for full list)
+
+  Sorted by triage concern: the larger of low-MI concern and CRAP risk. The risk / structure tag marks which one placed each file. MI reflects complexity, coupling, and dead code; risk reflects untested complexity (CRAP) and can diverge from MI. Risk: low <15, moderate 15-30, high >=30. CRAP estimated from export references (85% direct, 40% indirect, 0% untested). Run `fallow health --coverage <coverage-final.json>` for exact scores. https://docs.fallow.tools/explanations/health#file-health-scores
+
+● Refactoring targets (9)
+  6 medium · 3 high
+    score = quick-win ROI (higher = better) · pri = absolute priority
+
+   10.0  pri:30.0    src/lib/tauri/index.ts
+         high impact · effort:high · confidence:medium  Split high-impact file (4 LOC), 17 dependents amplify every change
+         importers: src/App.tsx (isTauri); src/components/layout/ZoomProvider.tsx (isTauri); src/components/onboarding/ProjectSetupStep.tsx (isTauri); src/components/sidebar/Sidebar.tsx (isTauri); src/pages/ChatPage.tsx (isTauri)
+
+    9.4  pri:18.7    src/services/FileSystemService.ts
+         complexity · effort:medium · confidence:high  Extract getTree (cognitive: 34) in 393-LOC file into smaller functions
+         importers: src/components/onboarding/ProjectSetupStep.tsx (FileSystemService); src/components/sidebar/Sidebar.tsx (FileSystemService); src/pages/ChatPage.tsx (FileSystemService)
+         clones: src/services/FileSystemService.ts:133-144 dup:48cf2995; src/services/FileSystemService.ts:183-192 dup:48cf2995
+
+    8.8  pri:17.6    server/src/searchService.ts
+         untested risk · effort:medium · confidence:high  16 complex functions lack test coverage path, add tests before modifying
+         importers: server/src/index.ts (fetchPage, imageSearch, newsSearch, webSearch)
+         clones: server/src/searchService.ts:55-79 dup:22c44c80; server/src/searchService.ts:62-73 dup:9607c9a8; server/src/searchService.ts:99-110 dup:9607c9a8; server/src/searchService.ts:149-157 dup:75c07156; server/src/searchService.ts:183-194 dup:0f885798
+
+    8.7  pri:17.4    src/components/chat/AssistantBubble.tsx
+         complexity · effort:medium · confidence:high  Extract AssistantBubble (cognitive: 42) in 324-LOC file into smaller functions
+         importers: src/pages/ChatPage.tsx (AssistantBubble)
+
+    8.7  pri:17.4    src/pages/ChatsPage.tsx
+         complexity · effort:medium · confidence:high  Extract ChatsPage (cognitive: 30) in 375-LOC file into smaller functions
+         importers: src/App.tsx (ChatsPage); src/pages/index.tsx (side effect)
+
+    7.6  pri:22.9    src/pages/ChatPage.tsx
+         complexity · effort:high · confidence:high  Extract ChatPage (cognitive: 57) in 763-LOC file into smaller functions
+         importers: src/App.tsx (ChatPage); src/pages/index.tsx (side effect)
+
+    7.6  pri:15.1    src/lib/chatUtils.ts
+         untested risk · effort:medium · confidence:high  4 complex functions lack test coverage path, add tests before modifying
+         importers: src/pages/ChatPage.tsx (mapUIMessageToLegacyMessage)
+
+    5.9  pri:11.7    src/components/chat/ThinkingTimeline.tsx
+         complexity · effort:medium · confidence:high  Extract <arrow> (cognitive: 92) in 392-LOC file into smaller functions
+         importers: src/components/chat/AssistantBubble.tsx (ThinkingTimeline, TimelineSource, useAggregatedSources, useTimelineSteps)
+         clones: src/components/chat/ThinkingTimeline.tsx:306-313 dup:1d19ed21; src/components/chat/ThinkingTimeline.tsx:347-354 dup:1d19ed21
+
+    4.8  pri:14.4    src/components/settings/SettingsModal.tsx
+         complexity · effort:high · confidence:high  Extract SettingsModal (cognitive: 60) in 675-LOC file into smaller functions
+         importers: src/components/sidebar/Sidebar.tsx (SettingsModal)
+         clones: src/components/onboarding/ModelSetupStep.tsx:46-50 dup:f4136336; src/components/onboarding/ModelSetupStep.tsx:107-121 dup:f3beec5d; src/components/settings/SettingsModal.tsx:169-184 dup:8a373f65; src/components/settings/SettingsModal.tsx:352-362 dup:fb2ae626; src/components/settings/SettingsModal.tsx:373-383 dup:fb2ae626
+
+  Prioritized refactoring recommendations based on complexity, churn, and coupling signals: https://docs.fallow.tools/explanations/health#refactoring-targets
+
+✗ 118 above threshold · 901 analyzed · maintainability 92.4 (good) (0.07s)
+
+Failed: dead-code (3 issues), dupes (28 clone groups), health (118 above threshold): start with src/lib/tauri/index.ts
+Setup: `fallow init --agents` writes an agent guide; `fallow hooks install --target agent` adds a commit gate (hide this hint: `fallow init --decline`).

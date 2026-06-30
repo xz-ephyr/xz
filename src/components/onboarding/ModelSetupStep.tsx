@@ -1,60 +1,28 @@
-import { useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { ViewIcon, ViewOffSlashIcon, Key01Icon, ZapIcon, GlobeIcon } from '@hugeicons/core-free-icons';
-import {
-  MODEL_MODE_STORAGE_KEY,
-  MODEL_MODES,
-  SELECTED_MODEL_STORAGE_KEY,
-  getStoredModelMode,
-  getStoredSelectedModel,
-  API_KEYS,
-  MODELS,
-} from '../../config/models';
+import { ModelSettingsForm } from '../settings/ModelSettingsForm';
+import { useModelSettings } from '../../hooks/useModelSettings';
 
 interface ModelSetupStepProps {
   onComplete: () => void;
   onSkip: () => void;
 }
 
-const PROVIDER_LABELS: Record<string, string> = {
-  google: 'Google Gemini',
-  groq: 'Groq',
-  opencodezen: 'OpenCode Zen',
-  mistral: 'Mistral',
-  openrouter: 'OpenRouter',
-  cerebras: 'Cerebras',
-};
-
 export function ModelSetupStep({ onComplete, onSkip }: ModelSetupStepProps) {
-  const [keys, setKeys] = useState(() => {
-    const initial: any = {};
-    Object.keys(API_KEYS).forEach((key) => {
-      initial[key] = localStorage.getItem((API_KEYS as any)[key]) || '';
-    });
-    return initial;
-  });
+  const {
+    keys,
+    setKeys,
+    selectedModel,
+    setSelectedModel,
+    modelMode,
+    setModelMode,
+    saveSettings,
+  } = useModelSettings();
 
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
-  const [selectedModel, setSelectedModel] = useState(getStoredSelectedModel);
-  const [modelMode, setModelMode] = useState(getStoredModelMode);
-
-  const toggleShowKey = (provider: string) => {
-    setShowKeys(prev => ({ ...prev, [provider]: !prev[provider] }));
-  };
-
-  const handleSave = () => {
-    Object.keys(API_KEYS).forEach((key) => {
-      localStorage.setItem((API_KEYS as any)[key], keys[key]);
-    });
-    localStorage.setItem(SELECTED_MODEL_STORAGE_KEY, selectedModel);
-    localStorage.setItem(MODEL_MODE_STORAGE_KEY, modelMode);
-    window.dispatchEvent(new CustomEvent('model-changed'));
+  const handleSave = async () => {
+    await saveSettings(keys, selectedModel, modelMode);
     onComplete();
   };
 
-  const hasAnyKey = Object.keys(PROVIDER_LABELS).some(
-    (p) => keys[p]?.trim().length > 0
-  );
+  const hasAnyKey = Object.values(keys).some((k) => k.trim().length > 0);
 
   return (
     <div className="flex flex-col max-w-lg mx-auto gap-6 py-4 w-full">
@@ -72,81 +40,25 @@ export function ModelSetupStep({ onComplete, onSkip }: ModelSetupStepProps) {
         </p>
       </div>
 
-      <div className="space-y-4">
-        {Object.keys(PROVIDER_LABELS).map((providerId) => (
-          <div key={providerId} className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-neutral-700 ml-1">
-              {PROVIDER_LABELS[providerId]}
-            </label>
-            <div className="relative">
-              <div className="absolute left-3 top-2.5 text-neutral-400">
-                <HugeiconsIcon icon={Key01Icon} size={14} />
-              </div>
-              <input
-                type={showKeys[providerId] ? 'text' : 'password'}
-                className="h-10 bg-neutral-50 rounded-[10px] pl-9 pr-10 outline-none text-sm w-full border border-neutral-200 focus:border-neutral-400 transition-colors"
-                placeholder={`Enter ${PROVIDER_LABELS[providerId]} API Key`}
-                value={keys[providerId]}
-                onChange={(e) => setKeys({ ...keys, [providerId]: e.target.value })}
-              />
-              <button
-                type="button"
-                onClick={() => toggleShowKey(providerId)}
-                className="absolute right-2.5 top-2 text-neutral-400 hover:text-neutral-600"
-              >
-                <HugeiconsIcon
-                  icon={showKeys[providerId] ? ViewOffSlashIcon : ViewIcon}
-                  size={16}
-                />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="space-y-4 pt-2 border-t border-neutral-100">
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
-            <HugeiconsIcon icon={ZapIcon} size={16} />
-            Model Mode
-          </label>
-          <select
-            className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
-            value={modelMode}
-            onChange={(e) => setModelMode(e.target.value as typeof modelMode)}
-          >
-            <option value={MODEL_MODES.fixed}>Fixed selected model</option>
-            <option value={MODEL_MODES.rotate}>Auto rotate models</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
-            <HugeiconsIcon icon={GlobeIcon} size={16} />
-            Default Model
-          </label>
-          <select
-            className="h-10 bg-neutral-50 rounded-[10px] px-3 text-sm outline-none w-full border border-neutral-200 focus:border-black transition-all appearance-none cursor-pointer"
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-          >
-            {MODELS.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.label} ({PROVIDER_LABELS[model.provider] || model.provider})
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <ModelSettingsForm
+        keys={keys}
+        setKeys={setKeys}
+        selectedModel={selectedModel}
+        setSelectedModel={setSelectedModel}
+        modelMode={modelMode}
+        setModelMode={setModelMode}
+      />
 
       <div className="flex gap-3 pt-2">
         <button
+          type="button"
           onClick={onSkip}
           className="flex-1 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-medium text-sm hover:bg-neutral-50 transition-all"
         >
           Skip for now
         </button>
         <button
+          type="button"
           onClick={handleSave}
           className="flex-1 py-2.5 rounded-xl bg-black text-white font-medium text-sm hover:bg-neutral-800 transition-all active:scale-[0.98]"
         >

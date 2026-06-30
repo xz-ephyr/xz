@@ -1,0 +1,73 @@
+import { useState, useEffect, useRef, startTransition } from 'react';
+
+export function useWriteArtifactStreaming(
+  hasWriteArtifact: boolean,
+  content: string,
+  contentBeforeTool?: string,
+  contentAfterTool?: string
+) {
+  const [phase, setPhase] = useState<'idle' | 'intention' | 'shimmer' | 'explanation' | 'done'>('idle');
+  const [intentionLen, setIntentionLen] = useState(0);
+  const [explanationLen, setExplanationLen] = useState(0);
+  const prevIntentionRef = useRef('');
+  const prevExplanationRef = useRef('');
+
+  useEffect(() => {
+    if (!hasWriteArtifact || !contentBeforeTool) return;
+    if (phase === 'idle') {
+      if (content && content.startsWith(contentBeforeTool)) {
+        startTransition(() => setIntentionLen(contentBeforeTool.length));
+        if (contentAfterTool && content.includes(contentAfterTool)) {
+          startTransition(() => { setExplanationLen(contentAfterTool.length); setPhase('done'); });
+          return;
+        }
+        startTransition(() => setPhase('shimmer'));
+        return;
+      }
+      startTransition(() => setPhase('intention'));
+    }
+  }, [hasWriteArtifact, contentBeforeTool, phase, content, contentAfterTool]);
+
+  useEffect(() => {
+    if (phase !== 'intention' || !contentBeforeTool) return;
+    const total = contentBeforeTool.length;
+    if (total === 0 || intentionLen >= total) {
+      startTransition(() => setPhase('shimmer'));
+      return;
+    }
+    if (contentBeforeTool !== prevIntentionRef.current && prevIntentionRef.current !== '') {
+      prevIntentionRef.current = contentBeforeTool;
+      startTransition(() => setIntentionLen(total));
+      return;
+    }
+    prevIntentionRef.current = contentBeforeTool;
+    const t = setTimeout(() => setIntentionLen(l => Math.min(l + Math.max(1, Math.floor(total / 60)), total)), 25);
+    return () => clearTimeout(t);
+  }, [phase, contentBeforeTool, intentionLen]);
+
+  useEffect(() => {
+    if (phase !== 'shimmer') return;
+    startTransition(() => setExplanationLen(0));
+    const t = setTimeout(() => setPhase('explanation'), 600);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== 'explanation' || !contentAfterTool) return;
+    const total = contentAfterTool.length;
+    if (total === 0 || explanationLen >= total) {
+      startTransition(() => setPhase('done'));
+      return;
+    }
+    if (contentAfterTool !== prevExplanationRef.current && prevExplanationRef.current !== '') {
+      prevExplanationRef.current = contentAfterTool;
+      startTransition(() => setExplanationLen(total));
+      return;
+    }
+    prevExplanationRef.current = contentAfterTool;
+    const t = setTimeout(() => setExplanationLen(l => Math.min(l + Math.max(1, Math.floor(total / 60)), total)), 25);
+    return () => clearTimeout(t);
+  }, [phase, contentAfterTool, explanationLen]);
+
+  return { phase, intentionLen, explanationLen };
+}

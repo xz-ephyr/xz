@@ -1,0 +1,6 @@
+npm warn exec The following package was not found and will be installed: fallow@2.103.0
+error: unexpected argument '--json' found
+
+Usage: fallow [OPTIONS] [COMMAND]
+
+For more information, try '--help'.

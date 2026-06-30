@@ -104,6 +104,9 @@ export async function migrate() {
       updated_at INTEGER NOT NULL,
       PRIMARY KEY (project_id, file_path)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_project_files_updated_at ON project_files(updated_at);
+    CREATE INDEX IF NOT EXISTS idx_search_cache_created_at ON search_cache(created_at);
   `);
   console.log('Migration complete');
 }
