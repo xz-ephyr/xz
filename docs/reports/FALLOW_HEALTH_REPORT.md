@@ -23,7 +23,7 @@ The following 9 targets are prioritized based on their "Quick-Win ROI"—a combi
 | **8.8** | Med | `server/src/searchService.ts` | **Untested Risk**: 16 complex functions lack coverage; significant cloning. | Med |
 | **8.7** | Med | `src/components/chat/AssistantBubble.tsx` | **Complexity**: Component (Cognitive: 42) is bloated with inline logic. | Med |
 | **8.7** | Med | `src/pages/ChatsPage.tsx` | **Complexity**: Main listing page (Cognitive: 30) needs modularization. | Med |
-| **7.6** | High | `src/pages/ChatPage.tsx` | **Complexity**: The core "God Component" (Cognitive: 57, 763 LOC). | High |
+| **7.6** | High | `src/pages/ChatPage.tsx` | **Complexity**: The core "God Component" (Cognitive: 57, 677 LOC). | High |
 | **7.6** | Med | `src/lib/chatUtils.ts` | **Untested Risk**: 4 complex mapping functions lack test coverage. | Med |
 | **5.9** | Med | `src/components/chat/ThinkingTimeline.tsx` | **Complexity**: Aggregated source logic (Cognitive: 92) is brittle. | Med |
 | **4.8** | High | `src/components/settings/SettingsModal.tsx` | **Complexity**: (Cognitive: 60) Massively duplicated UI patterns. | High |
@@ -37,7 +37,7 @@ CRAP (Change Risk Anti-Patterns) identifies functions that are both complex and 
 *   **`src/components/chat/ThinkingTimeline.tsx`**:
     *   `useTimelineSteps` logic (Cognitive: 92): Orchestrates real-time reasoning updates; extremely high cognitive load.
 *   **`src/pages/ChatPage.tsx`**:
-    *   `ChatPage` (639 lines, Cognitive: 57): Handles session loading, streaming state, artifact coordination, and layout management.
+    *   `ChatPage` (677 lines, Cognitive: 57): Handles session loading, streaming state, artifact coordination, and layout management.
 *   **`src/components/settings/SettingsModal.tsx`**:
     *   `SettingsModal` (552 lines, Cognitive: 60): Contains a massive render block with nested ternaries and duplicated model selection logic.
 *   **`src/services/FileSystemService.ts`**:
