@@ -30,6 +30,7 @@ export const ChatPage = () => {
   const previousModelRef = useRef<string | null>(null);
   const isThinkingEnabledRef = useRef(false);
   const currentModelRef = useRef<string | null>(null);
+  const projectContextCacheRef = useRef<Record<string, { context: ProjectContext; timestamp: number }>>({});
   const { addToast } = useToast();
   const { setTitle: setSessionTitle, setSessionId, setIsTitleGenerating } = useSessionTitle();
   const isMobile = useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`);
@@ -118,12 +119,21 @@ export const ChatPage = () => {
 
   const getProjectContext = useCallback(async (): Promise<ProjectContext | undefined> => {
     if (!uuid || uuid === 'new') return undefined;
+
     try {
       const session = await ChatSessionManager.getSession(uuid);
       if (!session?.projectId) return undefined;
+
+      // Check cache first (TTL: 30 seconds)
+      const cached = projectContextCacheRef.current[session.projectId];
+      if (cached && Date.now() - cached.timestamp < 30000) {
+        return cached.context;
+      }
+
       const projects = await DatabaseService.getProjects();
       const project = projects.find(p => p.id === session.projectId);
       if (!project) return undefined;
+
       const pc = await FileSystemService.getProjectContent(project.path, project.id);
       let files = pc.tree;
       if (pc.contents.length > 0) {
@@ -137,7 +147,16 @@ export const ChatPage = () => {
       if (pc.skippedBinary > 0) notes.push(`${pc.skippedBinary} binary file(s) excluded.`);
       if (pc.skippedSize > 0) notes.push(`${pc.skippedSize} file(s) too large to include.`);
       if (notes.length > 0) files += '\n\n_Notes: ' + notes.join(' ') + '_';
-      return { name: project.name, path: project.path, files };
+
+      const context = { name: project.name, path: project.path, files };
+
+      // Update cache
+      projectContextCacheRef.current[session.projectId] = {
+        context,
+        timestamp: Date.now()
+      };
+
+      return context;
     } catch {
       return undefined;
     }
@@ -265,7 +284,7 @@ export const ChatPage = () => {
   }, [setMessages]);
 
   const titleGeneratedRef = useRef(false);
-  const lastUuidRef = useRef<string | undefined>();
+  const lastUuidRef = useRef<string | undefined>(undefined);
 
   const handleSend = useCallback(
     async (content: string) => {
